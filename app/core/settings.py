@@ -1,7 +1,6 @@
 import os
 import yaml
 from dotenv import load_dotenv
-
 load_dotenv()
 
 def load_config(path="v1config.yaml"):
@@ -14,7 +13,8 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 BASE_URL_OLLAMA = os.getenv("BASE_URL_OLLAMA")
 
-def get_llm():
+#llm chat switchs
+def get_chat_model():
     provider = config["llm"]["provider"]
     model = config["llm"]["model"]
     if provider == "openai":
@@ -38,13 +38,30 @@ def get_llm():
             temperature=0.2,
             base_url=BASE_URL_OLLAMA
         )
-    elif provider == "fastembed":
-        from langchain_fastembed import FastEmbed
-        return FastEmbed(
-            model=model,
-            temperature=0.2
-        )
     else:
         raise ValueError(f"Unknown LLM provider: {provider}")
     
+def get_embedding_model():
+    provider = config["embeddings"]["provider"]
+    model = config["embeddings"]["model"]
+    if provider == "fastembed":
+        from fastembed import FastEmbeddings
+        return FastEmbeddings(
+            model=model
+        )
+    else:
+        raise ValueError(f"Unknown embedding provider: {provider}")
+
+def get_reranker_model():
+    provider = config["reranker"]["provider"]
+    model = config["reranker"]["model"]
+    if provider == "fastembed":
+        from fastembed import FastEmbeddings
+        return FastEmbeddings(
+            model=model
+        )
+    else:
+        raise ValueError(f"Unknown reranker provider: {provider}")
+
+
 #ora in v1config.yaml puoi cambiare 'provider' e 'model' come vuoi ( e.g. openai  e gpt-4.1-mini) (dentro il config.yaml) e quindi automaticamente verranno scaricati/settati auto in questo file.  poi in fies target fai semplicemente  llm = get_llm()  
