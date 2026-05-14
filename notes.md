@@ -185,4 +185,4 @@ app/
   services/   ← orchestration layer
 
 
-//in futuro fovrai pensare anche al GDPR per la privacy
+//in futuro fovrai pensare anche al GDPR per la privacy, quindi anonimizzare i dati sensibili!

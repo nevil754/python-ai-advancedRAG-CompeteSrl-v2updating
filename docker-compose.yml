@@ -1,0 +1,53 @@
+version: "3.8"
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: docker/fastapi.Dockerfile
+    container_name: fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      - BASE_URL_OLLAMA=http://ollama:11434
+      - REDIS_URL=redis://redis:6379
+      - SQLSERVER_HOST=sqlserver
+      - SQLSERVER_PORT=1433
+      - SQLSERVER_USER=SA
+      - SQLSERVER_PASSWORD=YourStrong!Passw0rd
+      - SQLSERVER_DB=RAGChat
+    depends_on:
+      - qdrant
+      - redis
+      - sqlserver
+
+  qdrant:
+    image: qdrant/qdrant:v1.4.2
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+volumes:
+  qdrant_data:
+  redis_data:
+  sqlserver_data:
