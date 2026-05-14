@@ -1,7 +1,8 @@
 version: "3.8"
-services:
+services:  #here servizi da avviare
   fastapi:
     build:
+      #directory di contesto per la build è la root del progetto
       context: .
       dockerfile: docker/fastapi.Dockerfile
     container_name: fastapi
@@ -15,6 +16,7 @@ services:
       - SQLSERVER_USER=SA
       - SQLSERVER_PASSWORD=YourStrong!Passw0rd
       - SQLSERVER_DB=RAGChat
+    #partira solo dopo questi VENGONO AVVIATI(non significa che sono pronti ready e operativi)
     depends_on:
       - qdrant
       - redis
@@ -47,7 +49,17 @@ services:
     volumes:
       - sqlserver_data:/var/opt/mssql
 
+  celery-worker:
+    build: ./app
+    command: celery -A app.workers.celery_worker.celery_app worker --loglevel=info
+    #-A → specifica il modulo dove si trova la definizione del tuo Celery app, worker → dice “voglio avviare un worker”, --loglevel=info → log dettagliato
+    depends_on:
+      - redis
+      - sqlserver
+
 volumes:
   qdrant_data:
   redis_data:
   sqlserver_data:
+
+
