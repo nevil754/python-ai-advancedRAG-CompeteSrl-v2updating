@@ -1,0 +1,45 @@
+loader:
+  extensions: [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"]
+
+splitter:
+  chunk_size: 1000
+  chunk_overlap: 200
+  strategy: "markdown"
+
+embeddings:
+  provider: "fastembed" #"ollama"
+  model: "BAAI/BGE-M3" #"nomic-embed-text:latest"  #magari posso anche usare qua un modello di gemini(google)
+  base_url: "" #"http://localhost:11434"
+
+llm:
+  provider: "ollama" #"openai" #"google"   
+  model: "llama3.1" #"tinyllama:latest" #"gpt-4.1-mini" #"gemini-2.0-flash"
+  #api_key: "${GOOGLE_API_KEY}"  #ora gestito da 'settings.py'
+  num_ctx: 2048
+  api_key: "${OLLAMA_API_KEY}"
+
+reranker:
+ enabled: true
+ model: "BAAI/bge-reranker-base"
+ top_k: 5
+ initial_k: 20
+
+metadata:
+  config_file: "./metadata.yaml"
+
+vectorstore:
+  url: "" #"http://localhost:6333"
+  collection_name: "collection-competeSrl-RAGv2"
+  use_sparse: true
+  force_recreate: false
+
+retriever:
+  search_type: "hybrid"
+  retrieval_strategy: "mmr"
+  top_k: 20
+  auto_filter: false
+
+logging: 
+  level: "INFO"
+  console_output: true
+  colored: true
