@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /build
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir --no-deps -r requirements.txt
 
 # Pre-scarica i modelli fastembed nel layer di build
 # Così non vengono scaricati ad ogni restart del container

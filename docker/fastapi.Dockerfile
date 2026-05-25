@@ -26,7 +26,7 @@ WORKDIR /build
 # Se requirements.txt non cambia, questo layer non viene rieseguito
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir --no-deps -r requirements.txt
 
 # ── Stage 2: runtime ──────────────────────────────────────────
 FROM python:3.11-slim AS runtime
