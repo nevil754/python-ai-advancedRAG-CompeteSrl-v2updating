@@ -1,5 +1,4 @@
 # Dipendenze solo per sviluppo/test — non installate in prod
-# -r requirements.txt
 
 #Testing
 pytest==8.3.3
