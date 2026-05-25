@@ -54,48 +54,48 @@ metadata:
   config_file: "/app/config/metadata.yaml"
 
 vectorstore:
-  url: "" #"http://localhost:6333"
-  api_key: "${QDRANT_API_KEY}"    #vuoto in dev, 🔥obbligatorio in prod
+  url: "" #"http://localhost:6333"  #porta
+  api_key: "${QDRANT_API_KEY}"    #chiave auth, anche ok vuoto in dev, ma ovviamente 🔥obbligatorio in prod
   collection_name: "collection-competeSrl-RAGv2"
   use_sparse: true
-  force_recreate: false
+  force_recreate: false   #se true allora cancella e ricrea la collection ad ogni avvio, ok sviluppo per evitare dati obsoleti ma in produzione deve essere false
   distance: "Cosine"  #Cosine | Dot | Euclid
-  on_disk_payload: true    #payload metadata su disco, non in RAM
+  on_disk_payload: true   #metadata su disco anziché RAM, molto utile grandi dataset!
 
-memory:
-  short_term_turns: 10            # ultimi N turni in Redis
-  long_term_enabled: false        # summary in SQL — attivare in v2
-  session_ttl_hours: 24
+memory:  #memoria conversazionale
+  short_term_turns: 10       #ultimi N messaggi mantenuti in Redis
+  long_term_enabled: false   #memory persistente conversazioni. summary in SQL — attivare in v2
+  session_ttl_hours: 24      #scadenza sessione
 
 cache:
-  query_ttl_seconds: 3600         # 1h — risposta RAG per la stessa query
-  session_ttl_seconds: 86400      # 24h — storia chat
+  query_ttl_seconds: 3600         #cache query rag, 1h — risposta RAG per la stessa query
+  session_ttl_seconds: 86400      #cache sessione, 24h — storia chat
 
-web_search:
+web_search:  #web retrieval esterno
   enabled: false
-  provider: "tavily"              # tavily | ddgs
+  provider: "tavily"   #uso plugin tavily | ddgs
   api_key: "${TAVILY_API_KEY}"
-  max_results: 5
-
+  max_results: 5   #numero risultati search
 
   
 logging: 
   level: "INFO"    #DEBUG | INFO | WARNING | ERROR
-  console_output: true
+  console_output: true  #output log su console
   colored: true
-  json_output: false    #true in produzione per log aggregation
+  json_output: false    #🔥FORMATO JSON, da fare perche cosi è leggibile anche da sistemi e.g.ELK/Grafana/Datadog
 
 observability:
-  langsmith_enabled: false        # true in staging/prod
-  langsmith_project: "rag-enterprise-legal"
-  opentelemetry_enabled: false
+  langsmith_enabled: false      #true in staging/prod, cosi vedi info nella dashboard LangSmith
+  langsmith_project: "competeSrl-RAGenterprise-legal"
+  opentelemetry_enabled: false  #telemetry distribuita, usa plugin opentelemetry per tracciare richieste e performance
 
-rate_limit:
+rate_limit:  #🔥SEMPRE DA FARE protezione abuso e ti protegge anche dai costi alti computazionali eseguiti dai clienti
   requests_per_minute: 60
   tokens_per_day: 100000
 
 security:
-  jwt_algorithm: "HS256"
+  jwt_algorithm: "HS256"  #algh firma, hs256 va bene per chiavi simmetriche, se usi chiavi asimmetriche allora RS256
   jwt_expire_minutes: 60
-  api_key_length: 32
-  password_min_length: 12
+  api_key_length: 32   #lunghezza API key generate
+  password_min_length: 12  
+
