@@ -131,6 +131,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.local
+.env.*.local
 
 # Spyder project settings
 .spyderproject
@@ -174,3 +176,30 @@ nul
 .claude
 *.sqlite3
 .claude/*
+
+.ruff_cache/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+logs/
+*.safetensors
+
+# Upload temporanei
+uploads/
+temp/
+tmp/
+
+# Docker volumes locali
+docker/sqlserver/data/
+

@@ -1,15 +1,29 @@
-loader:
-  extensions: [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"]
+app:
+  name: "competeSrl RAG Enterprise Legal"
+  version: "0.1.0"
+  debug: false
+  environment: "development"  #development | staging | production
 
-splitter:
-  chunk_size: 1000
-  chunk_overlap: 200
-  strategy: "markdown"
+ingestion:
+  parser:  #parser: docling per PDF/DOCX complessi, unstructured come fallback
+    prefer_docling: true          #docling è più preciso su contratti/bilanci
+    extract_tables: true          #estrae tabelle come testo strutturato
+    extract_images: false         #in futuro: VLM per immagini
+    languages: ["it", "en"]
+  splitter:
+    chunk_size: 1000
+    chunk_overlap: 200
+    strategy: "markdown"
+  loader:
+    extensions: [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"]
+    max_file_size_mb: 100
 
 embeddings:
   provider: "fastembed" #"ollama"
   model: "BAAI/BGE-M3" #"nomic-embed-text:latest"  #magari posso anche usare qua un modello di gemini(google)
   base_url: "" #"http://localhost:11434"
+  batch_size: 64
+  cache_dir: "/app/.cache/embeddings"  # evita re-download ad ogni restart
 
 llm:
   provider: "ollama" #"openai" #"google"   
@@ -17,6 +31,18 @@ llm:
   #api_key: "${GOOGLE_API_KEY}"  #ora gestito da 'settings.py'
   num_ctx: 2048
   api_key: "${OLLAMA_API_KEY}"
+  base_url: "http://ollama:11434"
+  temperature: 0.0
+  max_tokens: 2048
+  timeout: 120
+  streaming: true
+
+retriever:
+  search_type: "hybrid"
+  retrieval_strategy: "mmr"
+  top_k: 20
+  mmr_lambda: 0.5      #0=diversity, 1=similarity — 0.5 è bilanciato
+  auto_filter: false
 
 reranker:
  enabled: true
@@ -29,15 +55,14 @@ metadata:
 
 vectorstore:
   url: "" #"http://localhost:6333"
+  api_key: "${QDRANT_API_KEY}"    #vuoto in dev, obbligatorio in prod
   collection_name: "collection-competeSrl-RAGv2"
   use_sparse: true
   force_recreate: false
+  distance: "Cosine"  #Cosine | Dot | Euclid
+  on_disk_payload: true    #payload metadata su disco, non in RAM
 
-retriever:
-  search_type: "hybrid"
-  retrieval_strategy: "mmr"
-  top_k: 20
-  auto_filter: false
+
 
 logging: 
   level: "INFO"
