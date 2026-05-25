@@ -1,15 +1,14 @@
 
-
-#REPRODUCE AL 100% ESATTAMENTE CON STESSE VERSIONS PLUGINGS:
+########REPRODUCE AL 100% ESATTAMENTE CON STESSE VERSIONS PLUGINGS (anche con quelle TRANSITIVE!!):
 devi assicurarti di bloccare le dipendenze transitive (quelle che anche se non scarichi direttamente, vengono scaricate).
 
 1.crea ambiente asettico
-conda create -n rag-prod python=3.11.9
-conda activate rag-prod
+conda create -n envCompeteSrlRAGproductionOKpluginsTransitivi python=3.11.9  #USO VERSION 3.11.9🔥
+conda activate envCompeteSrlRAGproductionOKpluginsTransitivi
 pip install pip-tools==7.4.1
 
-2.assicurati che i file dove hai elencato tutti i plugins, non si chiamino .txt ma .in 
-3.genera i lock file con versioni transitive bloccate:
+2.assicurati che i file dove hai elencato tutti i plugins, non si chiamino .txt --> .in ! 
+3.genera i lock file con versioni transitive bloccate runnando:
 pip-compile requirements.in \
   --output-file requirements.txt \
   --resolver=backtracking \
@@ -22,9 +21,13 @@ pip-compile requirements-dev.in \
   --no-header \
   --annotate
   ora hai appena creato i files .txt, con ogni singolo pacchetto (diretto e TRANSITIVO) pinato alla versione esatta!!
-4. solo ORA puoi installare i pacchetti in modo deterministico
+4. assicurati di aggiungere '--no-deps' nei Dockerfile (e.g.celery.Dockerfile) quando fai ... --no-cache-dir --no-deps -r requirements.txt
+5. solo ORA puoi installare i pacchetti in modo deterministico
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 //tutto è già pinato — pip non ha margine per "risolvere"(CIOE CHE DECIDE LUI) niente!! ORA PRJ E' RIPRODUCIBILE AL 100% ovunque senza che ci siano bug che le dipendenze transitive le versioni sono cambiate!!
 //ora non hai piu bug silenziosi causati dalle incostistenze delle versions dei pacchetti transitivi, tutto il prj con pacchetti diretti&transitivi E RIPRODUCIBILE ESATTAMENTE UGUALE su qualsiasi macchina.
 
+//è ok, xk ricorda che in produzione Docker ogni container è già un ambiente isolato!
+
+########

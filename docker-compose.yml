@@ -45,7 +45,7 @@ services:  #here servizi da avviare
     restart: unless-stopped
     command: >
       celery -A app.workers.celery_app.celery_app worker
-      --queues=tenant.*.high,shared_cleanup
+      --queues=high,shared_cleanup
       --concurrency=4
       --prefetch-multiplier=1
       --loglevel=info
@@ -78,7 +78,7 @@ services:  #here servizi da avviare
     restart: unless-stopped
     command: >
       celery -A app.workers.celery_app.celery_app worker
-      --queues=tenant.*.default,default
+      --queues=default,low
       --concurrency=2
       --prefetch-multiplier=1
       --loglevel=info
@@ -207,7 +207,7 @@ services:  #here servizi da avviare
       /init/entrypoint.sh
       wait $$SQLSERVR_PID"
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd",
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd",
              "-S", "localhost",
              "-U", "SA",
              "-P", "${SQLSERVER_PASSWORD}",
