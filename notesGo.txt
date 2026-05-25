@@ -10,8 +10,8 @@ pip install pip-tools
 
 2.assicurati che i file dove hai elencato tutti i plugins, non si chiamino .txt --> .in ! 
 3.genera i lock file con versioni transitive bloccate runnando (in root prj):
-pip-compile requirements.in --output-file requirements.txt --resolver=backtracking --no-header --annotate --pre
-//grazie a --pre gestisci la versione alpha di markitdown
+pip-compile requirements.in --output-file requirements.txt --resolver=backtracking --no-header --annotate
+//prima avevo anche '--pre' finale per gestire la versione alpha di markitdown, ma ora faccio direttamente >=0.0.1
 pip-compile requirements-dev.in --output-file requirements-dev.txt --resolver=backtracking --no-header --annotate
 
 ora hai appena creato i files .txt, con ogni singolo pacchetto (diretto e TRANSITIVO) pinato alla versione esatta!!
@@ -24,5 +24,7 @@ pip install -r requirements-dev.txt
 //ora non hai piu bug silenziosi causati dalle incostistenze delle versions dei pacchetti transitivi, tutto il prj con pacchetti diretti&transitivi E RIPRODUCIBILE ESATTAMENTE UGUALE su qualsiasi macchina.
 
 //è ok, xk ricorda che in produzione Docker ogni container è già un ambiente isolato!
+
+//attualmente nel mio env creato  avevo markitdown==0.0.1a2 ora invece ho tolto '--pre' dal comando per generare il file .txt e l'ho cambiato in -> markitdown>=0.0.1, e ho rigenerato il file requirements.txt. CMQN SAPERE CHE ATTUALMENTE NEL MIO ENV HO ANCORA LA VERSIONE markitdown==0.0.1a2 (e le sue dipendenze transitive). mentre il file .txt è correttamente aggiornato.
 
 ########

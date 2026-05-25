@@ -1,18 +1,18 @@
 app:
-  name: "competeSrl RAG Enterprise Legal"
-  version: "0.1.0"
-  debug: false
-  environment: "development"  #development | staging | production
+  name: "CompeteSrl RAG Enterprise Legal"
+  version: "0.1.0"  #0.x → prototipo/dev, 1.x → beta, 2.x → prod
+  debug: false  #se true allora log piu verbosi e stacktrace completi, in production sempre false.
+  environment: "development"  #ambiente runtime. development | staging | production dal code puoi leggere here per settare behaviors diversi e.g.CORS
 
 ingestion:
   parser:  #parser: docling per PDF/DOCX complessi, unstructured come fallback
-    prefer_docling: true          #docling è più preciso su contratti/bilanci
-    extract_tables: true          #estrae tabelle come testo strutturato
-    extract_images: false         #in futuro: VLM per immagini
+    prefer_docling: true   #docling è più preciso su contratti/bilanci, quindi usa prima docling e fallback su Unstructured
+    extract_tables: true   #estrae tabelle come testo strutturato
+    extract_images: false  #false, se true allora OCR/VLM/image understanding ma molto costoso computazionalmente
     languages: ["it", "en"]
-  splitter:
+  splitter:  #how CHUNKING documenti
     chunk_size: 1000
-    chunk_overlap: 200
+    chunk_overlap: 200  #overlap tra chunk consecutivi, per evitare perdita contesto
     strategy: "markdown"
   loader:
     extensions: [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"]
@@ -21,34 +21,34 @@ ingestion:
 embeddings:
   provider: "fastembed" #"ollama"
   model: "BAAI/BGE-M3" #"nomic-embed-text:latest"  #magari posso anche usare qua un modello di gemini(google)
-  base_url: "" #"http://localhost:11434"
-  batch_size: 64
-  cache_dir: "/app/.cache/embeddings"  # evita re-download ad ogni restart
+  base_url: "" #ollama "http://localhost:11434"
+  batch_size: 64   #numero documenti elaborati insieme, piu è alto piu è veloce ma piu ram
+  cache_dir: "/app/.cache/embeddings"  #dir cache modelli, evita re-download ad ogni restart
 
 llm:
   provider: "ollama" #"openai" #"google"   
   model: "llama3.1" #"tinyllama:latest" #"gpt-4.1-mini" #"gemini-2.0-flash"
   #api_key: "${GOOGLE_API_KEY}"  #ora gestito da 'settings.py'
-  num_ctx: 2048
+  num_ctx: 2048   #finestra contesto massima, piu è alto più memoria conversazionale ma piu ram
   api_key: "${OLLAMA_API_KEY}"
   base_url: "http://ollama:11434"
-  temperature: 0.0
-  max_tokens: 2048
-  timeout: 120
-  streaming: true
+  temperature: 0.0  #'creatività'del modello, 0=deterministico 1=massima creatività
+  max_tokens: 2048  #massima lunghezza output
+  timeout: 120  #timeout in secondi per chiamate al modello, per evitare attese infinite
+  streaming: true  #invia token realtime, io uso SSE
 
 retriever:
   search_type: "hybrid"
   retrieval_strategy: "mmr"
-  top_k: 20
-  mmr_lambda: 0.5      #0=diversity, 1=similarity — 0.5 è bilanciato
-  auto_filter: false
+  top_k: 20           #numero documenti recuperati, piu è alto più contesto ma piu rumore
+  mmr_lambda: 0.5     #bilanciamento mmr, 0.5 è ok. 0 → massima diversità 1 → massima similarità.
+  auto_filter: false  #now disattivo filtro automatico metadata
 
 reranker:
- enabled: true
+ enabled: true  #attiva reranking
  model: "BAAI/bge-reranker-base"
- top_k: 5
- initial_k: 20
+ top_k: 5  #numero documenti finali che passano al llm dopo il reranking
+ initial_k: 20  #numero documenti iniziali recuperati
 
 metadata:
   config_file: "/app/config/metadata.yaml"

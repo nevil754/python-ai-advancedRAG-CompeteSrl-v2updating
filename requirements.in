@@ -21,7 +21,7 @@ unstructured[pdf,docx]==0.16.11  #INFO NON HTML?? general document parsing .pdf/
 pypdf==5.1.0   #estrazione base testo pdf, veloce ma limitato
 python-docx==1.1.2  #estrazione testo da .docx
 openpyxl==3.1.5  #estrazione testo da file .excel
-markitdown==0.0.1a2  #converte docs->markdown pulito strutturato
+markitdown>=0.0.1  #converte docs->markdown pulito strutturato
 markdown2==2.5.1  #converte markdown → HTML
 xhtml2pdf==0.2.17  #converte HTML → PDF
 

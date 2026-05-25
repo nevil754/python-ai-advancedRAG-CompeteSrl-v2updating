@@ -20,6 +20,8 @@ amqp==5.3.1
     # via kombu
 annotated-types==0.7.0
     # via pydantic
+antlr4-python3-runtime==4.9.3
+    # via omegaconf
 anyio==4.13.0
     # via
     #   httpx
@@ -53,7 +55,7 @@ beautifulsoup4==4.12.3
     #   markdownify
     #   markitdown
     #   unstructured
-billiard==4.3.0rc1
+billiard==4.2.4
     # via celery
 celery==5.4.0
     # via
@@ -73,6 +75,7 @@ chardet==7.4.3
     # via unstructured
 charset-normalizer==3.4.7
     # via
+    #   markitdown
     #   pdfminer-six
     #   reportlab
     #   requests
@@ -83,6 +86,7 @@ click==8.4.1
     #   click-plugins
     #   click-repl
     #   ddgs
+    #   magika
     #   nltk
     #   python-oxmsg
     #   typer
@@ -93,14 +97,14 @@ click-plugins==1.1.1.2
     # via celery
 click-repl==0.3.0
     # via celery
-cobble==0.1.4
-    # via mammoth
 colorama==0.4.6
     # via
     #   click
     #   loguru
     #   tqdm
     #   uvicorn
+coloredlogs==15.0.1
+    # via onnxruntime
 contourpy==1.3.3
     # via matplotlib
 cryptography==43.0.3
@@ -129,7 +133,7 @@ deepsearch-glm==1.0.0
 defusedxml==0.7.1
     # via
     #   docling-core
-    #   youtube-transcript-api
+    #   markitdown
 deprecated==1.3.1
     # via
     #   opentelemetry-api
@@ -202,16 +206,16 @@ googleapis-common-protos==1.75.0
     #   grpcio-status
 greenlet==3.5.1
     # via sqlalchemy
-grpcio==1.81.0rc1
+grpcio==1.80.0
     # via
     #   google-api-core
     #   google-cloud-vision
     #   grpcio-status
     #   grpcio-tools
     #   qdrant-client
-grpcio-status==1.81.0rc1
+grpcio-status==1.80.0
     # via google-api-core
-grpcio-tools==1.81.0rc1
+grpcio-tools==1.80.0
     # via qdrant-client
 h11==0.16.0
     # via
@@ -256,6 +260,8 @@ huggingface-hub==0.36.2
     #   tokenizers
     #   transformers
     #   unstructured-inference
+humanfriendly==10.0
+    # via coloredlogs
 hyperframe==6.1.0
     # via h2
 idna==3.16
@@ -356,7 +362,7 @@ lxml==5.4.0
     #   python-pptx
     #   svglib
     #   unstructured
-mammoth==1.12.0
+magika==0.6.3
     # via markitdown
 markdown-it-py==4.2.0
     # via rich
@@ -364,7 +370,7 @@ markdown2==2.5.1
     # via -r requirements.in
 markdownify==1.2.2
     # via markitdown
-markitdown==0.0.1a2
+markitdown==0.1.5
     # via -r requirements.in
 marko==2.2.2
     # via docling
@@ -372,7 +378,7 @@ markupsafe==3.0.3
     # via jinja2
 marshmallow==3.26.2
     # via dataclasses-json
-matplotlib==3.11.0rc2
+matplotlib==3.10.9
     # via unstructured-inference
 mdurl==0.1.2
     # via markdown-it-py
@@ -394,8 +400,6 @@ multiprocess==0.70.19
     #   mpire
 mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==2.21.2
-    # via scikit-learn
 nest-asyncio==1.6.0
     # via ragas
 networkx==3.6.1
@@ -418,7 +422,7 @@ numpy==1.26.4
     #   langchain
     #   langchain-community
     #   layoutparser
-    #   markitdown
+    #   magika
     #   matplotlib
     #   ml-dtypes
     #   onnx
@@ -444,16 +448,17 @@ olefile==0.47
     # via python-oxmsg
 ollama==0.6.2
     # via langchain-ollama
-omegaconf==2.4.0.dev11
+omegaconf==2.3.0
     # via effdet
 onnx==1.21.0
     # via
     #   fastembed
     #   unstructured
     #   unstructured-inference
-onnxruntime==1.26.0
+onnxruntime==1.20.1
     # via
     #   fastembed
+    #   magika
     #   unstructured-inference
 openai==1.109.1
     # via
@@ -469,7 +474,6 @@ openpyxl==3.1.5
     # via
     #   -r requirements.in
     #   docling
-    #   markitdown
 opentelemetry-api==1.28.2
     # via
     #   -r requirements.in
@@ -499,6 +503,7 @@ packaging==24.2
     #   matplotlib
     #   onnxruntime
     #   pikepdf
+    #   safetensors
     #   scikit-image
     #   transformers
     #   unstructured-pytesseract
@@ -509,18 +514,14 @@ pandas==2.2.3
     #   docling
     #   docling-core
     #   layoutparser
-    #   markitdown
 passlib[bcrypt]==1.7.4
     # via -r requirements.in
-pathvalidate==3.3.1
-    # via markitdown
 pdf2image==1.17.0
     # via
     #   layoutparser
     #   unstructured
 pdfminer-six==20251230
     # via
-    #   markitdown
     #   pdfplumber
     #   unstructured
 pdfplumber==0.11.9
@@ -584,8 +585,6 @@ psycopg[binary]==3.3.4
     # via -r requirements.in
 psycopg-binary==3.3.4
     # via psycopg
-puremagic==1.30
-    # via markitdown
 py-rust-stemmers==0.1.8
     # via fastembed
 pyarrow==24.0.0
@@ -603,7 +602,7 @@ pycocotools==2.0.11
     # via effdet
 pycparser==3.0
     # via cffi
-pydantic==2.14.0a1
+pydantic==2.13.4
     # via
     #   -r requirements.in
     #   docling
@@ -620,15 +619,13 @@ pydantic==2.14.0a1
     #   qdrant-client
     #   ragas
     #   unstructured-client
-pydantic-core==2.47.0
+pydantic-core==2.46.4
     # via pydantic
 pydantic-settings==2.6.1
     # via
     #   -r requirements.in
     #   docling
     #   langchain-community
-pydub==0.25.1
-    # via markitdown
 pygments==2.20.0
     # via
     #   mpire
@@ -655,6 +652,8 @@ pypdfium2==4.30.0
     # via
     #   docling
     #   pdfplumber
+pyreadline3==3.5.6
+    # via humanfriendly
 pysbd==0.3.4
     # via ragas
 python-bidi==0.6.10
@@ -675,6 +674,7 @@ python-docx==1.1.2
 python-dotenv==1.0.1
     # via
     #   -r requirements.in
+    #   magika
     #   pydantic-settings
     #   uvicorn
 python-iso639==2026.4.20
@@ -690,9 +690,7 @@ python-multipart==0.0.12
 python-oxmsg==0.0.2
     # via unstructured
 python-pptx==1.0.2
-    # via
-    #   docling
-    #   markitdown
+    # via docling
 python-slugify==8.0.4
     # via -r requirements.in
 pytz==2026.2
@@ -765,7 +763,6 @@ requests==2.34.2
     #   tiktoken
     #   transformers
     #   unstructured
-    #   youtube-transcript-api
 requests-toolbelt==1.0.0
     # via
     #   langsmith
@@ -782,7 +779,7 @@ rtree==1.4.1
     # via
     #   docling
     #   docling-ibm-models
-safetensors[numpy,torch]==0.8.0rc0
+safetensors[numpy,torch]==0.7.0
     # via
     #   accelerate
     #   docling-ibm-models
@@ -790,7 +787,7 @@ safetensors[numpy,torch]==0.8.0rc0
     #   transformers
 scikit-image==0.26.0
     # via easyocr
-scikit-learn==1.9.0rc1
+scikit-learn==1.8.0
     # via sentence-transformers
 scipy==1.17.1
     # via
@@ -819,8 +816,6 @@ sniffio==1.3.1
     # via openai
 soupsieve==2.8.4
     # via beautifulsoup4
-speechrecognition==3.16.1
-    # via markitdown
 sqlalchemy==2.0.36
     # via
     #   -r requirements.in
@@ -835,7 +830,9 @@ starlette==0.41.3
 svglib==1.5.1
     # via xhtml2pdf
 sympy==1.14.0
-    # via torch
+    # via
+    #   onnxruntime
+    #   torch
 tabulate==0.10.0
     # via
     #   docling-core
@@ -869,7 +866,7 @@ tinycss2==1.5.1
     # via
     #   cssselect2
     #   svglib
-tokenizers==0.23.0rc0
+tokenizers==0.22.2
     # via
     #   fastembed
     #   transformers
@@ -945,7 +942,6 @@ typing-extensions==4.15.0
     #   python-oxmsg
     #   python-pptx
     #   referencing
-    #   speechrecognition
     #   sqlalchemy
     #   torch
     #   typer
@@ -1015,8 +1011,6 @@ xxhash==3.7.0
     # via datasets
 yarl==1.24.2
     # via aiohttp
-youtube-transcript-api==1.2.4
-    # via markitdown
 zipp==4.1.0
     # via importlib-metadata
 
