@@ -51,19 +51,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-#
+#qui installo solo runtime ODBC
 
 COPY --from=builder /usr/lib/x86_64-linux-gnu/libodbc* /usr/lib/x86_64-linux-gnu/
+#copia librerie ODBC compilate
 COPY --from=builder /opt/microsoft /opt/microsoft
+#copia driver Microsoft SQL
 COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
+#copia tutte librerie Python installate.
 COPY --from=builder /usr/local/bin /usr/local/bin
-# Copia cache modelli pre-scaricati
+#copia eseguibili Python (e.g. celery, uvicorn, gunicorn, ecc
 COPY --from=builder /root/.cache /root/.cache
+#copia modelli già scaricati, QUESTO EVITA re-download embedding model / start-up lento ect
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
     C_FORCE_ROOT=1
+#ENV PYTHONDONTWRITEBYTECODE=1 \   disabilita .pyc, riduce scritture disco
+#PYTHONUNBUFFERED=1 \   
+#PYTHONUNBUFFERED=1 \   
+#C_FORCE_ROOT=1   
 
 WORKDIR /app
 
