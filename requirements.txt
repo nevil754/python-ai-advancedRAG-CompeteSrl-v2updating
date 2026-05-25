@@ -6,7 +6,7 @@ langgraph==0.2.53
 langchain-openai==0.2.10
 langchain-ollama==0.2.1
 
-pydantic==2.10.2  #🔥validazione e struttura dati in Python
+pydantic>=2.10.3,<3.0.0  #🔥validazione e struttura dati in Python
 pydantic-settings==2.6.1  #x gestione configurazione, carica da .env, variabili ambiente, ect. molto utile per gestire configurazione in modo pulito e sicuro, soprattutto in progetti più grandi
 python-dotenv==1.0.1   #x caricare .env
 pyyaml==6.0.2  #parsing file .yaml

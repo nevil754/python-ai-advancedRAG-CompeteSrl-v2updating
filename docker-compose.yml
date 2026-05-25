@@ -176,7 +176,7 @@ services:  #here servizi da avviare
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -203,9 +203,9 @@ services:  #here servizi da avviare
     command: >
       /bin/bash -c "
       /opt/mssql/bin/sqlservr &
-      sleep 30 &&
-      /init/entrypoint.sh &&
-      wait"
+      SQLSERVR_PID=$$!
+      /init/entrypoint.sh
+      wait $$SQLSERVR_PID"
     healthcheck:
       test: ["CMD", "/opt/mssql-tools/bin/sqlcmd",
              "-S", "localhost",

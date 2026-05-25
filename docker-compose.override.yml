@@ -1,0 +1,4 @@
+version: "3.8"
+# Override per sviluppo locale
+# Aggiungere qui: hot reload, porte debug, volumi locali
+services: {}

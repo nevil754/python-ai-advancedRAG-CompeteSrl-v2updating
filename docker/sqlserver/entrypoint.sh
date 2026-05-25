@@ -6,7 +6,7 @@
 set -e
 
 echo "Attendo SQL Server..."
-until /opt/mssql-tools/bin/sqlcmd \
+until /opt/mssql-tools18/bin/sqlcmd \
     -S localhost \
     -U SA \
     -P "$SA_PASSWORD" \
@@ -15,7 +15,7 @@ until /opt/mssql-tools/bin/sqlcmd \
 done
 
 echo "SQL Server pronto. Eseguo init.sql..."
-/opt/mssql-tools/bin/sqlcmd \
+/opt/mssql-tools18/bin/sqlcmd \
     -S localhost \
     -U SA \
     -P "$SA_PASSWORD" \

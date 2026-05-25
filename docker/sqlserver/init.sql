@@ -22,7 +22,12 @@ IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'shared')
 GO
 
 -- Registro di tutti i tenant attivi
-CREATE TABLE IF NOT EXISTS shared.tenants (
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    JOIN sys.schemas s ON t.schema_id = s.schema_id
+    WHERE s.name = 'shared' AND t.name = 'tenants'
+)
+CREATE TABLE shared.tenants (
     id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
     slug            NVARCHAR(100)       NOT NULL,   -- "acme-corp" → schema tenant_acme_corp
     display_name    NVARCHAR(255)       NOT NULL,
@@ -41,7 +46,12 @@ CREATE TABLE IF NOT EXISTS shared.tenants (
 GO
 
 -- Audit log globale (GDPR, compliance legale)
-CREATE TABLE IF NOT EXISTS shared.audit_log (
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    JOIN sys.schemas s ON t.schema_id = s.schema_id
+    WHERE s.name = 'shared' AND t.name = 'tenants'
+)
+CREATE TABLE shared.audit_log (
     id          BIGINT IDENTITY(1,1)    NOT NULL,
     tenant_id   UNIQUEIDENTIFIER        NOT NULL,
     user_id     UNIQUEIDENTIFIER        NULL,
@@ -60,7 +70,12 @@ CREATE INDEX IX_audit_tenant_date ON shared.audit_log (tenant_id, created_at DES
 GO
 
 -- Utilizzo token per billing e rate limiting
-CREATE TABLE IF NOT EXISTS shared.usage_stats (
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    JOIN sys.schemas s ON t.schema_id = s.schema_id
+    WHERE s.name = 'shared' AND t.name = 'tenants'
+)
+CREATE TABLE shared.usage_stats (
     id              BIGINT IDENTITY(1,1) NOT NULL,
     tenant_id       UNIQUEIDENTIFIER     NOT NULL,
     stat_date       DATE                 NOT NULL,
@@ -75,7 +90,12 @@ CREATE TABLE IF NOT EXISTS shared.usage_stats (
 GO
 
 -- API keys (per integrazione esterna di un tenant)
-CREATE TABLE IF NOT EXISTS shared.api_keys (
+IF NOT EXISTS (
+    SELECT 1 FROM sys.tables t
+    JOIN sys.schemas s ON t.schema_id = s.schema_id
+    WHERE s.name = 'shared' AND t.name = 'tenants'
+)
+CREATE TABLE shared.api_keys (
     id          UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
     tenant_id   UNIQUEIDENTIFIER    NOT NULL,
     key_hash    NVARCHAR(64)        NOT NULL,   -- SHA-256 della key, mai in chiaro
