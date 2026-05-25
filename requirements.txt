@@ -98,4 +98,3 @@ python-slugify==8.0.4
 ##external llm providers
 #openai==1.55.3
 #google-generativeai==0.8.3      # per gemini
-
