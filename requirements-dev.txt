@@ -1,0 +1,18 @@
+# Dipendenze solo per sviluppo/test — non installate in prod
+# -r requirements.txt
+
+#Testing
+pytest==8.3.3
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+httpx==0.28.0                   #client async per test FastAPI
+factory-boy==3.3.1              #fixtures dati di test
+
+#Linting / Formatting
+ruff==0.8.1                     #linter + formatter (sostituisce black+isort+flake8)
+mypy==1.13.0                    #type checking statico
+pre-commit==4.0.1
+
+#Dev tools
+ipython==8.29.0
+rich==13.9.4                    #output colorato nel terminale
