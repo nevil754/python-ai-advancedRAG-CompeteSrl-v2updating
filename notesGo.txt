@@ -5,12 +5,13 @@ devi assicurarti di bloccare le dipendenze transitive (quelle che anche se non s
 1.crea ambiente asettico
 conda create -n envCompeteSrlRAGproductionOKpluginsTransitivi python=3.11.9  #USO VERSION 3.11.9🔥
 conda activate envCompeteSrlRAGproductionOKpluginsTransitivi
-pip install pip-tools==7.4.1
+python -m pip install --upgrade pip
+pip install pip-tools
 
 2.assicurati che i file dove hai elencato tutti i plugins, non si chiamino .txt --> .in ! 
 3.genera i lock file con versioni transitive bloccate runnando (in root prj):
-pip-compile requirements.in --output-file requirements.txt --resolver=backtracking --no-header --annotate
-
+pip-compile requirements.in --output-file requirements.txt --resolver=backtracking --no-header --annotate --pre
+//grazie a --pre gestisci la versione alpha di markitdown
 pip-compile requirements-dev.in --output-file requirements-dev.txt --resolver=backtracking --no-header --annotate
 
 ora hai appena creato i files .txt, con ogni singolo pacchetto (diretto e TRANSITIVO) pinato alla versione esatta!!

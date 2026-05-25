@@ -23,7 +23,7 @@ python-docx==1.1.2  #estrazione testo da .docx
 openpyxl==3.1.5  #estrazione testo da file .excel
 markitdown==0.0.1a2  #converte docs->markdown pulito strutturato
 markdown2==2.5.1  #converte markdown → HTML
-xhtml2pdf  #converte HTML → PDF
+xhtml2pdf==0.2.17  #converte HTML → PDF
 
 pandas==2.2.3 #x tabelle/csv/ect
 tavily-python==0.5.0  #motore di ricerca web progettato per RAG e agenti, è “LLM-ready results” quindi ti restituisce gia anche summary-extracted text-relevance score, 💰free con 1,000 API credits/month (OTTIMO QUINDI DOVE QUESTA FEAT NON E' FONDAMENTALE MA VUOI AVERLA & easy)
@@ -69,10 +69,6 @@ celery-redbeat==2.3.2  #(ex plugin 'redbeat') scheduler Celery persistito su Red
 
 aiosqlite==0.20.0  #sqlite async, x piccoli storage
 #asyncpg    #driver PostgreSQL async e velocissimo, NON SERVE XK USO SQLSERVER(microsoft)
-
-##testing
-pytest   #test automatici in python
-pytest-asyncio   #test async automatici in python
 
 ##security
 python-jose[cryptography]==3.3.0  #JWT tokens

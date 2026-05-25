@@ -1,8 +1,8 @@
 # Dipendenze solo per sviluppo/test — non installate in prod
 
 #Testing
-pytest==8.3.3
-pytest-asyncio==0.24.0
+pytest==8.3.3   #test automatici in python
+pytest-asyncio==0.24.0  #test async automatici in python
 pytest-cov==6.0.0  #x coverage test
 httpx==0.28.0         #client async per test FastAPI
 factory-boy==3.3.1    #generazione fake test data.
