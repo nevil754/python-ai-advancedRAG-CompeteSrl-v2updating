@@ -51,20 +51,51 @@ reranker:
  initial_k: 20
 
 metadata:
-  config_file: "./metadata.yaml"
+  config_file: "/app/config/metadata.yaml"
 
 vectorstore:
   url: "" #"http://localhost:6333"
-  api_key: "${QDRANT_API_KEY}"    #vuoto in dev, obbligatorio in prod
+  api_key: "${QDRANT_API_KEY}"    #vuoto in dev, 🔥obbligatorio in prod
   collection_name: "collection-competeSrl-RAGv2"
   use_sparse: true
   force_recreate: false
   distance: "Cosine"  #Cosine | Dot | Euclid
   on_disk_payload: true    #payload metadata su disco, non in RAM
 
+memory:
+  short_term_turns: 10            # ultimi N turni in Redis
+  long_term_enabled: false        # summary in SQL — attivare in v2
+  session_ttl_hours: 24
+
+cache:
+  query_ttl_seconds: 3600         # 1h — risposta RAG per la stessa query
+  session_ttl_seconds: 86400      # 24h — storia chat
+
+web_search:
+  enabled: false
+  provider: "tavily"              # tavily | ddgs
+  api_key: "${TAVILY_API_KEY}"
+  max_results: 5
 
 
+  
 logging: 
-  level: "INFO"
+  level: "INFO"    #DEBUG | INFO | WARNING | ERROR
   console_output: true
   colored: true
+  json_output: false    #true in produzione per log aggregation
+
+observability:
+  langsmith_enabled: false        # true in staging/prod
+  langsmith_project: "rag-enterprise-legal"
+  opentelemetry_enabled: false
+
+rate_limit:
+  requests_per_minute: 60
+  tokens_per_day: 100000
+
+security:
+  jwt_algorithm: "HS256"
+  jwt_expire_minutes: 60
+  api_key_length: 32
+  password_min_length: 12
