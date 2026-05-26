@@ -60,25 +60,28 @@ COPY --from=builder /opt/microsoft /opt/microsoft
 COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
 #copia tutte librerie Python installate.
 COPY --from=builder /usr/local/bin /usr/local/bin
-#copia eseguibili Python (e.g. celery, uvicorn, gunicorn, ecc
+#copia eseguibili Python celery, uvicorn, gunicorn, ecc
 COPY --from=builder /root/.cache /root/.cache
-#copia modelli già scaricati, QUESTO EVITA re-download embedding model / start-up lento ect
+#COPIA MODELLI GIA SCARICATI, QUESTO EVITA re-download embedding model / start-up lento ect
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONUNBUFFERED=1 \
     C_FORCE_ROOT=1
 #ENV PYTHONDONTWRITEBYTECODE=1 \   disabilita .pyc, riduce scritture disco
-#PYTHONUNBUFFERED=1 \   
-#PYTHONUNBUFFERED=1 \   
-#C_FORCE_ROOT=1   
+#PYTHONUNBUFFERED=1 \   output log immediato, molto importante per Docker logs
+#PYTHONUNBUFFERED=1 \     traceback completi anche per crash low-level, ottimo debugging
+#C_FORCE_ROOT=1     permette Celery come root. ⚠️⚠️ IN PRODUZIONE NON USARE ROOT, CREA UTENTE DEDICATO E USA QUELLO!!
 
 WORKDIR /app
-
+#directory app
 COPY app/ ./app/
 COPY config/ ./config/
+#copia code
 
-# Il CMD viene sovrascritto dal docker-compose.yml per ogni worker
-# (high priority vs default priority queue)
+#Il CMD viene sovrascritto dal docker-compose.yml per ogni worker
+#(high priority vs default priority queue)
 CMD ["celery", "-A", "app.workers.celery_app.celery_app", "worker", \
      "--loglevel=info", "--concurrency=2"]
+#avvia worker Celery, -A specifica il modulo dell'app Celery (cioe path dove trovare istanza Celery!), --loglevel=info per log informativi, --concurrency=2 limita a 2 processi worker (regolabile in base risorse)
+

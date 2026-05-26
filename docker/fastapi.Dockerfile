@@ -22,29 +22,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
-# Copia solo requirements prima del codice — sfrutta la cache Docker
-# Se requirements.txt non cambia, questo layer non viene rieseguito
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir --no-deps -r requirements.txt
 
-# ── Stage 2: runtime ──────────────────────────────────────────
-FROM python:3.11-slim AS runtime
 
-# Riduce immagine finale: solo pacchetti runtime, non build tools
+
+FROM python:3.11-slim AS runtime
+#crei stage chiamato 'runtime', in questa farai solor runtime non quello che hai fatto in 'builder'. python:3.11-slim è immagine Debian minimal molto piu piccola della full
 RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia driver ODBC e pacchetti installati dal builder
 COPY --from=builder /usr/lib/x86_64-linux-gnu/libodbc* /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /opt/microsoft /opt/microsoft
 COPY --from=builder /usr/local/lib/python3.11 /usr/local/lib/python3.11
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Variabili ambiente per comportamento deterministico Python
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
@@ -56,16 +52,22 @@ WORKDIR /app
 COPY app/ ./app/
 COPY config/ ./config/
 COPY main.py .
+  #copia anche code main.py, entry point FastAPI, questo è importante per uvicorn main:app
 
-# Utente non-root per sicurezza
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+#crea user Linux non privilegiato!
 USER appuser
+#da qui in poi processo gira come utente normale, ottima pratica x production!
 
-# Directory cache embeddings (fastembed scarica i modelli qui)
 RUN mkdir -p /app/.cache/embeddings
+#🔥directory cache per modelli embedding, fastembed scarica i modelli qui
 
 EXPOSE 8000
+#porta usata dal container
 
 # --workers 1 in dev — in prod usa gunicorn o aumenta i worker
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \
      "--workers", "1", "--loop", "uvloop", "--http", "httptools"]
+#avvia FastAPI, --host 0.0.0.0 espone server all'esterno container, --port 8000 è porta standard FastAPI, --workers 1 per sviluppo (⚠️in prod aumentare o usare gunicorn), --loop uvloop e --http httptools migliorano performance FastAPI, ottimo per produzione!!
+
+
