@@ -87,6 +87,10 @@ NEWSEQUENTIALID(): UUID/GUID univoco MA sequenziale
 GETUTCDATE()  return data e ora corrente del server SQL in formato UTC
 i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto
 i [] wrappano i nomi particolari delle tue tabelle, cosi che anche i caratteri speciali sono letti ok
+DECLARE crea var locale
+EXEC sp_executesql @sql;  esegue sql dentro quella var locale 
+
+
 
 🔥📈MULTI-TENANT ARCHITECTURE
 ricorda che uno 'schema' è un contenitore logico, che puo contere piu tabelle

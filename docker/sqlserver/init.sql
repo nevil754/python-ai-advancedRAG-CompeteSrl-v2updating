@@ -123,24 +123,26 @@ BEGIN  --inizio del corpo
     SET NOCOUNT ON;  --evita messaggi di "X rows affected" che possono confondere client che chiamano la sp (es. Python pyodbc)
 
     DECLARE @schema_name NVARCHAR(200) = 'tenant_' + REPLACE(@slug, '-', '_');  --converte e.g. "acme-corp" -> "tenant_acme_corp", perche i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto
-    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @sql NVARCHAR(MAX);  --here creerai query sql dinamiche 
 
     -- 1. Crea schema
     IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = @schema_name)
     BEGIN
         SET @sql = 'CREATE SCHEMA [' + @schema_name + ']';
-        EXEC sp_executesql @sql;
+        EXEC sp_executesql @sql;  --esegue sql dentro quella var locale 
     END
 
     -- 2. Inserisci record in shared.tenants
     IF NOT EXISTS (SELECT 1 FROM shared.tenants WHERE slug = @slug)
     BEGIN
-        INSERT INTO shared.tenants (slug, display_name, plan)
+        INSERT INTO shared.tenants (slug, display_name, plan)  --insert in tab condivisa 
         VALUES (@slug, @display_name, @plan);
     END
 
-    -- 3. Crea tabelle tenant (DDL dinamico)
-    -- users
+    --####### Crea tabelle tenant (DDL dinamico)
+
+    --crea sql dinamico dentro var locale, con questo sql creerai tutte le tab del tenant (e.g.users/collections/document/ ect)
+    --crea tab users
     SET @sql = '
     IF NOT EXISTS (
         SELECT 1 FROM sys.tables t
@@ -161,9 +163,10 @@ BEGIN  --inizio del corpo
         CONSTRAINT [UQ_' + @schema_name + '_users_email] UNIQUE (email),
         CONSTRAINT [CK_' + @schema_name + '_users_role] CHECK (role IN (''admin'',''user'',''viewer''))
     )';
-    EXEC sp_executesql @sql;
+    EXEC sp_executesql @sql;  --esegue sql dentro quella var locale 
 
-    -- collections (cartelle logiche di documenti)
+    --usi sempre stessa var locale @sql, ma il suo value all'interno lo cambi
+    --crea tab collections (cartelle logiche di documenti)
     SET @sql = '
     IF NOT EXISTS (
         SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -181,9 +184,10 @@ BEGIN  --inizio del corpo
         CONSTRAINT [PK_' + @schema_name + '_collections] PRIMARY KEY (id),
         CONSTRAINT [UQ_' + @schema_name + '_qdrant_name] UNIQUE (qdrant_name)
     )';
-    EXEC sp_executesql @sql;
+    EXEC sp_executesql @sql;  --esegue sql dentro quella var locale 
 
-    -- documents
+    --usi sempre stessa var locale @sql, ma il suo value all'interno lo cambi
+    --crea tab documents
     SET @sql = '
     IF NOT EXISTS (
         SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -211,16 +215,20 @@ BEGIN  --inizio del corpo
             status IN (''pending'',''processing'',''ready'',''error'',''deleted'')
         )
     )';
-    EXEC sp_executesql @sql;
+    EXEC sp_executesql @sql;  --esegue sql dentro quella var locale 
 
-    -- index su file_hash per deduplicazione veloce
+
+    --usi sempre stessa var locale @sql, ma il suo value all'interno lo cambi
+    --crea index su file_hash per deduplicazione veloce
     SET @sql = '
     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = ''IX_' + @schema_name + '_doc_hash'')
         CREATE INDEX [IX_' + @schema_name + '_doc_hash]
         ON [' + @schema_name + '].documents (file_hash)';
-    EXEC sp_executesql @sql;
+    EXEC sp_executesql @sql;  --esegue sql dentro quella var locale 
 
-    -- ingestion_jobs
+
+    --usi sempre stessa var locale @sql, ma il suo value all'interno lo cambi
+    --crea tab ingestion_jobs
     SET @sql = '
     IF NOT EXISTS (
         SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -244,7 +252,8 @@ BEGIN  --inizio del corpo
     )';
     EXEC sp_executesql @sql;
 
-    -- conversations
+    --usi sempre stessa var locale @sql, ma il suo value all'interno lo cambi
+    --crea tab conversations
     SET @sql = '
     IF NOT EXISTS (
         SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -264,7 +273,8 @@ BEGIN  --inizio del corpo
     )';
     EXEC sp_executesql @sql;
 
-    -- messages
+    --usi sempre stessa var locale @sql, ma il suo value all'interno lo cambi
+    --crea tab messages
     SET @sql = '
     IF NOT EXISTS (
         SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -287,13 +297,16 @@ BEGIN  --inizio del corpo
     )';
     EXEC sp_executesql @sql;
 
+
+    --crea index
     SET @sql = '
     IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = ''IX_' + @schema_name + '_msgs_conv'')
         CREATE INDEX [IX_' + @schema_name + '_msgs_conv]
         ON [' + @schema_name + '].messages (conversation_id, created_at)';
     EXEC sp_executesql @sql;
 
-    -- feedback (thumbs up/down, rating per RAGAS evaluation loop)
+
+    --crea tab feedback (thumbs up/down, rating per RAGAS evaluation loop)
     SET @sql = '
     IF NOT EXISTS (
         SELECT 1 FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -310,17 +323,16 @@ BEGIN  --inizio del corpo
     )';
     EXEC sp_executesql @sql;
 
-    PRINT 'Tenant provisioned: ' + @schema_name;
+    PRINT 'Tenant provisioned: ' + @schema_name;  --mex log su console
 END
 GO
 
 
--- TENANT DI ESEMPIO: utile per dev/testing locale
-EXEC shared.sp_provision_tenant
+EXEC shared.sp_provision_tenant  --runna creando 1 tenant (1 schema intermente per 1 'AZIENDA') fake, per testare tutto ok
     @slug         = 'demo-corp',
     @display_name = 'Demo Corporation',
     @plan         = 'pro';
 GO
 
-PRINT 'init.sql completato.';
+PRINT 'init.sql completato.';  --mex log su console
 GO

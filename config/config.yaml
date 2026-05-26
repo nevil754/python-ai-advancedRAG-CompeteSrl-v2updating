@@ -73,7 +73,7 @@ cache:
 
 web_search:  #web retrieval esterno
   enabled: false
-  provider: "tavily"   #uso plugin tavily | ddgs
+  provider: "tavily"   #uso plugin tavily | ddgs. REMEMBER tavily gratuito fino a 1k/search al month! NON VA BENE x production
   api_key: "${TAVILY_API_KEY}"
   max_results: 5   #numero risultati search
 
