@@ -114,12 +114,13 @@ GO
 --stored procedure: provisioning dinamico di un tenant, 🔥🔥GRAZIE A QUESTO OGNI 'AZIENDA' AVRA UN'INTERO SCHEMA SOLO PER LUI!!
 --chiamata da Python (tenant_db.provision_tenant) al signup
 CREATE OR ALTER PROCEDURE shared.sp_provision_tenant  --🔥🔥CREA AUTOMATICAMENTE UNO SCHEMA SQL COMPLETO PER OGNI CLIENTE see screenshot multi-tenant-architecture.svg QUINDI OGNI 'AZIENDA' GLI VIENE CREATO UN SUO INTERO SCHEMA SOLO PER LUI!!
-    @slug           NVARCHAR(100),
-    @display_name   NVARCHAR(255),
-    @plan           NVARCHAR(50) = 'starter'
-AS
-BEGIN
-    SET NOCOUNT ON;
+    @slug           NVARCHAR(100),  --e.g.'acme-corp'
+    @display_name   NVARCHAR(255),  --e.g. 'Acme Corporation'
+    @plan           NVARCHAR(50) = 'starter'  --starter | pro | enterprise
+    --params passati dal backend al momento del signup di un nuovo tenant, con queste info creo schema dedicato e registro tenant in tabella shared.tenants (taba shared solo per i metadata)
+AS  --inizio del corpo della stored procedure
+BEGIN  --inizio del corpo
+    SET NOCOUNT ON;  --evita messaggi di "X rows affected" che possono confondere client che chiamano la sp (es. Python pyodbc)
 
     DECLARE @schema_name NVARCHAR(200) = 'tenant_' + REPLACE(@slug, '-', '_');  --converte e.g. "acme-corp" -> "tenant_acme_corp", perche i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto
     DECLARE @sql NVARCHAR(MAX);
