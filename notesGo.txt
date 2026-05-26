@@ -34,7 +34,7 @@ docker-compose up    //questo ok lo lanci in develop (il docker-compose.override
 
 ########REDIS & CELERY
 
-
+Redis supporta fino a 16 database🔥(da 0 a 15) nello stesso processo, separati logicamente. Così un FLUSHDB sulla cache non tocca la coda Celery.
 
 
 
