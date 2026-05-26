@@ -206,28 +206,31 @@ services:  #here servizi da avviare
       - sqlserver_data:/var/opt/mssql
       - ./docker/sqlserver/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./docker/sqlserver/entrypoint.sh:/init/entrypoint.sh:ro
-    #
-    #
-    #
-
+    #sqlserver_data:/var/opt/mssql  persistena dati SQL Server, così i dati restano anche se il container viene ricreato, importante per produzione!!
+    #./docker/sqlserver/init.sql  SCRIPT SQL INIZIALE!!, solo read only
+    #./docker/sqlserver/entrypoint.sh  SCRIPT ENTRYPOINT custom, solo read only
     environment:
       SA_PASSWORD: "${SQLSERVER_PASSWORD}"
-      ACCEPT_EULA: "Y"
-      MSSQL_PID: "Developer"          # gratis per dev; "Standard"/"Enterprise" in prod
-      MSSQL_COLLATION: "Latin1_General_100_CI_AS_SC_UTF8"
-      MSSQL_MEMORY_LIMIT_MB: 2048     # cap RAM del container
+      ACCEPT_EULA: "Y"   #accetta licenza Microsoft, accettazione EULA obbligatoria per SQL Server, senza questa variabile SQL Server non parte!!
+      MSSQL_PID: "Developer"    #Edition gratuita dev. ⚠️⚠️"Standard"/"Enterprise" in prod
+      MSSQL_COLLATION: "Latin1_General_100_CI_AS_SC_UTF8"  #configurazione encoding/case sensitivity, x UTF8 italiano unicode
+      MSSQL_MEMORY_LIMIT_MB: 2048     # cap RAM del container Sql Server
     command: >
       /bin/bash -c "
       /opt/mssql/bin/sqlservr &
       SQLSERVR_PID=$$!
       /init/entrypoint.sh
       wait $$SQLSERVR_PID"
+    #/opt/mssql/bin/sqlservr &   avvia SQL Server background
+    #SQLSERVR_PID=$$!  salva PID processo SQL Server in variabile
+    #/init/entrypoint.sh  esegue script di inizializzazione custom 
+    #wait $$SQLSERVR_PID  attende che processo SQL Server termini, così container rimane attivo finché SQL Server è vivo
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd",
-             "-S", "localhost",
-             "-U", "SA",
-             "-P", "${SQLSERVER_PASSWORD}",
-             "-Q", "SELECT 1"]
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd",  #esegue comando DENTRO il container, /opt/mssql-tools18/bin/sqlcmd è il client CLI ufficiale Microsoft SQL Server
+             "-S", "localhost",  #-S = server, dice connettiti a localhost
+             "-U", "SA",  #-U = user, dice connettiti come utente SA
+             "-P", "${SQLSERVER_PASSWORD}",  #-P = password, dice connettiti come utente con password
+             "-Q", "SELECT 1"]  #-Q = query, esegue query di test "SELECT 1", se risponde è vivo, se fallisce è unhealthy
       interval: 10s
       timeout: 5s
       retries: 10
@@ -236,10 +239,13 @@ services:  #here servizi da avviare
 # ─────────────────────────────────────────────
 # VOLUMES
 # ─────────────────────────────────────────────
-volumes:
+volumes:  #docker named values, qui definiamo i volumi usati dai container per la persistena dati, così i dati restano ANCHE SE I CONTAINER VENGONO DISTRUTTI/RICREATI, fondamentale per produzione!!
   qdrant_data:
     driver: local
   redis_data:
     driver: local
   sqlserver_data:
     driver: local
+#i volumes sono area persistente ESTERNA AL CONTAINER, su linux solitamente in /var/lib/docker/volumes/, su Windows Docker Desktop solitamente C:\Users\Username\AppData\Local\docker\volumes. LI GESTISCE DOCKER
+
+
