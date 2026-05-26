@@ -35,7 +35,7 @@ services:  #here servizi da avviare
       start_period: 20s   #attende 20sec prima di iniziare il check
 
 
-  celery-worker-high:
+  celery-worker-high:  #worker Celery per coda "high" (task PRIORITARI)
     build:
       context: .
       dockerfile: docker/celery.Dockerfile
@@ -66,6 +66,7 @@ services:  #here servizi da avviare
         condition: service_started
     healthcheck:
       test: ["CMD", "celery", "-A", "app.workers.celery_app.celery_app", "inspect", "ping", "-d", "worker-high@%h"]
+      #comando per verificare se worker è vivo, usa celery inspect ping, target specifico worker-high@%h
       interval: 60s
       timeout: 10s
       retries: 3
@@ -74,7 +75,7 @@ services:  #here servizi da avviare
   # ─────────────────────────────────────────────
   # CELERY — coda DEFAULT (ingestion bulk)
   # ─────────────────────────────────────────────
-  celery-worker-default:
+  celery-worker-default:  #Worker per task PESANTI/NON URGENTI
     build:
       context: .
       dockerfile: docker/celery.Dockerfile
@@ -87,6 +88,7 @@ services:  #here servizi da avviare
       --prefetch-multiplier=1
       --loglevel=info
       --hostname=worker-default@%h
+    #--queues=default,low  ascolta coda default e low, per task di background meno urgenti (es. ingestion bulk, manutenzione non critica)
     env_file: .env
     environment:
       REDIS_URL: "redis://redis:6379/0"
@@ -101,7 +103,7 @@ services:  #here servizi da avviare
   # ─────────────────────────────────────────────
   # CELERY BEAT — scheduler task periodici
   # ─────────────────────────────────────────────
-  celery-beat:
+  celery-beat:   #Celery scheduler per task PERIODICI
     build:
       context: .
       dockerfile: docker/celery.Dockerfile
@@ -111,6 +113,7 @@ services:  #here servizi da avviare
       celery -A app.workers.celery_app.celery_app beat
       --loglevel=info
       --scheduler redbeat.RedBeatScheduler
+    #--scheduler redbeat.RedBeatScheduler qui entra celery-redbeat, scheduler persistito su Redis (schedule persistenti, survive restart, centralizzato) MOOOLTO MEGLIO DI SCHEDULER LOCALE file-based!!
     env_file: .env
     environment:
       REDIS_URL: "redis://redis:6379/0"
@@ -120,8 +123,8 @@ services:  #here servizi da avviare
   # ─────────────────────────────────────────────
   # FLOWER — monitoring Celery (dev/staging)
   # ─────────────────────────────────────────────
-  flower:
-    image: mher/flower:2.0
+  flower:  #📊 dashboard monitoring Celery
+    image: mher/flower:2.0  #immagine ufficiale Flower, leggera e pronta all'uso, supporta autenticazione, ottima per monitorare health e performance dei worker Celery in dev e staging (in prod meglio soluzioni più robuste come Prometheus + Grafana)
     container_name: flower
     restart: unless-stopped
     command: >
@@ -130,30 +133,30 @@ services:  #here servizi da avviare
       flower
       --port=5555
       --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
+    #flower si connette a Redis broker, protezione dashboard
     ports:
-      - "5555:5555"
+      - "5555:5555"  #porta dashboard Flower
     env_file: .env
     depends_on:
       - redis
 
 
   qdrant:
-    image: qdrant/qdrant:v1.4.2
+    image: qdrant/qdrant:v1.4.2   #immagine ufficiale Qdrant
     container_name: qdrant
     restart: unless-stopped
     ports:
-      - "6333:6333"   # HTTP / REST
-      - "6334:6334"   # gRPC
+      - "6333:6333"   #HTTP / REST
+      - "6334:6334"   #gRPC
     volumes:
-      - qdrant_data:/qdrant/storage
-    environment:
+      - qdrant_data:/qdrant/storage  #persistenza dati Qdrant, SENZA QUESTO PERDI EMBEDDINGS AL RESTART!! così i dati restano anche se il container viene ricreato, importante per produzione!!
+    environment:  #env var AGGIUNTIVE, se ci sono anche in .env QUESTE SOVRASCRIVONO quelle in .env, utili per configurazioni specifiche container
       QDRANT__SERVICE__HTTP_PORT: 6333
       QDRANT__SERVICE__GRPC_PORT: 6334
       QDRANT__LOG_LEVEL: "INFO"
-      # in production: abilita API key
-      # QDRANT__SERVICE__API_KEY: "${QDRANT_API_KEY}"
+      #QDRANT__SERVICE__API_KEY: "${QDRANT_API_KEY}"   ⚠️in production abilita API key!!  
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]   #endpoint health check Qdrant, f → fail se status != 200
       interval: 30s
       timeout: 10s
       retries: 5
@@ -163,13 +166,13 @@ services:  #here servizi da avviare
   # REDIS — broker Celery + cache + sessioni
   # ─────────────────────────────────────────────
   redis:
-    image: redis:7.0-alpine
+    image: redis:7.0-alpine  #immagine ufficiale Redis, versione 7.0, basata su Alpine Linux (leggera), perfetta per produzione, supporta configurazione personalizzata tramite command e env var
     container_name: redis
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis_data:/data   #persistenza dati Redis, così i dati restano anche se il container viene ricreato, importante per produzione!!
     command: >
       redis-server
       --maxmemory 2gb
@@ -177,10 +180,15 @@ services:  #here servizi da avviare
       --appendonly yes
       --appendfsync everysec
       --requirepass ${REDIS_PASSWORD}
+    #limite RAM, 
+    #--maxmemory-policy allkeys-lru   quando ram piena elimina key meno usate, ottimo x cache!!
+    #--appendonly yes   persistenza Redis AOF, Redis salva operazioni disco, più sicuro di RDB snapshot, ottimo per produzione!!
+    #--appendfsync everysec   sincronizza AOF su disco ogni secondo (Flush disco ogni secondo), bilancio tra performance e sicurezza dati, ottimo per produzione!!
+    #--requirepass ${REDIS_PASSWORD}   password redis, OBBLIGATORIA IN PRODUZIONE!!
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping"]
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping"]  #comando per verificare se Redis è vivo, usa redis-cli ping con autenticazione
       interval: 10s
       timeout: 5s
       retries: 5
@@ -189,7 +197,7 @@ services:  #here servizi da avviare
   # SQL SERVER — storage relazionale multi-tenant
   # ─────────────────────────────────────────────
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-latest  #immagine ufficiale SQL Server 2022, sempre aggiornata, supporta configurazione tramite env var e script di inizializzazione, ottima per produzione (⚠️ricorda di configurare password forte e persistena dati!!)
     container_name: sqlserver
     restart: unless-stopped
     ports:
@@ -198,6 +206,10 @@ services:  #here servizi da avviare
       - sqlserver_data:/var/opt/mssql
       - ./docker/sqlserver/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./docker/sqlserver/entrypoint.sh:/init/entrypoint.sh:ro
+    #
+    #
+    #
+
     environment:
       SA_PASSWORD: "${SQLSERVER_PASSWORD}"
       ACCEPT_EULA: "Y"
