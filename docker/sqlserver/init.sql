@@ -13,7 +13,7 @@ GO
 USE RAGChat;
 GO
 
--- SCHEMA CONDIVISO  (metadati piattaforma, NON dati tenant)
+--creo schema 'shared' x metadati piattaforma (non dati tenant dove OGNI 'AZIENDA' AVRA IL SUO SCHEMA TUTTO PER LUI, lo schema personale viene creato al SignUp dell'azienda grazie a stored procedure shared.sp_provision_tenant)
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'shared')  --in sqlserver(microsoft) non puoi fare CREATE SCHEMA IF NOT EXISTS direttamente, devi sempre fare check manuale su sys.schemas
     EXEC('CREATE SCHEMA shared');
@@ -43,7 +43,7 @@ CREATE TABLE shared.tenants (
 );
 GO
 
--- Audit log globale (GDPR, compliance legale)
+--🔥Audit log globale (GDPR, compliance legale)
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     JOIN sys.schemas s ON t.schema_id = s.schema_id
@@ -58,7 +58,7 @@ CREATE TABLE shared.audit_log (  --FONDAMENTALE in contesti enterprise, con ques
     ip_address  NVARCHAR(45)            NULL,
     user_agent  NVARCHAR(500)           NULL,
     metadata    NVARCHAR(MAX)           NULL,       -- JSON
-    created_at  DATETIME2               NOT NULL DEFAULT GETUTCDATE(),
+    created_at  DATETIME2               NOT NULL DEFAULT GETUTCDATE(),  --return data e ora corrente del server SQL in formato UTC
     CONSTRAINT PK_audit_log PRIMARY KEY (id),
     CONSTRAINT FK_audit_tenants FOREIGN KEY (tenant_id) REFERENCES shared.tenants(id)
 );
@@ -102,7 +102,7 @@ CREATE TABLE shared.api_keys (
     is_active   BIT                 NOT NULL DEFAULT 1,
     last_used   DATETIME2           NULL,
     expires_at  DATETIME2           NULL,
-    created_at  DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+    created_at  DATETIME2           NOT NULL DEFAULT GETUTCDATE(),  --return data e ora corrente del server SQL in formato UTC
     CONSTRAINT PK_api_keys PRIMARY KEY (id),
     CONSTRAINT UQ_api_keys_hash UNIQUE (key_hash),
     CONSTRAINT FK_api_keys_tenants FOREIGN KEY (tenant_id) REFERENCES shared.tenants(id)
@@ -110,10 +110,10 @@ CREATE TABLE shared.api_keys (
 GO
 
 
--- STORED PROCEDURE: provisioning dinamico di un tenant
--- Chiamata da Python (tenant_db.provision_tenant) al signup
-
-CREATE OR ALTER PROCEDURE shared.sp_provision_tenant  --🔥🔥CREA AUTOMATICAMENTE UNO SCHEMA SQL COMPLETO PER OGNI CLIENTE
+--###################################
+--stored procedure: provisioning dinamico di un tenant, 🔥🔥GRAZIE A QUESTO OGNI 'AZIENDA' AVRA UN'INTERO SCHEMA SOLO PER LUI!!
+--chiamata da Python (tenant_db.provision_tenant) al signup
+CREATE OR ALTER PROCEDURE shared.sp_provision_tenant  --🔥🔥CREA AUTOMATICAMENTE UNO SCHEMA SQL COMPLETO PER OGNI CLIENTE see screenshot multi-tenant-architecture.svg QUINDI OGNI 'AZIENDA' GLI VIENE CREATO UN SUO INTERO SCHEMA SOLO PER LUI!!
     @slug           NVARCHAR(100),
     @display_name   NVARCHAR(255),
     @plan           NVARCHAR(50) = 'starter'
@@ -139,7 +139,6 @@ BEGIN
     END
 
     -- 3. Crea tabelle tenant (DDL dinamico)
-
     -- users
     SET @sql = '
     IF NOT EXISTS (
