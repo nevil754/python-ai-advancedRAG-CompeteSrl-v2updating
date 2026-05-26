@@ -30,7 +30,12 @@ pip install -r requirements-dev.txt
 ########DOCKER & RUN CONTAINERS ALL APPLICATIONS
 
 docker-compose -f docker-compose.yml up -d    //questo lo lanci in production (quindi il docker-compose.override.yml non viene caricato)
-docker-compose up    //questo ok lo lanci in develop (il docker-compose.override.yml viene caricato)
+docker-compose up    //questo ok lo lanci in develop, e visto che non specifici il file allora anche il file docker-compose.override.yml viene caricato!!
+
+//in sviluppo il comand per far parti non usa -d (detached), cosi rimane legato e vedi tutti i logs su terminale
+
+
+
 
 ########REDIS & CELERY
 
