@@ -1,5 +1,5 @@
 
-########REPRODUCE AL 100% ESATTAMENTE CON STESSE VERSIONS PLUGINGS (anche con quelle TRANSITIVE!!):
+########REPRODUCE AL 100% ESATTAMENTE CON STESSE VERSIONS PLUGINGS installate (anche con quelle TRANSITIVE!!):
 devi assicurarti di bloccare le dipendenze transitive (quelle che anche se non scarichi direttamente, vengono scaricate).
 
 1.crea ambiente asettico
@@ -27,4 +27,16 @@ pip install -r requirements-dev.txt
 
 //attualmente nel mio env creato  avevo markitdown==0.0.1a2 ora invece ho tolto '--pre' dal comando per generare il file .txt e l'ho cambiato in -> markitdown>=0.0.1, e ho rigenerato il file requirements.txt. CMQN SAPERE CHE ATTUALMENTE NEL MIO ENV HO ANCORA LA VERSIONE markitdown==0.0.1a2 (e le sue dipendenze transitive). mentre il file .txt è correttamente aggiornato.
 
-########
+########DOCKER & RUN CONTAINERS ALL APPLICATIONS
+
+docker-compose -f docker-compose.yml up -d    //questo lo lanci in production (quindi il docker-compose.override.yml non viene caricato)
+docker-compose up    //questo ok lo lanci in develop (il docker-compose.override.yml viene caricato)
+
+########REDIS & CELERY
+
+
+
+
+
+
+
