@@ -33,9 +33,18 @@ docker-compose -f docker-compose.yml up -d    //questo lo lanci in production (q
 docker-compose up    //questo ok lo lanci in develop, e visto che non specifici il file allora anche il file docker-compose.override.yml viene caricato!!
 
 //in sviluppo il comand per far parti non usa -d (detached), cosi rimane legato e vedi tutti i logs su terminale
+con 'docker-compose -f docker-compose.yml up -d', docker rispetta i depends_on e avvia i container in questo ordine:
+-Prima ondata: i container senza dipendenze partono subito in parallelo: redis, qdrant, sqlserver. Non aspettano nessuno.
+-Seconda ondata: Docker aspetta che sqlserver superi il suo healthcheck (il SELECT 1 via sqlcmd). Questo può richiedere 30-60 secondi perché SQL Server è lento ad avviarsi. Solo quando il healthcheck passa, Docker considera sqlserver come service_healthy.
+-Terza ondata: solo a quel punto partono fastapi, celery-worker-high, celery-worker-default. Tutti e tre dipendono da sqlserver: condition: service_healthy. Redis e Qdrant usano condition: service_started che è meno restrittivo — basta che il processo sia partito.
+Sempre attivi: celery-beat dipende solo da Redis, parte presto. flower dipende solo da Redis, parte presto.
+//see also screenshot 'docker-production-architecture.svg'
 
-
-
+-dentro la rete docker, tutti i containers si vedono tramite il nome del servizio come hostname.
+e.g. è per questo che hai fatto in .env SQLSERVER_HOST=sqlserver, xk sqlserver è il nome container (docker auto gestisce dns interno che risolve sqlserver all'ip privato del container).
+-le porte esposte al di fuori del docker system sono quelle con 'ports:' cioe attualmente 8000(fastapi), 5555(flower x dashboard monitoring), 1433 6379 6333 6334 (only x debug develop).
+//in production finita terresti solo esposta port 8000(fastapi)!
+-ricorda che i volumes(x persistent data) vengono salvati all'esterno del docker system in linux solitamente in /var/lib/docker/volumes/  su Windows Docker Desktop solitamente C:\Users\Username\AppData\Local\docker\volumes , i containers appena ri-attivi si ri-collegano ai loro volumes e trovano tutti i dati intatti.
 
 ########REDIS & CELERY
 
