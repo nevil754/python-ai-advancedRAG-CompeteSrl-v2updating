@@ -1,5 +1,3 @@
--- RAG ENTERPRISE LEGAL ,SQL Server init script
--- Eseguito automaticamente da Docker al primo avvio
 -- Strategia: schema-per-tenant dentro un unico database RAGChat
 
 USE master;  --db di sistema, da cui creiamo il nostro db RAGChat
@@ -17,7 +15,7 @@ GO
 
 -- SCHEMA CONDIVISO  (metadati piattaforma, NON dati tenant)
 
-IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'shared')
+IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'shared')  --in sqlserver(microsoft) non puoi fare CREATE SCHEMA IF NOT EXISTS direttamente, devi sempre fare check manuale su sys.schemas
     EXEC('CREATE SCHEMA shared');
 GO
 
@@ -49,7 +47,7 @@ GO
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     JOIN sys.schemas s ON t.schema_id = s.schema_id
-    WHERE s.name = 'shared' AND t.name = 'tenants'
+    WHERE s.name = 'shared' AND t.name = 'audit_log'
 )
 CREATE TABLE shared.audit_log (  --FONDAMENTALE in contesti enterprise, con questa puoi ricostruire info chi ha fatto cosa, quando, dove, con che dati ect quest tab puo contenere recrods che ricostruiscono query rag - llm call - document ingestion - security
     id          BIGINT IDENTITY(1,1)    NOT NULL,
@@ -73,7 +71,7 @@ GO
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     JOIN sys.schemas s ON t.schema_id = s.schema_id
-    WHERE s.name = 'shared' AND t.name = 'tenants'
+    WHERE s.name = 'shared' AND t.name = 'usage_stats'
 )
 CREATE TABLE shared.usage_stats (
     id              BIGINT IDENTITY(1,1) NOT NULL,
@@ -93,13 +91,13 @@ GO
 IF NOT EXISTS (
     SELECT 1 FROM sys.tables t
     JOIN sys.schemas s ON t.schema_id = s.schema_id
-    WHERE s.name = 'shared' AND t.name = 'tenants'
+    WHERE s.name = 'shared' AND t.name = 'api_keys'
 )
 CREATE TABLE shared.api_keys (
     id          UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),  --UUID/GUID univoco MA sequenziale
     tenant_id   UNIQUEIDENTIFIER    NOT NULL,
-    key_hash    NVARCHAR(64)        NOT NULL,   -- SHA-256 della key, mai in chiaro
-    name        NVARCHAR(255)       NOT NULL,
+    key_hash    NVARCHAR(64)        NOT NULL,   -- SHA-256 della key, ⚠️ MAI IN CHIARO (puoi hasharla nel backend)
+    [name]        NVARCHAR(255)       NOT NULL,
     scopes      NVARCHAR(500)       NOT NULL DEFAULT 'read,write',
     is_active   BIT                 NOT NULL DEFAULT 1,
     last_used   DATETIME2           NULL,
@@ -115,7 +113,7 @@ GO
 -- STORED PROCEDURE: provisioning dinamico di un tenant
 -- Chiamata da Python (tenant_db.provision_tenant) al signup
 
-CREATE OR ALTER PROCEDURE shared.sp_provision_tenant
+CREATE OR ALTER PROCEDURE shared.sp_provision_tenant  --🔥🔥CREA AUTOMATICAMENTE UNO SCHEMA SQL COMPLETO PER OGNI CLIENTE
     @slug           NVARCHAR(100),
     @display_name   NVARCHAR(255),
     @plan           NVARCHAR(50) = 'starter'
@@ -123,7 +121,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @schema_name NVARCHAR(200) = 'tenant_' + REPLACE(@slug, '-', '_');
+    DECLARE @schema_name NVARCHAR(200) = 'tenant_' + REPLACE(@slug, '-', '_');  --converte e.g. "acme-corp" -> "tenant_acme_corp", perche i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto
     DECLARE @sql NVARCHAR(MAX);
 
     -- 1. Crea schema

@@ -84,6 +84,13 @@ cosi anche per compliance legale (GDPR / GDPR-like), puoi rispondere alle domand
 
 IDENTITY(1,1)
 NEWSEQUENTIALID(): UUID/GUID univoco MA sequenziale
+GETUTCDATE()  return data e ora corrente del server SQL in formato UTC
+i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto
+i [] wrappano i nomi particolari delle tue tabelle, cosi che anche i caratteri speciali sono letti ok
+
+
+
+
 
 ########REDIS & CELERY
 
