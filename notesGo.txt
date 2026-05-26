@@ -99,7 +99,12 @@ ricorda che uno 'schema' è un contenitore logico, che puo contere piu tabelle
 la mia procedura CREATE OR ALTER PROCEDURE shared.sp_provision_tenant  🔥🔥CREA AUTOMATICAMENTE UNO SCHEMA SQL COMPLETO PER OGNI CLIENTE see screenshot multi-tenant-architecture.svg QUINDI OGNI 'AZIENDA' GLI VIENE CREATO UN SUO INTERO SCHEMA SOLO PER LUI!!
 
 NEL MIO TENANT-ARCHITECTURE
-
+-layer1. quando user fa login (succede anche al sign-up), riceve il token JWT gia con tenant_id nel payload, poi nelle req successive il token sara sempre nell'header (uso Authorization: Bearer <token>)
+-layer2. middleware app/api/middleware/tenant.py legge il tenant_id e lo inietta nel request.state.tenant_id, ora ogni parte del codice puo leggere tenant_id
+-in app/db/sqlserver.py con la class TenantDB riceve il tenant_id e imposta lo schema corretto sulla connessione SQLAlchemy, ora tutte le queries trovano il tenant automaticamente le tab del tenant target senza specificare lo schema (il tenant = 1 azienda) esplicitamente.
+-usando Redis, utilizzi e.g. tenant:[AZIENDAX]:cache:query:{hash}, quindi 100% non puoi mischiare e per sbaglio ottenere cache di altri tenant(1 schema = 1 azienda)
+-usando qdrant, OGNI TENANT HA LA SUA QDRANT COLLECTION, quindi e.g. tenant_[AZIENDAX]_documents quindi 100% non prendi per sbaglio i vettori numerici di altre qdrant collections
+-usando Celery, ogni task celery ha il tenant_id negli headers dei mexs, quindi 100% ISOLAMENTO e non mischi con altri tenant
 
 ########REDIS & CELERY
 
