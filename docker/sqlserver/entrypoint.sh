@@ -1,17 +1,16 @@
-#!/bin/bash
-# docker/sqlserver/entrypoint.sh
-# Attende che SQL Server sia pronto, poi esegue init.sql
-# Montato nel container sqlserver come comando di avvio
 
-set -e
+#!/bin/bash   
+#QUELLO HERE QUA SOPRA NON E UN COMMENTO! E PROPRIO UN'ISTRUZIONE! dice che tutto questo code deve essere eseguito con Bash!!
 
-echo "Attendo SQL Server..."
-until /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost \
-    -U SA \
-    -P "$SA_PASSWORD" \
-    -Q "SELECT 1" > /dev/null 2>&1; do
-    sleep 2
+set -e   #dice a BAsh 'se QUALSIASI comando fallisce → termina immediatamente lo script'. SEMPRE DA FARE!!
+
+echo "Attendo SQL Server..."  #log console
+until /opt/mssql-tools18/bin/sqlcmd \   #loop bash, ripete finche il COMMAND non ha successo, in questo caso il comando /opt/mssql-tools18/bin/sqlcmd (client CLI SQL Server) che verifica se SQL Server è vivo
+    -S localhost \   #-S = server, poi vuole sapere a quale server deve connttersi, quindi gli dici connnettiti a localhost
+    -U SA \    #-U = user, poi vuole sapere a quale utente SQL deve connettersi, dice connettiti come utente SA(System Administrator)
+    -P "$SA_PASSWORD" \   #-P = password (presa da file .env), poi vuole sapere la psw, gli dai la psw 
+    -Q "SELECT 1" > /dev/null 2>&1; do    #-Q = query, esegue query di test "SELECT 1", se risponde è vivo, se fallisce è unhealthy, > /dev/null butta via stdout, 2>&1 redirect stderr verso stdout., così non vediamo errori di connessione in console finché non è pronto
+    sleep 2   #se sqlserver non è pronto, aspetta 2 secondi e riprova, finché non risponde correttamente al comando sqlcmd
 done
 
 echo "SQL Server pronto. Eseguo init.sql..."
@@ -19,7 +18,10 @@ echo "SQL Server pronto. Eseguo init.sql..."
     -S localhost \
     -U SA \
     -P "$SA_PASSWORD" \
-    -i /docker-entrypoint-initdb.d/init.sql \
-    -b   # esce con errore se il batch fallisce
+    -i /docker-entrypoint-initdb.d/init.sql \    #-i = input file, esegue script SQL presente in /docker-entrypoint-initdb.d/init.sql (montato da docker-compose)
+    -b   #esce con errore se il batch fallisce
 
-echo "init.sql completato."
+echo "init.sql completato."  #log console
+
+
+

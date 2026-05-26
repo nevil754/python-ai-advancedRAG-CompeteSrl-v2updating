@@ -227,9 +227,9 @@ services:  #here servizi da avviare
     #wait $$SQLSERVR_PID  attende che processo SQL Server termini, così container rimane attivo finché SQL Server è vivo
     healthcheck:
       test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd",  #esegue comando DENTRO il container, /opt/mssql-tools18/bin/sqlcmd è il client CLI ufficiale Microsoft SQL Server
-             "-S", "localhost",  #-S = server, dice connettiti a localhost
-             "-U", "SA",  #-U = user, dice connettiti come utente SA
-             "-P", "${SQLSERVER_PASSWORD}",  #-P = password, dice connettiti come utente con password
+             "-S", "localhost",  #-S = server, poi vuole sapere a quale server deve connttersi, quindi gli dici connnettiti a localhost
+             "-U", "SA",  #-U = user, poi vuole sapere a quale utente SQL deve connettersi, dice connettiti come utente SA(System Administrator)
+             "-P", "${SQLSERVER_PASSWORD}",  #-P = password (presa da file .env), poi vuole sapere la psw, gli dai la psw
              "-Q", "SELECT 1"]  #-Q = query, esegue query di test "SELECT 1", se risponde è vivo, se fallisce è unhealthy
       interval: 10s
       timeout: 5s
