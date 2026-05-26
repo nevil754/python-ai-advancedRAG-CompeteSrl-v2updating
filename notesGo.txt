@@ -68,6 +68,23 @@ server {
     }
 }
 
+########DB
+tabella audit: cronologia IMMUTABILE di tutto quello che succede nel sistema (chia fatto cosa, quando lo ha fatto, con che dati, da dove, ect)
+fondamentale in contesti enterprise🔥
+e.g. record di audit
+{
+  "user_id": 42,
+  "action": "rag_query",
+  "timestamp": "2026-05-26T12:00:00Z",
+  "query": "contratto società X",
+  "tokens_used": 1200,
+  "status": "success"
+}
+cosi anche per compliance legale (GDPR / GDPR-like), puoi rispondere alle domanda dell'utente “Cosa avete fatto con i miei dati?”. senza saresti 'cieco'.
+
+IDENTITY(1,1)
+NEWSEQUENTIALID(): UUID/GUID univoco MA sequenziale
+
 ########REDIS & CELERY
 
 Redis supporta fino a 16 database🔥(da 0 a 15) nello stesso processo, separati logicamente. Così un FLUSHDB sulla cache non tocca la coda Celery.

@@ -2,20 +2,20 @@
 -- Eseguito automaticamente da Docker al primo avvio
 -- Strategia: schema-per-tenant dentro un unico database RAGChat
 
-USE master;
-GO
+USE master;  --db di sistema, da cui creiamo il nostro db RAGChat
+GO  --separatore batch code
 
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'RAGChat')
 BEGIN
     CREATE DATABASE RAGChat
-    COLLATE Latin1_General_100_CI_AS_SC_UTF8;
+    COLLATE Latin1_General_100_CI_AS_SC_UTF8;   --encoding del db, CI=case insensitive AS=accent sensitive (distingue "è" da "e")  SC=supplementary characters (emoji e caratteri rari) UTF8=supporto completo unicode
 END
 GO
 
 USE RAGChat;
 GO
 
--- SCHEMA CONDIVISO  (metadati piattaforma, non dati tenant)
+-- SCHEMA CONDIVISO  (metadati piattaforma, NON dati tenant)
 
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'shared')
     EXEC('CREATE SCHEMA shared');
@@ -28,16 +28,16 @@ IF NOT EXISTS (
     WHERE s.name = 'shared' AND t.name = 'tenants'
 )
 CREATE TABLE shared.tenants (
-    id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
-    slug            NVARCHAR(100)       NOT NULL,   -- "acme-corp" → schema tenant_acme_corp
+    id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),  --NEWSEQUENTIALID() è UUID/GUID univoco MA sequenziale
+    slug            NVARCHAR(100)       NOT NULL,   -- "acme-corp" diventa → schema tenant_acme_corp
     display_name    NVARCHAR(255)       NOT NULL,
     plan            NVARCHAR(50)        NOT NULL DEFAULT 'starter',  -- starter | pro | enterprise
     is_active       BIT                 NOT NULL DEFAULT 1,
     max_docs        INT                 NOT NULL DEFAULT 500,
     max_users       INT                 NOT NULL DEFAULT 10,
-    max_tokens_day  BIGINT              NOT NULL DEFAULT 100000,
+    max_tokens_day  BIGINT              NOT NULL DEFAULT 100000,  --🔥RATE LIMIT TOKEN X DAY!!
     settings        NVARCHAR(MAX)       NULL,       -- JSON: feature flags, custom prompts, ecc.
-    created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+    created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),  --return data e ora corrente del server SQL in formato UTC
     updated_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
     CONSTRAINT PK_tenants PRIMARY KEY (id),
     CONSTRAINT UQ_tenants_slug UNIQUE (slug),
@@ -51,11 +51,11 @@ IF NOT EXISTS (
     JOIN sys.schemas s ON t.schema_id = s.schema_id
     WHERE s.name = 'shared' AND t.name = 'tenants'
 )
-CREATE TABLE shared.audit_log (
+CREATE TABLE shared.audit_log (  --FONDAMENTALE in contesti enterprise, con questa puoi ricostruire info chi ha fatto cosa, quando, dove, con che dati ect quest tab puo contenere recrods che ricostruiscono query rag - llm call - document ingestion - security
     id          BIGINT IDENTITY(1,1)    NOT NULL,
     tenant_id   UNIQUEIDENTIFIER        NOT NULL,
     user_id     UNIQUEIDENTIFIER        NULL,
-    action      NVARCHAR(100)           NOT NULL,  -- 'doc.upload' | 'chat.query' | 'user.login'
+    action      NVARCHAR(100)           NOT NULL,  --e.g. 'doc.upload' | 'chat.query' | 'user.login'
     resource    NVARCHAR(500)           NULL,
     ip_address  NVARCHAR(45)            NULL,
     user_agent  NVARCHAR(500)           NULL,
@@ -66,7 +66,7 @@ CREATE TABLE shared.audit_log (
 );
 GO
 
-CREATE INDEX IX_audit_tenant_date ON shared.audit_log (tenant_id, created_at DESC);
+CREATE INDEX IX_audit_tenant_date ON shared.audit_log (tenant_id, created_at DESC);  --index per iterare velocemente i records quando utente fa una search
 GO
 
 -- Utilizzo token per billing e rate limiting
@@ -96,7 +96,7 @@ IF NOT EXISTS (
     WHERE s.name = 'shared' AND t.name = 'tenants'
 )
 CREATE TABLE shared.api_keys (
-    id          UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),
+    id          UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),  --UUID/GUID univoco MA sequenziale
     tenant_id   UNIQUEIDENTIFIER    NOT NULL,
     key_hash    NVARCHAR(64)        NOT NULL,   -- SHA-256 della key, mai in chiaro
     name        NVARCHAR(255)       NOT NULL,
