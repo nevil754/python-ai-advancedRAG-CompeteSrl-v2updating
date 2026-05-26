@@ -46,6 +46,28 @@ e.g. è per questo che hai fatto in .env SQLSERVER_HOST=sqlserver, xk sqlserver 
 //in production finita terresti solo esposta port 8000(fastapi)!
 -ricorda che i volumes(x persistent data) vengono salvati all'esterno del docker system in linux solitamente in /var/lib/docker/volumes/  su Windows Docker Desktop solitamente C:\Users\Username\AppData\Local\docker\volumes , i containers appena ri-attivi si ri-collegano ai loro volumes e trovano tutti i dati intatti.
 
+//tutto cio dentro il docker-compose.yml E' UN UNICO DOCKER COMPOSE STACK (rete docker interna privata in cui i containers si parlano) !!al suo esterno si vedranno solo le :ports esposte dichiarate.
+
+DEPLOY SU SERVER:
+su server devi aver installato: Docker Engine, Docker Compose, e magari anche 🔥Nginx(reverse proxy che gestisce SSL/HTTPS e il dominio)(nginx deve stare davanti fastapi, ascolta su porta 443 HTTPS gira le req internamente a fastapi su porta 8000)(nginx lo installi sul server target, oppure direttamente come container all'interno di questo docker-compose cioe questo DOCKER COMPOSE STACK)
+//su server non installi nient'altro, tutto python le librerie i driver ODBC ect 🔥VIVONO DENTRO LE IMG DOCKER!!
+
+e.g. nginx
+server {
+    listen 443 ssl;
+    server_name app.tuodominio.it;
+    ssl_certificate /etc/ssl/cert.pem;
+    ssl_certificate_key /etc/ssl/key.pem;
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # Fondamentale per SSE (streaming token-by-token)
+        proxy_buffering off;
+        proxy_cache off;
+    }
+}
+
 ########REDIS & CELERY
 
 Redis supporta fino a 16 database🔥(da 0 a 15) nello stesso processo, separati logicamente. Così un FLUSHDB sulla cache non tocca la coda Celery.

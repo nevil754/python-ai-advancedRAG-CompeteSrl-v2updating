@@ -72,9 +72,7 @@ services:  #here servizi da avviare
       retries: 3
       start_period: 30s
 
-  # ─────────────────────────────────────────────
   # CELERY — coda DEFAULT (ingestion bulk)
-  # ─────────────────────────────────────────────
   celery-worker-default:  #Worker per task PESANTI/NON URGENTI
     build:
       context: .
@@ -100,9 +98,7 @@ services:  #here servizi da avviare
       redis:
         condition: service_started
 
-  # ─────────────────────────────────────────────
   # CELERY BEAT — scheduler task periodici
-  # ─────────────────────────────────────────────
   celery-beat:   #Celery scheduler per task PERIODICI
     build:
       context: .
@@ -120,9 +116,7 @@ services:  #here servizi da avviare
     depends_on:
       - redis
 
-  # ─────────────────────────────────────────────
   # FLOWER — monitoring Celery (dev/staging)
-  # ─────────────────────────────────────────────
   flower:  #📊 dashboard monitoring Celery
     image: mher/flower:2.0  #immagine ufficiale Flower, leggera e pronta all'uso, supporta autenticazione, ottima per monitorare health e performance dei worker Celery in dev e staging (in prod meglio soluzioni più robuste come Prometheus + Grafana)
     container_name: flower
@@ -162,9 +156,7 @@ services:  #here servizi da avviare
       retries: 5
       start_period: 20s
 
-  # ─────────────────────────────────────────────
   # REDIS — broker Celery + cache + sessioni
-  # ─────────────────────────────────────────────
   redis:
     image: redis:7.0-alpine  #immagine ufficiale Redis, versione 7.0, basata su Alpine Linux (leggera), perfetta per produzione, supporta configurazione personalizzata tramite command e env var
     container_name: redis
@@ -193,9 +185,7 @@ services:  #here servizi da avviare
       timeout: 5s
       retries: 5
 
-  # ─────────────────────────────────────────────
   # SQL SERVER — storage relazionale multi-tenant
-  # ─────────────────────────────────────────────
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest  #immagine ufficiale SQL Server 2022, sempre aggiornata, supporta configurazione tramite env var e script di inizializzazione, ottima per produzione (⚠️ricorda di configurare password forte e persistena dati!!)
     container_name: sqlserver
@@ -236,9 +226,7 @@ services:  #here servizi da avviare
       retries: 10
       start_period: 30s
 
-# ─────────────────────────────────────────────
 # VOLUMES
-# ─────────────────────────────────────────────
 volumes:  #docker named values, qui definiamo i volumi usati dai container per la persistena dati, così i dati restano ANCHE SE I CONTAINER VENGONO DISTRUTTI/RICREATI, fondamentale per produzione!!
   qdrant_data:
     driver: local
