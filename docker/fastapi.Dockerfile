@@ -4,7 +4,6 @@
 # runtime è l'immagine finale leggera
 # =============================================================
 
-# ── Stage 1: builder ──────────────────────────────────────────
 FROM python:3.11-slim AS builder
 
 # Installa driver ODBC per SQL Server (Microsoft)

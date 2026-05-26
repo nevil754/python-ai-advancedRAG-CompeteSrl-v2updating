@@ -1,26 +1,24 @@
-version: "3.8"
+version: "3.8"  #versione sintassi Docker Compose, now (26-05-2026) 3.8 è la più comune e stabile, supporta tutte le funzionalità necessarie
 services:  #here servizi da avviare
 
 
   fastapi:
-    build:
-      #directory di contesto per la build è la root del progetto
-      context: .
+    build:  #build ur img custom da Dockerfile, questo è necessario per installare dipendenze e configurare ambiente esatto per FastAPI
+      context: .   #la root progetto è il contesto build
       dockerfile: docker/fastapi.Dockerfile
     container_name: fastapi
-    restart: unless-stopped
+    restart: unless-stopped  #🔥riavvia se crasha, ma non in caso di stop manuale, ottimo per produzione
     ports:
-      - "8000:8000"
-    env_file: .env
-    environment:
-      REDIS_URL: "redis://redis:6379/0"
-      SQLSERVER_HOST: "sqlserver"
-      SQLSERVER_PORT: "1433"
-      SQLSERVER_DB: "RAGChat"
+      - "8000:8000"  #mapping HOST:CONTAINER, quindi porta localhost:8000 va al container porta 8000
+    env_file: .env  #carica var env da file .env
+    environment:  #env var AGGIUNTIVE, se ci sono anche in .env QUESTE SOVRASCRIVONO quelle in .env, utili per configurazioni specifiche container
+      REDIS_URL: "redis://redis:6379/0"  #connessione redis redis://HOST:PORT/DB, redis->hostname Docker interno, 6379 porta standard Redis, 0 è il numero DB Redis (puoi usarne più di uno se vuoi)
+      SQLSERVER_HOST: "sqlserver"  #hostname container SQL Server
+      SQLSERVER_PORT: "1433"   #porta SQL Server standart
+      SQLSERVER_DB: "RAGChat"  #nome db da usare, ⚠️deve corrispondere a quello creato nello script init.sql !!
       QDRANT_URL: "http://qdrant:6333"
       BASE_URL_OLLAMA: "http://ollama:11434"
-    #partira solo dopo questi VENGONO AVVIATI(non significa che sono pronti ready e operativi)
-    depends_on:
+    depends_on:  #partira solo dopo questi VENGONO AVVIATI, in questo esatto ordine ( 🔥cio pero non significa che sono pronti ready e operativi)
       sqlserver:
         condition: service_healthy
       redis:
@@ -28,13 +26,13 @@ services:  #here servizi da avviare
       qdrant:
         condition: service_started
     volumes:
-      - ./config:/app/config:ro
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+      - ./config:/app/config:ro   #monta cartella config del progetto dentro container, in sola lettura (ro), così config è centralizzata e modificabile senza rebuild container!!
+    healthcheck:  #check salute del container
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]   #chiama endpoint health, f → fail se status != 200
+      interval: 30s  #ogni 30sec
+      timeout: 10s  #max tempo risposta
+      retries: 3   #dopo 3 tentativi falliti, container è unhealthy
+      start_period: 20s   #attende 20sec prima di iniziare il check
 
 
   celery-worker-high:
@@ -50,12 +48,18 @@ services:  #here servizi da avviare
       --prefetch-multiplier=1
       --loglevel=info
       --hostname=worker-high@%h
+    #avvia worker (path target), 
+    #--queues=high,shared_cleanup   worker ascolta SOLO queste queue (molto importante architetturalmente), high -> task urgenti(chat realtime, retieval, quick embeddings)  shared_cleanup->task manutenzione(delete cache, cleanup temp cache)
+    #--concurrency=4  4 processi worker paralleli, molto importante per throughput. 🔥 In prod aumentare in base risorse macchina e carico previsto
+    #--prefetch-multiplier=1  disabilita prefetch task, worker prende 1 task alla volta dalla coda, ottimo per task pesanti come embedding o retrieval, evita che worker prenda più task di quelli che può gestire
+    #--hostname=worker-high@%h  nome unico worker, utile per monitoraggio e debug, %h è hostname del container, così se hai più worker hai nomi diversi automaticamente
+
     env_file: .env
-    environment:
+    environment: #env var AGGIUNTIVE, se ci sono anche in .env QUESTE SOVRASCRIVONO quelle in .env, utili per configurazioni specifiche container
       REDIS_URL: "redis://redis:6379/0"
       SQLSERVER_HOST: "sqlserver"
       QDRANT_URL: "http://qdrant:6333"
-    depends_on:
+    depends_on:  #partira solo dopo questi VENGONO AVVIATI, in questo esatto ordine ( 🔥cio pero non significa che sono pronti ready e operativi)
       sqlserver:
         condition: service_healthy
       redis:
