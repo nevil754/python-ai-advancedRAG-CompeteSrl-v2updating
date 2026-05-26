@@ -90,20 +90,19 @@ i [] wrappano i nomi particolari delle tue tabelle, cosi che anche i caratteri s
 DECLARE crea var locale
 EXEC sp_executesql @sql;  esegue sql dentro quella var locale 
 
-
-
 🔥📈MULTI-TENANT ARCHITECTURE
+techniques multi-tenant: 
+-🔥Schema-Per-Tenant (QUELLO CHE USO IO, BEST, una query su tenant_azienda1 NON puo vedere dati di tenant_azienda2), 
+-Row-level (una tabella per tutte le aziende, ogni tab ha un tenant_id, soluzione piu easy ma moolti possibili bugs)
+-Database-Per-Tenant (massima security e isolamento, ma non è ottimo economicamente avere 1 database per ogni azienda)
 ricorda che uno 'schema' è un contenitore logico, che puo contere piu tabelle
-la procedura CREATE OR ALTER PROCEDURE shared.sp_provision_tenant  🔥🔥CREA AUTOMATICAMENTE UNO SCHEMA SQL COMPLETO PER OGNI CLIENTE see screenshot multi-tenant-architecture.svg QUINDI OGNI 'AZIENDA' GLI VIENE CREATO UN SUO INTERO SCHEMA SOLO PER LUI!!
+la mia procedura CREATE OR ALTER PROCEDURE shared.sp_provision_tenant  🔥🔥CREA AUTOMATICAMENTE UNO SCHEMA SQL COMPLETO PER OGNI CLIENTE see screenshot multi-tenant-architecture.svg QUINDI OGNI 'AZIENDA' GLI VIENE CREATO UN SUO INTERO SCHEMA SOLO PER LUI!!
 
-
+NEL MIO TENANT-ARCHITECTURE
 
 
 ########REDIS & CELERY
 
 Redis supporta fino a 16 database🔥(da 0 a 15) nello stesso processo, separati logicamente. Così un FLUSHDB sulla cache non tocca la coda Celery.
-
-
-
 
 
