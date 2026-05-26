@@ -117,8 +117,15 @@ CELERY
 per eseguire jobs in background, si attiva automaticamente e.g.caricamente di pdf di 200pagine 🤯
 -con acks_late=True Celery fa l'ACK a Redis solo DOPO che il task è completato con successo, in questo modo se un worker che sta elaborando il task crasha allora il task rimane in coda e un'altro worker lo prende in carico quindi segnalazione finale a Redis solo dopo che il task è stato completato con successfully!!
 -prefetch_multiplier=1  1 WORKER PUO PRENDERE SOLO 1 TASK ALLA VOLTA, questo evita e.g. che un worker si carica di piu tasks in memoria e va in oom!!
--
+-hai 2 code separate: 'high' e 'default',  🔥questo evita che un tenant che carica 200pdf insieme non blocchi negli altri tenat le risposte chat in real-time
 
+flow:
+1. fastapi riceve la query, il middleware estrae tenant_id dal JWT e lo inietta nel request.state
+2. chat_service.py esegue GET tenant:acme:cache:query:{hash} quindi se ha gia quella query in cache allora return subito, se no invece...
+3. se query non è gia in cache allora LRANGE tenant:acme:session:{conv_id} cioe carica da Redis->su cache, sono gli ultimi N turni, salvati su Redis per cosi non dover interrogare il db
+4. ora viene eseguito retrieval su qdrant- ...- reranking-passi tutto a llm, e la risposta viene passata al client via SSE
+5. quando la risposta è completa, allora aggiorna session Redis - mette risposta in cache - incrementa usage_stats per il billing
+//quindi Celery entra in gioco se la query triggera un'azione lenta e.g.upload 200docs / web scapring aggressivo (ricordati che con Tavily hai 1k req/mese free, quindi va bene solo x development!! )
 
 
 

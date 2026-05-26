@@ -26,7 +26,7 @@ markdown2==2.5.1  #converte markdown → HTML
 xhtml2pdf==0.2.17  #converte HTML → PDF
 
 pandas==2.2.3 #x tabelle/csv/ect
-tavily-python==0.5.0  #motore di ricerca web progettato per RAG e agenti, è “LLM-ready results” quindi ti restituisce gia anche summary-extracted text-relevance score, 💰free con 1,000 API credits/month (OTTIMO QUINDI DOVE QUESTA FEAT NON E' FONDAMENTALE MA VUOI AVERLA & easy)
+tavily-python==0.5.0  #motore di ricerca web progettato per RAG e agenti, è “LLM-ready results” quindi ti restituisce gia anche summary-extracted text-relevance score, 💰free solo fino a 1,000 API credits/month (OTTIMO QUINDI DOVE QUESTA FEAT NON E' FONDAMENTALE MA VUOI AVERLA & easy)
 ddgs>=9.10.0   #duckduckgo search (era chiamato duckduckgo-search), ti da i links come te li darebbe google se fai una ricerca manualmente. "Dimmi dove si trova l’informazione"
 beautifulsoup4==4.12.3  #scraping web pages, estrazione testo da pagine web. "Apri quella pagina e leggimi tutto"s
 
