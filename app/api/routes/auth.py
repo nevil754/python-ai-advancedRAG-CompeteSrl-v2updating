@@ -1,14 +1,13 @@
 # app/api/routes/auth.py
 # Autenticazione: login, token refresh, logout, profilo utente.
 
-from __future__ import annotations
-
+from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from datetime import timedelta
-from typing import Annotated
+from typing import Annotated   #per type hint più chiari, es. Annotated[]
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from loguru import logger
+from loguru import logger   #plugin x logging avanzato
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 
