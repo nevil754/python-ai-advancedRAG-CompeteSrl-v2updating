@@ -3,7 +3,6 @@
 # Chiamato UNA VOLTA all'avvio in main.py lifespan.
 
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
-
 import sys
 import os
 from typing import TYPE_CHECKING 
@@ -116,18 +115,20 @@ def _intercept_stdlib_logging() -> None:
             try:
                 level = logger.level(record.levelname).name   #converte logging.INFO -> Loguru INFO
             except ValueError:
-                level = record.levelno  #type: ignore
-            frame, depth = sys._getframe(6), 6   #
-            while frame and frame.f_code.co_filename == logging.__file__:
-                frame = frame.f_back  # type: ignore
+                level = record.levelno     #type: ignore
+            frame, depth = sys._getframe(6), 6   #serve a trovare il vero caller del log, è molto avanzato.
+            while frame and frame.f_code.co_filename == logging.__file__:   #salta frame interni di logging fino a trovare il vero caller
+                frame = frame.f_back     #type: ignore
                 depth += 1
-
             logger.opt(depth=depth, exception=record.exc_info).log(
                 level, record.getMessage()
-            )
+            )  #re-invia log a loguru con livello corretto e info eccezione
 
     # Intercetta root logger e logger specifici
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi",
-                 "sqlalchemy.engine", "celery", "httpx"):
-        logging.getLogger(name).handlers = [InterceptHandler()]
+                 "sqlalchemy.engine", "celery", "httpx"):  #tutti i logs che vuoi intercettare
+        logging.getLogger(name).handlers = [InterceptHandler()]  #sostituisce handler originali
         logging.getLogger(name).propagate = False
+
+
+
