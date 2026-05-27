@@ -67,12 +67,12 @@ class AppSettings(BaseSettings):
     embeddings_batch_size: int = 64
     embeddings_cache_dir: str = "/app/.cache/embeddings"
 
-    qdrant_url: str = "http://qdrant:6333"
-    qdrant_api_key: str = ""
-    qdrant_collection_name: str = "collection-rag-v2"
-    qdrant_use_sparse: bool = True
-    qdrant_force_recreate: bool = False
-    qdrant_distance: str = "Cosine"
+    vectorstore_url: str = "http://qdrant:6333"
+    vectorstore_api_key: str = ""
+    vectorstore_collection_name: str = "collection-rag-v2"
+    vectorstore_use_sparse: bool = True
+    vectorstore_force_recreate: bool = False
+    vectorstore_distance: str = "Cosine"
     qdrant_on_disk_payload: bool = True
 
     sqlserver_host: str = "sqlserver"
@@ -138,22 +138,18 @@ class AppSettings(BaseSettings):
     langchain_tracing_v2: bool = False
     opentelemetry_enabled: bool = False
 
-    # ── Logging ──────────────────────────────────────────────
     log_level: str = "INFO"
     log_console_output: bool = True
     log_colored: bool = True
     log_json_output: bool = False
 
-    # ── Web search ───────────────────────────────────────────
     web_search_enabled: bool = False
     web_search_provider: str = "tavily"
     tavily_api_key: str = ""
 
-    # ── Celery ───────────────────────────────────────────────
     celery_broker_url: str = "redis://redis:6379/0"
     celery_result_backend: str = "redis://redis:6379/0"
 
-    # ── External providers ───────────────────────────────────
     openai_api_key: str = ""
     google_api_key: str = ""
     ollama_api_key: str = ""
