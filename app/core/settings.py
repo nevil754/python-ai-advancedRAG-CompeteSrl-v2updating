@@ -71,8 +71,8 @@ class AppSettings(BaseSettings):
     vectorstore_api_key: str = ""
     vectorstore_collection_name: str = "collection-rag-v2"
     vectorstore_use_sparse: bool = True
-    vectorstore_force_recreate: bool = False
-    vectorstore_distance: str = "Cosine"
+    qdrant_force_recreate: bool = False
+    qdrant_distance: str = "Cosine"
     qdrant_on_disk_payload: bool = True
 
     sqlserver_host: str = "sqlserver"
