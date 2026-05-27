@@ -132,7 +132,7 @@ class AppSettings(BaseSettings):
     langsmith_api_key: str = ""
     langsmith_project: str = "rag-enterprise-legal"
     langsmith_endpoint: str = "https://eu.api.smith.langchain.com"
-    langchain_tracing_v2: bool = False
+    langchain_tracing_v2: bool = True
     opentelemetry_enabled: bool = False
 
     log_level: str = "INFO"
