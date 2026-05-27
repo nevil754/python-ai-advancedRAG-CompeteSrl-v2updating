@@ -78,7 +78,7 @@ class AppSettings(BaseSettings):
     sqlserver_password: str = ""
     sqlserver_driver: str = "ODBC Driver 18 for SQL Server"
 
-    @property   #trasforma function -> proprieta leggibile come attributo (quindi ora fai settings.sqlserver_url come se fosse una var normale)
+    @property   #trasforma function -> proprieta leggibile COME ATTRIBUTO (quindi ora fai settings.sqlserver_url come se fosse una var normale)
     def sqlserver_url(self) -> str:
         """connection string che verra usata da SQLAlchemy per SQL Server via pyodbc"""
         return (  #costruzione della stringa finale
@@ -170,34 +170,13 @@ class AppSettings(BaseSettings):
             raise ValueError(f"log_level deve essere uno di {allowed}")
         return v
 
-
-@lru_cache(maxsize=1)  #garantisce che venga creata una sola volta, e.g. la prima volta settings = get_settings() viene eseguito compeltamente, mentre la seconda volte che viene chiamato settings = get_settings() allora sfrutta la cache e return l'obj gia esistente
-def get_settings() -> AppSettings:
-    """
-    Usare sempre questa funzione, ⚠️ mai AppSettings() direttamente.
-    e.g. uso:
-        from app.core.settings import get_settings
-        settings = get_settings()
-        print(settings.llm_model)
-    """
-    # Applica override da config.yaml prima di creare l'istanza
-    _apply_yaml_overrides()
-    return AppSettings()
-
-
 def _apply_yaml_overrides() -> None:
-    """
-    Legge config.yaml e imposta i valori come variabili d'ambiente
-    SOLO se non sono già impostate (le env var hanno priorità)
-    Questo permette a config.yaml di fungere da file di default strutturato
-    """
-    cfg = _load_yaml()
+    cfg = _load_yaml()   #legge file config.yaml 
     if not cfg:
         return
-
-    # Mapping yaml path → nome variabile d'ambiente
-    mappings: list[tuple[str, str]] = [  #lista di coppie(cioe tuple)
-        # (path nel yaml separato da '.', nome env var)
+    mappings: list[tuple[str, str]] = [  #crea lista di coppie(cioe tuple)
+        #mapping file config.yaml path → nome env var (create here qua sopra)
+        #ricordati che il '.' indica nested
         ("llm.provider",            "LLM_PROVIDER"),
         ("llm.model",               "LLM_MODEL"),
         ("llm.base_url",            "LLM_BASE_URL"),
@@ -209,7 +188,9 @@ def _apply_yaml_overrides() -> None:
         ("embeddings.model",        "EMBEDDINGS_MODEL"),
         ("embeddings.batch_size",   "EMBEDDINGS_BATCH_SIZE"),
         ("embeddings.cache_dir",    "EMBEDDINGS_CACHE_DIR"),
-        ("vectorstore.url",         "QDRANT_URL"),
+        ("vectorstore.url",         "QDRANT_URL"),    #🔥ora QDRANT_URL è la variabile d'ambiente che userai nel codice per connetterti a Qdrant, 
+        #⚠️ QUINDI SE CAMBI IL NOMES NEL FILE CONFIG.YAML, RICORDATI DI CAMBIARLO ANCHE QUI!! ALTRIMENTI non link nell'app!! 
+        #"QDRANT_URL" è il tuo "qdrant_url" here qua sopra in AppSettings, mentre "vectorstore.url" è il path in config.yaml
         ("vectorstore.collection_name", "QDRANT_COLLECTION_NAME"),
         ("vectorstore.use_sparse",  "QDRANT_USE_SPARSE"),
         ("retriever.top_k",         "RETRIEVER_TOP_K"),
@@ -225,7 +206,6 @@ def _apply_yaml_overrides() -> None:
     ]
 
     def _get_nested(d: dict, path: str):
-        """Naviga un dizionario annidato tramite path 'a.b.c'."""
         keys = path.split(".")
         for k in keys:
             if not isinstance(d, dict) or k not in d:
@@ -238,6 +218,19 @@ def _apply_yaml_overrides() -> None:
             value = _get_nested(cfg, yaml_path)
             if value is not None:
                 os.environ[env_key] = str(value)
+
+@lru_cache(maxsize=1)  #garantisce che venga creata una sola volta, e.g. la prima volta settings = get_settings() viene eseguito compeltamente, mentre la seconda volte che viene chiamato settings = get_settings() allora sfrutta la cache e return l'obj gia esistente
+def get_settings() -> AppSettings:
+    """
+    Usare sempre questa funzione, ⚠️ mai AppSettings() direttamente.
+    e.g. uso:
+        from app.core.settings import get_settings
+        settings = get_settings()
+        print(settings.llm_model)
+    """
+    # Applica override da config.yaml prima di creare l'istanza
+    _apply_yaml_overrides()
+    return AppSettings()
 
 settings = get_settings()   #istanza globale, importa questa nei modules che lo vogliono
 
