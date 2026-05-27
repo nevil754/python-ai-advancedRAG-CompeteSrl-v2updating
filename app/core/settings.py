@@ -219,20 +219,19 @@ def _apply_yaml_overrides() -> None:
             if value is not None:
                 os.environ[env_key] = str(value)
 
-@lru_cache(maxsize=1)  #garantisce che venga creata una sola volta, e.g. la prima volta settings = get_settings() viene eseguito compeltamente, mentre la seconda volte che viene chiamato settings = get_settings() allora sfrutta la cache e return l'obj gia esistente
-def get_settings() -> AppSettings:
+@lru_cache(maxsize=1)  #garantisce che venga creata 1 SOLA VOLTA (singleton), e.g. la prima volta settings = get_settings() viene eseguito compeltamente, mentre la seconda volte che viene chiamato settings = get_settings() allora sfrutta la cache e return l'obj gia esistente
+def get_settings() -> AppSettings:  #return type of AppSettings!
     """
-    Usare sempre questa funzione, ⚠️ mai AppSettings() direttamente.
+    🔥Usare sempre questa funzione, MAI AppSettings() direttamente!
     e.g. uso:
         from app.core.settings import get_settings
         settings = get_settings()
         print(settings.llm_model)
     """
-    # Applica override da config.yaml prima di creare l'istanza
     _apply_yaml_overrides()
     return AppSettings()
 
-settings = get_settings()   #istanza globale, importa questa nei modules che lo vogliono
+settings = get_settings()   #istanza globale, importa questa nei modules che lo vogliono!
 
 
 
