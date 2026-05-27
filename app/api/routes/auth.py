@@ -31,12 +31,10 @@ class TokenResponse(BaseModel):
     user_role: str
     tenant_slug: str
 
-
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
     tenant_slug: str                 # il tenant si identifica con il suo slug
-
 
 class UserProfile(BaseModel):
     user_id: str
@@ -46,14 +44,10 @@ class UserProfile(BaseModel):
     tenant_id: str
     tenant_slug: str
 
-
-# ─── Routes ───────────────────────────────────────────────────
-
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest) -> TokenResponse:
     """
     Autentica un utente e ritorna un JWT.
-
     Flow:
     1. Trova il tenant tramite slug in shared.tenants
     2. Cerca l'utente in tenant_{slug}.users per email
@@ -159,7 +153,6 @@ async def refresh_token(tenant: CurrentTenant) -> TokenResponse:
         "tenant_id": tenant.tenant_id,
         "tenant_slug": tenant.tenant_slug,
     })
-
     return TokenResponse(
         access_token=new_token,
         expires_in=settings.jwt_expire_minutes * 60,
@@ -167,7 +160,6 @@ async def refresh_token(tenant: CurrentTenant) -> TokenResponse:
         user_role=tenant.user_role,
         tenant_slug=tenant.tenant_slug,
     )
-
 
 @router.get("/me", response_model=UserProfile)
 async def get_profile(tenant: CurrentTenant) -> UserProfile:
@@ -178,10 +170,8 @@ async def get_profile(tenant: CurrentTenant) -> UserProfile:
             {"id": tenant.user_id}
         )
         user = row.fetchone()
-
     if not user:
         raise HTTPException(status_code=404, detail="Utente non trovato")
-
     return UserProfile(
         user_id=str(user.id),
         email=user.email,
@@ -190,7 +180,6 @@ async def get_profile(tenant: CurrentTenant) -> UserProfile:
         tenant_id=tenant.tenant_id,
         tenant_slug=tenant.tenant_slug,
     )
-
 
 @router.post("/logout")
 async def logout(tenant: CurrentTenant) -> dict:
@@ -202,7 +191,6 @@ async def logout(tenant: CurrentTenant) -> dict:
     """
     from app.core.redis_client import TenantRedis
     redis = TenantRedis(tenant_id=tenant.tenant_id)
-
     # Cancella tutte le sessioni chat dell'utente
     pattern = f"tenant:{tenant.tenant_id}:session:*"
     client = redis._redis
@@ -215,6 +203,5 @@ async def logout(tenant: CurrentTenant) -> dict:
             deleted += len(keys)
         if cursor == 0:
             break
-
     logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)
     return {"message": "Logout effettuato", "sessions_deleted": deleted}
