@@ -1,8 +1,9 @@
 app:
   name: "CompeteSrl RAG Enterprise Legal"
   version: "0.1.0"  #0.x → prototipo/dev, 1.x → beta, 2.x → prod
-  debug: false  #se true allora log piu verbosi e stacktrace completi, in production sempre false.
+  debug: false  #se true allora log piu verbosi e stacktrace completi, in production sempre False!
   environment: "development"  #ambiente runtime. development | staging | production dal code puoi leggere here per settare behaviors diversi e.g.CORS
+  description: "competeSrl RAG system enterprise legal: con retrieval ibrido reranking memoria conversazionale"
 
 ingestion:
   parser:  #parser: docling per PDF/DOCX complessi, unstructured come fallback

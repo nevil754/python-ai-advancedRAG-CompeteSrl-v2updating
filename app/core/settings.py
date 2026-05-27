@@ -1,67 +1,276 @@
+# =============================================================
+# app/core/settings.py
+# Unica fonte di verità per tutta la configurazione.
+# Legge in questo ordine (priorità crescente):
+#   1. config.yaml  — valori di default strutturati
+#   2. .env         — sovrascrive con valori ambiente
+#   3. variabili d'ambiente OS — sovrascrivono tutto
+# =============================================================
+
+from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 import os
-import yaml
-from dotenv import load_dotenv
-load_dotenv()
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal  #x typing python, server per dire che una var puo essere solo di valori specificati e.g.Literal["development", "staging", "production"] = "development"
 
-def load_config(path="v1config.yaml"):
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+import yaml  #
+from pydantic import Field, field_validator  #
+from pydantic_settings import BaseSettings, SettingsConfigDict   #
 
-config = load_config()
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-BASE_URL_OLLAMA = os.getenv("BASE_URL_OLLAMA")
+# ─── path base progetto ───────────────────────────────────────
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  # root progetto
+CONFIG_FILE = BASE_DIR / "config" / "config.yaml"
 
-#llm chat switchs
-def get_chat_model():
-    provider = config["llm"]["provider"]
-    model = config["llm"]["model"]
-    if provider == "openai":
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(
-            model=model,
-            api_key=OPENAI_API_KEY,
-            temperature=0.2  #importantissimo!!
+
+def _load_yaml() -> dict:
+    """Carica config.yaml come dizionario piatto per i default."""
+    if not CONFIG_FILE.exists():
+        return {}
+    with open(CONFIG_FILE, encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
+# ─── sotto-modelli per sezioni yaml ───────────────────────────
+
+class LLMSettings:
+    pass  # valori letti direttamente in Settings
+
+
+class AppSettings(BaseSettings):
+    """
+    Configurazione principale dell'applicazione.
+    Ogni campo può essere sovrascritto da variabile d'ambiente con lo
+    stesso nome (case-insensitive). Es: APP_ENVIRONMENT=production
+    """
+
+    model_config = SettingsConfigDict(
+        env_file=str(BASE_DIR / ".env"),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",           # ignora variabili env non dichiarate
+        populate_by_name=True,
+    )
+
+    # ── app ──────────────────────────────────────────────────
+    app_name: str = "RAG Enterprise Legal"
+    app_version: str = "0.1.0"
+    app_debug: bool = False
+    app_environment: Literal["development", "staging", "production"] = "development"
+
+    # ── LLM ──────────────────────────────────────────────────
+    llm_provider: str = "ollama"          # ollama | openai | google
+    llm_model: str = "llama3.1"
+    llm_base_url: str = "http://ollama:11434"
+    llm_api_key: str = ""
+    llm_temperature: float = 0.0
+    llm_max_tokens: int = 2048
+    llm_timeout: int = 120
+    llm_streaming: bool = True
+    llm_num_ctx: int = 2048               # context window Ollama
+
+    # ── Embeddings ───────────────────────────────────────────
+    embeddings_provider: str = "fastembed"
+    embeddings_model: str = "BAAI/BGE-M3"
+    embeddings_base_url: str = ""
+    embeddings_batch_size: int = 64
+    embeddings_cache_dir: str = "/app/.cache/embeddings"
+
+    # ── Vector store (Qdrant) ────────────────────────────────
+    qdrant_url: str = "http://qdrant:6333"
+    qdrant_api_key: str = ""
+    qdrant_collection_name: str = "collection-rag-v2"
+    qdrant_use_sparse: bool = True
+    qdrant_force_recreate: bool = False
+    qdrant_distance: str = "Cosine"
+    qdrant_on_disk_payload: bool = True
+
+    # ── SQL Server ───────────────────────────────────────────
+    sqlserver_host: str = "sqlserver"
+    sqlserver_port: int = 1433
+    sqlserver_db: str = "RAGChat"
+    sqlserver_password: str = ""
+    sqlserver_driver: str = "ODBC Driver 18 for SQL Server"
+
+    @property
+    def sqlserver_url(self) -> str:
+        """Connection string SQLAlchemy per SQL Server via pyodbc."""
+        return (
+            f"mssql+pyodbc://SA:{self.sqlserver_password}@"
+            f"{self.sqlserver_host}:{self.sqlserver_port}/"
+            f"{self.sqlserver_db}"
+            f"?driver={self.sqlserver_driver.replace(' ', '+')}"
+            f"&TrustServerCertificate=yes"
+            f"&Encrypt=yes"
         )
-    elif provider == "google":
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        return ChatGoogleGenerativeAI(
-            model=model,
-            google_api_key=GOOGLE_API_KEY,
-            temperature=0.2
-        )
-    elif provider == "ollama":
-        from langchain_ollama import ChatOllama
-        return ChatOllama(
-            model=model,
-            temperature=0.2,
-            base_url=BASE_URL_OLLAMA
-        )
-    else:
-        raise ValueError(f"Unknown LLM provider: {provider}")
-    
-def get_embedding_model():
-    provider = config["embeddings"]["provider"]
-    model = config["embeddings"]["model"]
-    if provider == "fastembed":
-        from fastembed import FastEmbeddings
-        return FastEmbeddings(
-            model=model
-        )
-    else:
-        raise ValueError(f"Unknown embedding provider: {provider}")
 
-def get_reranker_model():
-    provider = config["reranker"]["provider"]
-    model = config["reranker"]["model"]
-    if provider == "fastembed":
-        from fastembed import FastEmbeddings
-        return FastEmbeddings(
-            model=model
-        )
-    else:
-        raise ValueError(f"Unknown reranker provider: {provider}")
+    # ── Redis ────────────────────────────────────────────────
+    redis_url: str = "redis://redis:6379/0"        # broker Celery + sessioni
+    redis_cache_url: str = "redis://redis:6379/1"  # cache RAG separata
+    redis_password: str = ""
+
+    # ── Retrieval ────────────────────────────────────────────
+    retriever_search_type: str = "hybrid"
+    retriever_strategy: str = "mmr"
+    retriever_top_k: int = 20
+    retriever_mmr_lambda: float = 0.5
+    retriever_auto_filter: bool = False
+
+    reranker_enabled: bool = True
+    reranker_model: str = "BAAI/bge-reranker-base"
+    reranker_top_k: int = 5
+    reranker_initial_k: int = 20
+
+    # ── Ingestion ────────────────────────────────────────────
+    ingestion_prefer_docling: bool = True
+    ingestion_extract_tables: bool = True
+    ingestion_chunk_size: int = 1000
+    ingestion_chunk_overlap: int = 200
+    ingestion_chunk_strategy: str = "markdown"
+    ingestion_max_file_mb: int = 100
+
+    # ── Memory ───────────────────────────────────────────────
+    memory_short_term_turns: int = 10
+    memory_long_term_enabled: bool = False
+    memory_session_ttl_hours: int = 24
+
+    # ── Cache ────────────────────────────────────────────────
+    cache_query_ttl_seconds: int = 3600
+    cache_session_ttl_seconds: int = 86400
+
+    # ── Security ─────────────────────────────────────────────
+    jwt_secret_key: str = Field(default="change-me-in-production-min-32-chars")
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60
+    api_key_length: int = 32
+    password_min_length: int = 12
+
+    # ── Rate limiting ────────────────────────────────────────
+    rate_limit_requests_per_minute: int = 60
+    rate_limit_tokens_per_day: int = 100_000
+
+    # ── Observability ────────────────────────────────────────
+    langsmith_enabled: bool = False
+    langsmith_api_key: str = ""
+    langsmith_project: str = "rag-enterprise-legal"
+    langsmith_endpoint: str = "https://eu.api.smith.langchain.com"
+    langchain_tracing_v2: bool = False
+    opentelemetry_enabled: bool = False
+
+    # ── Logging ──────────────────────────────────────────────
+    log_level: str = "INFO"
+    log_console_output: bool = True
+    log_colored: bool = True
+    log_json_output: bool = False
+
+    # ── Web search ───────────────────────────────────────────
+    web_search_enabled: bool = False
+    web_search_provider: str = "tavily"
+    tavily_api_key: str = ""
+
+    # ── Celery ───────────────────────────────────────────────
+    celery_broker_url: str = "redis://redis:6379/0"
+    celery_result_backend: str = "redis://redis:6379/0"
+
+    # ── External providers ───────────────────────────────────
+    openai_api_key: str = ""
+    google_api_key: str = ""
+    ollama_api_key: str = ""
+
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def validate_jwt_secret(cls, v: str) -> str:
+        if v == "change-me-in-production-min-32-chars":
+            return v  # ok in dev
+        if len(v) < 32:
+            raise ValueError("JWT_SECRET_KEY deve essere almeno 32 caratteri")
+        return v
+
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v: str) -> str:
+        allowed = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        v = v.upper()
+        if v not in allowed:
+            raise ValueError(f"log_level deve essere uno di {allowed}")
+        return v
 
 
-#ora in v1config.yaml puoi cambiare 'provider' e 'model' come vuoi ( e.g. openai  e gpt-4.1-mini) (dentro il config.yaml) e quindi automaticamente verranno scaricati/settati auto in questo file.  poi in fies target fai semplicemente  llm = get_llm()  
+@lru_cache(maxsize=1)
+def get_settings() -> AppSettings:
+    """
+    Ritorna l'istanza singleton di AppSettings.
+    @lru_cache garantisce che venga creata una sola volta per tutto il processo.
+    Usare sempre questa funzione, mai AppSettings() direttamente.
+
+    Uso:
+        from app.core.settings import get_settings
+        settings = get_settings()
+        print(settings.llm_model)
+    """
+    # Applica override da config.yaml prima di creare l'istanza
+    _apply_yaml_overrides()
+    return AppSettings()
+
+
+def _apply_yaml_overrides() -> None:
+    """
+    Legge config.yaml e imposta i valori come variabili d'ambiente
+    SOLO se non sono già impostate (le env var hanno priorità).
+    Questo permette a config.yaml di fungere da file di default strutturato.
+    """
+    cfg = _load_yaml()
+    if not cfg:
+        return
+
+    # Mapping yaml path → nome variabile d'ambiente
+    mappings: list[tuple[str, str]] = [
+        # (path nel yaml separato da '.', nome env var)
+        ("llm.provider",            "LLM_PROVIDER"),
+        ("llm.model",               "LLM_MODEL"),
+        ("llm.base_url",            "LLM_BASE_URL"),
+        ("llm.temperature",         "LLM_TEMPERATURE"),
+        ("llm.max_tokens",          "LLM_MAX_TOKENS"),
+        ("llm.timeout",             "LLM_TIMEOUT"),
+        ("llm.num_ctx",             "LLM_NUM_CTX"),
+        ("embeddings.provider",     "EMBEDDINGS_PROVIDER"),
+        ("embeddings.model",        "EMBEDDINGS_MODEL"),
+        ("embeddings.batch_size",   "EMBEDDINGS_BATCH_SIZE"),
+        ("embeddings.cache_dir",    "EMBEDDINGS_CACHE_DIR"),
+        ("vectorstore.url",         "QDRANT_URL"),
+        ("vectorstore.collection_name", "QDRANT_COLLECTION_NAME"),
+        ("vectorstore.use_sparse",  "QDRANT_USE_SPARSE"),
+        ("retriever.top_k",         "RETRIEVER_TOP_K"),
+        ("retriever.search_type",   "RETRIEVER_SEARCH_TYPE"),
+        ("reranker.enabled",        "RERANKER_ENABLED"),
+        ("reranker.top_k",          "RERANKER_TOP_K"),
+        ("logging.level",           "LOG_LEVEL"),
+        ("logging.json_output",     "LOG_JSON_OUTPUT"),
+        ("observability.langsmith_enabled", "LANGSMITH_ENABLED"),
+        ("memory.short_term_turns", "MEMORY_SHORT_TERM_TURNS"),
+        ("memory.long_term_enabled","MEMORY_LONG_TERM_ENABLED"),
+        ("cache.query_ttl_seconds", "CACHE_QUERY_TTL_SECONDS"),
+    ]
+
+    def _get_nested(d: dict, path: str):
+        """Naviga un dizionario annidato tramite path 'a.b.c'."""
+        keys = path.split(".")
+        for k in keys:
+            if not isinstance(d, dict) or k not in d:
+                return None
+            d = d[k]
+        return d
+
+    for yaml_path, env_key in mappings:
+        # Non sovrascrive se già impostato come variabile d'ambiente
+        if os.environ.get(env_key) is None:
+            value = _get_nested(cfg, yaml_path)
+            if value is not None:
+                os.environ[env_key] = str(value)
+
+
+# Istanza globale — importa questa nei moduli che ne hanno bisogno
+settings = get_settings()
+
+
+
