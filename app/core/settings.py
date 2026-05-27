@@ -8,34 +8,28 @@
 # =============================================================
 
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
-import os
-from functools import lru_cache
-from pathlib import Path
+import os  #x variabili d'ambiente
+from functools import lru_cache   #@lru_cache(maxsize=1)
+from pathlib import Path  #molto meglio di os.path, supporta operazioni più complesse sui path in modo più intuitivo
 from typing import Literal  #x typing python, server per dire che una var puo essere solo di valori specificati e.g.Literal["development", "staging", "production"] = "development"
+import yaml   #x legger file config.yaml
+from pydantic import Field, field_validator   #x validazione campi
+from pydantic_settings import BaseSettings, SettingsConfigDict   #x settings avanzati, BaseSettings legge auto .env file
 
-import yaml  #
-from pydantic import Field, field_validator  #
-from pydantic_settings import BaseSettings, SettingsConfigDict   #
-
-
-# ─── path base progetto ───────────────────────────────────────
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # root progetto
-CONFIG_FILE = BASE_DIR / "config" / "config.yaml"
-
+BASE_DIR = Path(__file__).resolve().parent.parent.parent  #__file__ è il path di this file, resolve() lo risolve in un path assoluto, parent.parent.parent sale di 3 livelli fino alla root del progetto, ok. Quindi BASE_DIR è la root del progetto, da cui poi costruisci il path per config.yaml e .env, ok.
+CONFIG_FILE = BASE_DIR / "config" / "config.yaml"  #str '/project/config/config.yaml'
 
 def _load_yaml() -> dict:
     """Carica config.yaml come dizionario piatto per i default."""
     if not CONFIG_FILE.exists():
-        return {}
+        return {}  #se file non esiste return {}
     with open(CONFIG_FILE, encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+        return yaml.safe_load(f) or {}   #safe_load evita esecuzione codice malevolo YAML.
+    #trasforma file config.yaml ->dict python, altrimenti {} se il file è vuoto
 
-
-# ─── sotto-modelli per sezioni yaml ───────────────────────────
-
+#models x the yaml section del tuo file originale config.yaml
 class LLMSettings:
-    pass  # valori letti direttamente in Settings
-
+    pass  #valori letti direttamente in Settings
 
 class AppSettings(BaseSettings):
     """
@@ -104,12 +98,10 @@ class AppSettings(BaseSettings):
             f"&Encrypt=yes"
         )
 
-    # ── Redis ────────────────────────────────────────────────
     redis_url: str = "redis://redis:6379/0"        # broker Celery + sessioni
     redis_cache_url: str = "redis://redis:6379/1"  # cache RAG separata
     redis_password: str = ""
 
-    # ── Retrieval ────────────────────────────────────────────
     retriever_search_type: str = "hybrid"
     retriever_strategy: str = "mmr"
     retriever_top_k: int = 20
@@ -121,7 +113,6 @@ class AppSettings(BaseSettings):
     reranker_top_k: int = 5
     reranker_initial_k: int = 20
 
-    # ── Ingestion ────────────────────────────────────────────
     ingestion_prefer_docling: bool = True
     ingestion_extract_tables: bool = True
     ingestion_chunk_size: int = 1000
@@ -129,16 +120,13 @@ class AppSettings(BaseSettings):
     ingestion_chunk_strategy: str = "markdown"
     ingestion_max_file_mb: int = 100
 
-    # ── Memory ───────────────────────────────────────────────
     memory_short_term_turns: int = 10
     memory_long_term_enabled: bool = False
     memory_session_ttl_hours: int = 24
 
-    # ── Cache ────────────────────────────────────────────────
     cache_query_ttl_seconds: int = 3600
     cache_session_ttl_seconds: int = 86400
 
-    # ── Security ─────────────────────────────────────────────
     jwt_secret_key: str = Field(default="change-me-in-production-min-32-chars")
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
