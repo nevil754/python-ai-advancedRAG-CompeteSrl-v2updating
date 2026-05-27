@@ -30,9 +30,7 @@ class LLMSettings:
 
 class AppSettings(BaseSettings):
     """
-    Configurazione principale dell'applicazione.
-    Ogni campo può essere sovrascritto da variabile d'ambiente con lo
-    stesso nome (case-insensitive). Es: APP_ENVIRONMENT=production
+    Ogni campo può essere sovrascritto uso case-insesitive
     """
 
     model_config = SettingsConfigDict(   #config pydantic settings

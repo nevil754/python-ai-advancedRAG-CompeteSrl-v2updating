@@ -81,7 +81,6 @@ def create_app() -> FastAPI:  #🔥app factory
     # app.include_router(jobs_router, prefix="/api/v1")
     return app
 
-
 async def _check_services() -> None:  #function health x startup
     from app.core.redis_client import TenantRedis    #ur custom
     from app.db.sqlserver import TenantDB    #ur custom
@@ -103,7 +102,6 @@ async def _check_services() -> None:  #function health x startup
     except Exception as e:
         logger.warning(f"Qdrant non raggiungibile all'avvio: {e}")
 
-
 async def _preload_models() -> None:
     try:
         import asyncio  #x use aync and await
@@ -119,3 +117,5 @@ async def _preload_models() -> None:
         logger.warning(f"Pre-caricamento modelli fallito: {e}")
 
 app = create_app()  #uvicorn usa questa istanza
+
+
