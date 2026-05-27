@@ -82,6 +82,7 @@ web_search:  #web retrieval esterno
   max_results: 5   #numero risultati search
 
   
+  
 logging: 
   level: "INFO"    #DEBUG | INFO | WARNING | ERROR
   console_output: true  #output log su console

@@ -38,22 +38,20 @@ class AppSettings(BaseSettings):
     stesso nome (case-insensitive). Es: APP_ENVIRONMENT=production
     """
 
-    model_config = SettingsConfigDict(
+    model_config = SettingsConfigDict(   #config pydantic settings
         env_file=str(BASE_DIR / ".env"),
-        env_file_encoding="utf-8",
+        env_file_encoding="utf-8",  #encoding file
         case_sensitive=False,
-        extra="ignore",           # ignora variabili env non dichiarate
-        populate_by_name=True,
+        extra="ignore",           # 🔥🔥ignora variabili env sconosciute, ALTRIMENTI CRASHA!!
+        populate_by_name=True,   #permette di popolare i campi anche usando il nome del campo invece del nome della variabile d'ambiente e.g. llm_provider invece di LLM_PROVIDER, utile se vuoi usare nomi più leggibili nel codice (non vuoi che siano tutti sempre in maiuscolo)
     )
 
-    # ── app ──────────────────────────────────────────────────
-    app_name: str = "RAG Enterprise Legal"
+    app_name: str = "RAG Enterprise Legal"  #here il value è quello di default, se in .env esiste allora vince quello di .env !!
     app_version: str = "0.1.0"
     app_debug: bool = False
     app_environment: Literal["development", "staging", "production"] = "development"
 
-    # ── LLM ──────────────────────────────────────────────────
-    llm_provider: str = "ollama"          # ollama | openai | google
+    llm_provider: str = "ollama"     #ollama | openai | google
     llm_model: str = "llama3.1"
     llm_base_url: str = "http://ollama:11434"
     llm_api_key: str = ""
@@ -63,14 +61,12 @@ class AppSettings(BaseSettings):
     llm_streaming: bool = True
     llm_num_ctx: int = 2048               # context window Ollama
 
-    # ── Embeddings ───────────────────────────────────────────
     embeddings_provider: str = "fastembed"
     embeddings_model: str = "BAAI/BGE-M3"
     embeddings_base_url: str = ""
     embeddings_batch_size: int = 64
     embeddings_cache_dir: str = "/app/.cache/embeddings"
 
-    # ── Vector store (Qdrant) ────────────────────────────────
     qdrant_url: str = "http://qdrant:6333"
     qdrant_api_key: str = ""
     qdrant_collection_name: str = "collection-rag-v2"
@@ -79,14 +75,13 @@ class AppSettings(BaseSettings):
     qdrant_distance: str = "Cosine"
     qdrant_on_disk_payload: bool = True
 
-    # ── SQL Server ───────────────────────────────────────────
     sqlserver_host: str = "sqlserver"
     sqlserver_port: int = 1433
     sqlserver_db: str = "RAGChat"
     sqlserver_password: str = ""
     sqlserver_driver: str = "ODBC Driver 18 for SQL Server"
 
-    @property
+    @property   #property dinamica 
     def sqlserver_url(self) -> str:
         """Connection string SQLAlchemy per SQL Server via pyodbc."""
         return (
@@ -133,11 +128,9 @@ class AppSettings(BaseSettings):
     api_key_length: int = 32
     password_min_length: int = 12
 
-    # ── Rate limiting ────────────────────────────────────────
     rate_limit_requests_per_minute: int = 60
     rate_limit_tokens_per_day: int = 100_000
 
-    # ── Observability ────────────────────────────────────────
     langsmith_enabled: bool = False
     langsmith_api_key: str = ""
     langsmith_project: str = "rag-enterprise-legal"
