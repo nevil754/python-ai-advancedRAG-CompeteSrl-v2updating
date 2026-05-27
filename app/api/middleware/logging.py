@@ -18,16 +18,17 @@ class LoggingMiddleware(BaseHTTPMiddleware):   #custom middleware
     - status code risposta
     - durata in millisecondi
     - tenant_id e user_id (se autenticato)
-    Il request_id viene anche aggiunto all'header di risposta
+    Il request_id viene poi anche aggiunto all'header di risposta
     X-Request-ID così il client può correlare richiesta e log.
     """
+
     SKIP_PATHS = {"/health", "/ready", "/metrics"}  #non loggare questi paths, 
 
     async def dispatch(self, request: Request, call_next) -> Response:   #called ad ogni req
         request_id = str(uuid.uuid4())[:8]  #8 char ok bastano per leggibilità
         request.state.request_id = request_id
         if request.url.path in self.SKIP_PATHS:
-            return await call_next(request)
+            return await call_next(request)  #jump to the next
         start = time.perf_counter()  #TIMER AD ALTA PRECISIONE
         with logger.contextualize(   #aggiunge contesto automatico a tutti i logs
             request_id=request_id,
