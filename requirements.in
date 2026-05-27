@@ -76,7 +76,7 @@ passlib[bcrypt]==1.7.4            #password hashing
 cryptography==43.0.3  #primitive crittografiche.
 
 ##logging / observability
-loguru==0.7.3  #logging avanzato python, mooolto piu avanzato di semplice 'import logging', in un sistema rag/ai devi poter vedere tutto!
+loguru==0.7.3  #LOGGING avanzato python, mooolto piu avanzato di semplice 'import logging', in un sistema rag/ai devi poter vedere tutto!
 langsmith==0.1.147  #tracing/debug/evaluation pipeline LLM.
 opentelemetry-api==1.28.2  #telemetria distribuita, tracciare performance, errori, ect in modo centralizzato
 opentelemetry-sdk==1.28.2  #telemetria distribuita, tracciare performance, errori, ect in modo centralizzato

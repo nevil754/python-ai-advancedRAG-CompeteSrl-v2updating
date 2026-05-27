@@ -64,8 +64,11 @@ vectorstore:
 
 memory:  #memoria conversazionale
   short_term_turns: 10       #ultimi N messaggi mantenuti in Redis
-  long_term_enabled: false   #memory persistente conversazioni. summary in SQL — attivare in v2
+  long_term_enabled: false   #memory persistente conversazioni. summary in SQL — attivare in v2 (nella seconda versione, prima deve funzionare tutto in v1)
   session_ttl_hours: 24      #scadenza sessione
+  #fact_extraction_enabled: true  # ← attiva estrazione fatti   x temporal-memory imitando Zep plugin, lo farai in v2
+  #semantic_memory_enabled: true  # ← attiva ricerca semantica  x temporal-memory (anche di anni) imitando Zep plugin, lo farai in v2
+  #facts_collection: "memory"     # nome collection Qdrant per i ricordi  x temporal-memory (anche di anni) imitando Zep plugin, lo farai in v2
 
 cache:
   query_ttl_seconds: 3600         #cache query rag, 1h — risposta RAG per la stessa query

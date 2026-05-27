@@ -128,4 +128,13 @@ flow:
 //quindi Celery entra in gioco se la query triggera un'azione lenta e.g.upload 200docs / web scapring aggressivo (ricordati che con Tavily hai 1k req/mese free, quindi va bene solo x development!! )
 
 
+-Memoria Temporale Graph(anche di anni) per agents:
+🔥--ZEP(https://github.com/getzep/zep?utm_source=chatgpt.com): self-hosted, memoria persistente temporal resoning knowledge graph dinamico context retrieval ultraveloce, e.g.2024 Nelvison preferisce Nvidia 2026 Nelvison preferisce SpaceX quindi il system sa cosa era vero quando è cambiato ed cosa oggi è vero! GOOD GOOD.
+--Mem0: memory abstraction layer minimal molto piu semplice di Zep, ok production ready.
+--MemGPT(old) / Letta(new version): non solo save memory ma anche costruisce agents stateful permanenti, lavora quasi come ram o hard disk di un pc, è molto piu agentico OVERKILL per te now. 
+//CMNQ PUOI FARE MEGLIO TEMPORAL MEMORY CUSTOMIZZATO USANDO redis-qdrant-sqlserver-langchain-langgraph
+
+memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovresti aggiungere anche 'summary' 'conversation_summaries' 'user_facts', e in app/rag/memory/long_term.py file dovresti aggiungere methodo summarize_conversation() e anche per estrazione extract_facts_from_conversation() e poi nel app/rag/memory/context_builder.py in build_context() assembli TUTTO le info (anche quelle di anni fa) prima di passare all'LLM. abilita anche memroy nel config.yaml.
+
+
 
