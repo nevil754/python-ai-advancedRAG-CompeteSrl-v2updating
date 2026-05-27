@@ -65,13 +65,11 @@ async def login(request: LoginRequest) -> TokenResponse:
             {"slug": request.tenant_slug}
         )
         tenant = tenant_row.fetchone()
-
     if not tenant:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenziali non valide",
         )
-
     if not tenant.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -205,3 +203,5 @@ async def logout(tenant: CurrentTenant) -> dict:
             break
     logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)
     return {"message": "Logout effettuato", "sessions_deleted": deleted}
+
+
