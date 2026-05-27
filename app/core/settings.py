@@ -64,10 +64,10 @@ class AppSettings(BaseSettings):
     embeddings_batch_size: int = 64
     embeddings_cache_dir: str = "/app/.cache/embeddings"
 
-    vectorstore_url: str = "http://qdrant:6333"
-    vectorstore_api_key: str = ""
-    vectorstore_collection_name: str = "collection-rag-v2"
-    vectorstore_use_sparse: bool = True
+    qdrant_url: str = "http://qdrant:6333"
+    qdrant_api_key: str = ""
+    qdrant_collection_name: str = "collection-rag-v2"
+    qdrant_use_sparse: bool = True
     qdrant_force_recreate: bool = False
     qdrant_distance: str = "Cosine"
     qdrant_on_disk_payload: bool = True
@@ -233,12 +233,11 @@ def _apply_yaml_overrides() -> None:
             d = d[k]
         return d
 
-    for yaml_path, env_key in mappings:
+    for yaml_path, env_key in mappings:   #🔥da priorita alle var in .env se trova trova match
         if os.environ.get(env_key) is None:   #non sovrascrive se gia impostato come variabile d'ambiente
             value = _get_nested(cfg, yaml_path)
             if value is not None:
                 os.environ[env_key] = str(value)
-
 
 settings = get_settings()   #istanza globale, importa questa nei modules che lo vogliono
 
