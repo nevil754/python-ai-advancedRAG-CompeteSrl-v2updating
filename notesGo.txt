@@ -136,5 +136,7 @@ flow:
 
 memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovresti aggiungere anche 'summary' 'conversation_summaries' 'user_facts', e in app/rag/memory/long_term.py file dovresti aggiungere methodo summarize_conversation() e anche per estrazione extract_facts_from_conversation() e poi nel app/rag/memory/context_builder.py in build_context() assembli TUTTO le info (anche quelle di anni fa) prima di passare all'LLM. abilita anche memroy nel config.yaml.
 
+########
 
+-yield: turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and generator funct per return data non usano 'return' ma usano 'yield'.
 
