@@ -55,7 +55,7 @@ metadata:
   config_file: "/app/config/metadata.yaml"
 
 vectorstore:
-  url: "" #"http://localhost:6333"  #porta
+  url: "" "http://qdrant:6333"  #porta
   api_key: "${QDRANT_API_KEY}"    #chiave auth, anche ok vuoto in dev, ma ovviamente 🔥obbligatorio in prod
   collection_name: "collection-competeSrl-RAGv2"
   use_sparse: true
@@ -82,7 +82,7 @@ web_search:  #web retrieval esterno
   max_results: 5   #numero risultati search
 
   
-  
+
 logging: 
   level: "INFO"    #DEBUG | INFO | WARNING | ERROR
   console_output: true  #output log su console

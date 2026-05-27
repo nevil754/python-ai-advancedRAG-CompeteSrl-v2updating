@@ -200,7 +200,7 @@ services:  #here servizi da avviare
     #./docker/sqlserver/init.sql  SCRIPT SQL INIZIALE!!, solo read only
     #./docker/sqlserver/entrypoint.sh  SCRIPT ENTRYPOINT custom, solo read only
     environment:
-      SA_PASSWORD: "${SQLSERVER_PASSWORD}"
+      SA_PASSWORD: "${SQLSERVER_PASSWORD}"  #🔥psw SqlServer, SA=System Admin. SA_PASSWORD è proprio il nome che Microsoft richiede nell'immagine
       ACCEPT_EULA: "Y"   #accetta licenza Microsoft, accettazione EULA obbligatoria per SQL Server, senza questa variabile SQL Server non parte!!
       MSSQL_PID: "Developer"    #Edition gratuita dev. ⚠️⚠️"Standard"/"Enterprise" in prod
       MSSQL_COLLATION: "Latin1_General_100_CI_AS_SC_UTF8"  #configurazione encoding/case sensitivity, x UTF8 italiano unicode
