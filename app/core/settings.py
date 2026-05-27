@@ -1,15 +1,11 @@
-# =============================================================
-# app/core/settings.py
-# Unica fonte di verità per tutta la configurazione.
-# Legge in questo ordine (priorità crescente):
-#   1. config.yaml  — valori di default strutturati
-#   2. .env         — sovrascrive con valori ambiente
-#   3. variabili d'ambiente OS — sovrascrivono tutto
-# =============================================================
+# UNICA fonte di verità per tutta la CONFIGURAZIONE (mischi insieme vars di config.yaml + .env ) 🔥
+# ˅  config.yaml 
+# ˅  .env    sovrascrivono config.yaml se trova match
+# ˅  env vars OS   sovrascrvono il result finora, sempre se trovano match
 
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 import os  #x variabili d'ambiente
-from functools import lru_cache   #@lru_cache(maxsize=1)
+from functools import lru_cache   #@lru_cache(maxsize=1), serve per cache automatica python, quando questa funzione viene chiamata, la esegue UNA SOLA VOLTA e poi ricorda il risultato
 from pathlib import Path  #molto meglio di os.path, supporta operazioni più complesse sui path in modo più intuitivo
 from typing import Literal  #x typing python, server per dire che una var puo essere solo di valori specificati e.g.Literal["development", "staging", "production"] = "development"
 import yaml   #x legger file config.yaml
@@ -27,7 +23,8 @@ def _load_yaml() -> dict:
         return yaml.safe_load(f) or {}   #safe_load evita esecuzione codice malevolo YAML.
     #trasforma file config.yaml ->dict python, altrimenti {} se il file è vuoto
 
-#models x the yaml section del tuo file originale config.yaml
+#classes x the yaml sections del tuo file originale config.yaml
+
 class LLMSettings:
     pass  #valori letti direttamente in Settings
 
@@ -81,14 +78,14 @@ class AppSettings(BaseSettings):
     sqlserver_password: str = ""
     sqlserver_driver: str = "ODBC Driver 18 for SQL Server"
 
-    @property   #property dinamica 
+    @property   #trasforma function -> proprieta leggibile come attributo (quindi ora fai settings.sqlserver_url come se fosse una var normale)
     def sqlserver_url(self) -> str:
-        """Connection string SQLAlchemy per SQL Server via pyodbc."""
-        return (
-            f"mssql+pyodbc://SA:{self.sqlserver_password}@"
-            f"{self.sqlserver_host}:{self.sqlserver_port}/"
+        """connection string che verra usata da SQLAlchemy per SQL Server via pyodbc"""
+        return (  #costruzione della stringa finale
+            f"mssql+pyodbc://SA:{self.sqlserver_password}@"  #psw SA(System Admin)
+            f"{self.sqlserver_host}:{self.sqlserver_port}/"  #host e port
             f"{self.sqlserver_db}"
-            f"?driver={self.sqlserver_driver.replace(' ', '+')}"
+            f"?driver={self.sqlserver_driver.replace(' ', '+')}"   #sostituisce spazi con +, necessario per pyodbc
             f"&TrustServerCertificate=yes"
             f"&Encrypt=yes"
         )
@@ -122,7 +119,7 @@ class AppSettings(BaseSettings):
     cache_query_ttl_seconds: int = 3600
     cache_session_ttl_seconds: int = 86400
 
-    jwt_secret_key: str = Field(default="change-me-in-production-min-32-chars")
+    jwt_secret_key: str = Field(default="change-me-in-production-min-32-chars")   #chiave fake x development
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
     api_key_length: int = 32
@@ -154,18 +151,19 @@ class AppSettings(BaseSettings):
     google_api_key: str = ""
     ollama_api_key: str = ""
 
-    @field_validator("jwt_secret_key")
-    @classmethod
-    def validate_jwt_secret(cls, v: str) -> str:
-        if v == "change-me-in-production-min-32-chars":
-            return v  # ok in dev
+    #quando fai settings = AppSettings(), 🔥pydantic fa legge .env -> legge env var -> crea obj settings -> valida tutti i campi -> ESEGUE I VALIDATORS -> solo ora run the app
+    @field_validator("jwt_secret_key")   #custom validator, check il filed jwt_secret_key
+    @classmethod  #dice a python che questa funzione appartiene alla classe e NON all'istanza. per validator pydantic è lo standart.
+    def validate_jwt_secret(cls, v: str) -> str:   #cls è la classe corrente, v è il valore del campo jwt_secret_key
+        if v == "change-me-in-production-min-32-chars":   #chiave fake di development 
+            return v  #ok in dev
         if len(v) < 32:
             raise ValueError("JWT_SECRET_KEY deve essere almeno 32 caratteri")
         return v
 
-    @field_validator("log_level")
+    @field_validator("log_level")   #custom validator, check il filed log_level
     @classmethod
-    def validate_log_level(cls, v: str) -> str:
+    def validate_log_level(cls, v: str) -> str:   #cls è la classe corrente, v è il valore del campo log_level
         allowed = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         v = v.upper()
         if v not in allowed:
@@ -173,14 +171,11 @@ class AppSettings(BaseSettings):
         return v
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=1)  #garantisce che venga creata una sola volta, e.g. la prima volta settings = get_settings() viene eseguito compeltamente, mentre la seconda volte che viene chiamato settings = get_settings() allora sfrutta la cache e return l'obj gia esistente
 def get_settings() -> AppSettings:
     """
-    Ritorna l'istanza singleton di AppSettings.
-    @lru_cache garantisce che venga creata una sola volta per tutto il processo.
-    Usare sempre questa funzione, mai AppSettings() direttamente.
-
-    Uso:
+    Usare sempre questa funzione, ⚠️ mai AppSettings() direttamente.
+    e.g. uso:
         from app.core.settings import get_settings
         settings = get_settings()
         print(settings.llm_model)
@@ -193,15 +188,15 @@ def get_settings() -> AppSettings:
 def _apply_yaml_overrides() -> None:
     """
     Legge config.yaml e imposta i valori come variabili d'ambiente
-    SOLO se non sono già impostate (le env var hanno priorità).
-    Questo permette a config.yaml di fungere da file di default strutturato.
+    SOLO se non sono già impostate (le env var hanno priorità)
+    Questo permette a config.yaml di fungere da file di default strutturato
     """
     cfg = _load_yaml()
     if not cfg:
         return
 
     # Mapping yaml path → nome variabile d'ambiente
-    mappings: list[tuple[str, str]] = [
+    mappings: list[tuple[str, str]] = [  #lista di coppie(cioe tuple)
         # (path nel yaml separato da '.', nome env var)
         ("llm.provider",            "LLM_PROVIDER"),
         ("llm.model",               "LLM_MODEL"),
@@ -239,15 +234,13 @@ def _apply_yaml_overrides() -> None:
         return d
 
     for yaml_path, env_key in mappings:
-        # Non sovrascrive se già impostato come variabile d'ambiente
-        if os.environ.get(env_key) is None:
+        if os.environ.get(env_key) is None:   #non sovrascrive se gia impostato come variabile d'ambiente
             value = _get_nested(cfg, yaml_path)
             if value is not None:
                 os.environ[env_key] = str(value)
 
 
-# Istanza globale — importa questa nei moduli che ne hanno bisogno
-settings = get_settings()
+settings = get_settings()   #istanza globale, importa questa nei modules che lo vogliono
 
 
 
