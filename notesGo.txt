@@ -161,6 +161,8 @@ logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)  #log w 
 #    "<cyan>{name}</cyan>:<cyan>{line}</cyan> | "
 #    "<level>{message}</level>"
 #) quindi non hai {extra}, quindi in console non renderizzerai anche e.g. user_id e sessions_deleted, ma questi SERVONO CMNQ NEL RECORD LOGURU xk e.g. Grafana/OpenTelemetry/ELK li usano!!!
+- @lru_cache(maxsize=1)  trasforma la functione in singleton, quindi la seconda volta se l'istanza è cia in cache allora ritornalo al chiamante senza doverlo ricaricare.
+- 
 
 
 
