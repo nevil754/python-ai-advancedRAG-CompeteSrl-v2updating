@@ -4,29 +4,28 @@
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from datetime import timedelta
 from typing import Annotated   #per type hint più chiari, es. Annotated[]
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from loguru import logger   #plugin x logging avanzato
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 
-from app.api.deps import CurrentTenant, get_current_tenant
+from app.api.deps import CurrentTenant, get_current_tenant   #ur custom
 from app.core.security import (
     create_access_token,
     hash_password,
     verify_password,
-)
-from app.core.settings import get_settings
-from app.db.sqlserver import tenant_db
+)   #ur custom
+from app.core.settings import get_settings   #ur custom
+from app.db.sqlserver import tenant_db  #ur custom
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])   #tags serve x Swagger ui per grouping all routers x auth sotto tag "auth"
 settings = get_settings()
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    expires_in: int                  # secondi
+    expires_in: int                  #in secs
     user_id: str
     user_role: str
     tenant_slug: str
@@ -34,7 +33,7 @@ class TokenResponse(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
-    tenant_slug: str                 # il tenant si identifica con il suo slug
+    tenant_slug: str                 #tenant si identifica con il suo slug!
 
 class UserProfile(BaseModel):
     user_id: str
@@ -48,23 +47,23 @@ class UserProfile(BaseModel):
 async def login(request: LoginRequest) -> TokenResponse:
     """
     Autentica un utente e ritorna un JWT.
-    Flow:
+    flow:
     1. Trova il tenant tramite slug in shared.tenants
     2. Cerca l'utente in tenant_{slug}.users per email
     3. Verifica la password con bcrypt
     4. Genera JWT con tenant_id, user_id, role nel payload
     """
-    # 1. Trova il tenant
+    #1.trova il tenant
     async with tenant_db._async_factory() as session:
         tenant_row = await session.execute(
             text("""
                 SELECT id, slug, is_active
                 FROM shared.tenants
                 WHERE slug = :slug
-            """),
-            {"slug": request.tenant_slug}
+            """),   #cerca tenant globale per slug, se non esiste o è disabilitato blocca subito
+            {"slug": request.tenant_slug}  #sql parameter binding, 🔥🔥EVITA SQL INJECTION!!
         )
-        tenant = tenant_row.fetchone()
+        tenant = tenant_row.fetchone()  #prende la prima riga
     if not tenant:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -75,33 +74,29 @@ async def login(request: LoginRequest) -> TokenResponse:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account tenant disabilitato",
         )
-
-    # 2. Cerca l'utente nello schema del tenant
-    async with tenant_db.aget_session(request.tenant_slug) as session:
+    #2.cerca l'utente nello schema del tenant
+    async with tenant_db.aget_session(request.tenant_slug) as session:  #ENTRI NEL TENANT target
         user_row = await session.execute(
             text("""
                 SELECT id, email, full_name, password_hash, role, is_active
                 FROM users
                 WHERE email = :email
-            """),
+            """),  #non specifichi il tenant xk sei gia dentro!, cerca user (nel tenant target) per email
             {"email": request.email}
         )
         user = user_row.fetchone()
-
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenziali non valide",
         )
-
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account utente disabilitato",
         )
-
-    # 3. Verifica password
-    if not verify_password(request.password, user.password_hash):
+    #3. Verifica password
+    if not verify_password(request.password, user.password_hash):  #check se request.password == user.password_hash
         logger.warning(
             "Tentativo login fallito",
             email=request.email,
@@ -111,25 +106,21 @@ async def login(request: LoginRequest) -> TokenResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenziali non valide",
         )
-
-    # 4. Aggiorna last_login
+    #4. Aggiorna last_login
     async with tenant_db.aget_session(request.tenant_slug) as session:
         await session.execute(
-            text("UPDATE users SET last_login = GETUTCDATE() WHERE id = :id"),
-            {"id": user.id}
+            text("UPDATE users SET last_login = GETUTCDATE() WHERE id = :id"),  #update ora ultimo login
+            {"id": user.id}   #paramenter binding x evitare sql injection
         )
-
-    # 5. Genera JWT
-    token = create_access_token(data={
+    #5. Genera JWT
+    token = create_access_token(data={  #crea token jwt con payload
         "sub": str(user.id),
         "email": user.email,
         "role": user.role,
         "tenant_id": str(tenant.id),
         "tenant_slug": tenant.slug,
     })
-
     logger.info("Login effettuato", user_id=str(user.id), tenant=request.tenant_slug)
-
     return TokenResponse(
         access_token=token,
         expires_in=settings.jwt_expire_minutes * 60,
@@ -137,7 +128,6 @@ async def login(request: LoginRequest) -> TokenResponse:
         user_role=user.role,
         tenant_slug=tenant.slug,
     )
-
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(tenant: CurrentTenant) -> TokenResponse:
@@ -185,19 +175,19 @@ async def logout(tenant: CurrentTenant) -> dict:
     Logout — invalida le sessioni Redis dell'utente.
     Il JWT rimane tecnicamente valido fino a scadenza
     (per invalidarlo completamente servirebbe una blacklist in Redis —
-    da implementare in v2 se necessario).
+    da implementare in v2 se vuoi 🔥).
     """
     from app.core.redis_client import TenantRedis
-    redis = TenantRedis(tenant_id=tenant.tenant_id)
+    redis = TenantRedis(tenant_id=tenant.tenant_id)  #cliente redis tenant-scoped
     # Cancella tutte le sessioni chat dell'utente
     pattern = f"tenant:{tenant.tenant_id}:session:*"
     client = redis._redis
     cursor = 0
     deleted = 0
     while True:
-        cursor, keys = await client.scan(cursor=cursor, match=pattern, count=50)
+        cursor, keys = await client.scan(cursor=cursor, match=pattern, count=50)  #redis scan incrementale 
         if keys:
-            await client.delete(*keys)
+            await client.delete(*keys)   #cancella batch chiavi!!
             deleted += len(keys)
         if cursor == 0:
             break
