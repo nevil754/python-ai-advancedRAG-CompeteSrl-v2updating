@@ -48,7 +48,7 @@ async def get_current_tenant(
     Iniettata in ogni route protetta con Depends(get_current_tenant).
     Supporta due metodi di autenticazione:
     1. Bearer JWT: Authorization: Bearer <token>
-    2. API Key (PER INTEGRAZIONI ESTERNE):    X-API-Key: rag_xxx...
+    2. API Key (PER INTEGRAZIONI ESTERNE):  X-API-Key: rag_xxx...
     Returns:
         TenantContext con tenant_id, user_id, role, ecc.
     Raises:
@@ -83,7 +83,7 @@ async def _validate_api_key(api_key: str) -> TenantContext | None:
     """
     try:
         key_hash = hash_api_key(api_key)
-        # Cerca la key nel DB shared (non è tenant-specific)
+        #Cerca la key nel DB shared (non è tenant-specific)
         async with tenant_db._async_factory() as session:  #ur custom
             from sqlalchemy import text  #sqlalchemy legge vari tipi di db, ma per query raw serve text() per scrivere query SQL testuali
             result = await session.execute(
@@ -120,12 +120,11 @@ async def _validate_api_key(api_key: str) -> TenantContext | None:
         return None
 
 async def get_db(
-    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
-) -> AsyncGenerator[AsyncSession, None]:
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],  #Annotated blocca il type che puo essere solo di quel tipo, 🔥Depends(...) dice a fastpi di eseguire PRIMA get_current_tenant e poi SOLO DOPO questa funct
+) -> AsyncGenerator[AsyncSession, None]:  #questa funzione async produce oggetti AsyncSession usando yield, guarda ur notes about Yield, vedi che devi return un Generator!
     """
     Ritorna sessione DB già configurata per lo schema del tenant.
     Usata con Depends(get_db) nelle route che accedono al DB.
-
     Esempio:
         @router.get("/documents")
         async def list_documents(db: Annotated[AsyncSession, Depends(get_db)]):

@@ -142,10 +142,10 @@ config.yaml contiene parametri funzionali dell'app e nessun segreto, .env contie
 
 ########
 
--yield: turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and generator funct per return data non usano 'return' ma usano 'yield'.
+-yield: turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and 🔥Generator funct per return data non usano 'return' ma usano 'yield'.
 -@property   #trasforma function -> proprieta leggibile come attributo (quindi ora fai settings.sqlserver_url come se fosse una var normale)
 -SQLAlchemy: puo leggere molti db diversi (SQL Server, PostgreSQL, ect)
-
+-loguru x logs strutturati ottimi x OpenTelemetry/ELK/ect!
 logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)  #log w loguru, che crea record tipo
 # {
 #     "message": "Logout",
