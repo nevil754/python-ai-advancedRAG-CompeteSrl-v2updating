@@ -28,15 +28,14 @@ class TenantMiddleware(BaseHTTPMiddleware):
         if request.url.path in self.PUBLIC_PATHS:  #skip x routes pubbliche
             return await call_next(request)
         # Estrai token dall'header Authorization
-        auth_header = request.headers.get("Authorization")
-        token = extract_bearer_token(auth_header)
-
+        auth_header = request.headers.get("Authorization")  #estrai auth da header 
+        token = extract_bearer_token(auth_header)  #estrai token
         if token:
             payload = decode_access_token(token)
             if payload:
+                #update lo state
                 request.state.tenant_id = payload.get("tenant_id")
                 request.state.tenant_slug = payload.get("tenant_slug")
                 request.state.user_id = payload.get("sub")
                 request.state.user_role = payload.get("role")
-
         return await call_next(request)
