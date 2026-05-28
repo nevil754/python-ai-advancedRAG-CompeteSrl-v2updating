@@ -1,4 +1,3 @@
-# app/api/middleware/tenant.py
 # Middleware che estrae tenant_id dal JWT ad ogni request
 # e lo inietta in request.state per accesso rapido.
 
