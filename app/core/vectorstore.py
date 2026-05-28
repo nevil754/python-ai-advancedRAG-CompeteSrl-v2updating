@@ -2,12 +2,12 @@
 # Ogni tenant ha la sua collection separata in Qdrant.
 
 from __future__ import annotations
-from functools import lru_cache
-from typing import Any
+from functools import lru_cache  
+from typing import Any   #typing generico python
 from loguru import logger
-from qdrant_client import AsyncQdrantClient, QdrantClient
-from qdrant_client.http import models as qmodels
-from qdrant_client.http.exceptions import UnexpectedResponse
+from qdrant_client import AsyncQdrantClient, QdrantClient  #client sincrono easincrono per qdrant
+from qdrant_client.http import models as qmodels  #modelli/schema qdrant
+from qdrant_client.http.exceptions import UnexpectedResponse   #errore qdrant
 
 @lru_cache(maxsize=1)    #decoratore che trasforma la funzione in un singleton, quindi get_qdrant_client() ritorna sempre la stessa istanza di QdrantClient, evitando overhead di connessioni multiple
 def get_qdrant_client() -> QdrantClient:  
@@ -15,17 +15,17 @@ def get_qdrant_client() -> QdrantClient:
     Ritorna il client Qdrant sincrono (singleton).
     Usato nei worker Celery e nei task di ingestion.
     """
-    from app.core.settings import get_settings
+    from app.core.settings import get_settings  #ur custom settings 
     settings = get_settings()
     logger.info("Connessione Qdrant", url=settings.qdrant_url)
-    kwargs: dict[str, Any] = {"url": settings.qdrant_url}
+    kwargs: dict[str, Any] = {"url": settings.qdrant_url}  #costruisce parametri dinamici
     if settings.qdrant_api_key:
         kwargs["api_key"] = settings.qdrant_api_key
     return QdrantClient(**kwargs)
 
 
-@lru_cache(maxsize=1)
-def get_async_qdrant_client() -> AsyncQdrantClient:
+@lru_cache(maxsize=1)  #cache per singleton
+def get_async_qdrant_client() -> AsyncQdrantClient:   #return async qdrant client
     """
     Ritorna il client Qdrant asincrono (singleton).
     Usato nelle route FastAPI per non bloccare l'event loop.
@@ -45,12 +45,12 @@ def get_collection_name(tenant_slug: str) -> str:
         tenant_slug: es. "acme-corp" → "tenant_acme_corp_documents"
     """
     safe_slug = tenant_slug.replace("-", "_").lower()
-    return f"tenant_{safe_slug}_documents"
+    return f"tenant_{safe_slug}_documents"  #slug w '..documents' finale
 
 def get_memory_collection_name(tenant_slug: str) -> str:
     """Collection per la semantic memory (fatti utente estratti da Zep-like layer)."""
     safe_slug = tenant_slug.replace("-", "_").lower()
-    return f"tenant_{safe_slug}_memory"
+    return f"tenant_{safe_slug}_memory"  #slug w '..memory' finale
 
 def ensure_collection(
     tenant_slug: str,
@@ -65,8 +65,8 @@ def ensure_collection(
     Returns:
         Nome della collection creata/esistente
     """
-    from app.core.settings import get_settings
-    from app.core.embeddings import get_embedding_dimension
+    from app.core.settings import get_settings   #ur custom settings
+    from app.core.embeddings import get_embedding_dimension  #ur custom
     settings = get_settings()
     client = get_qdrant_client()
     collection_name = get_collection_name(tenant_slug)
@@ -80,9 +80,7 @@ def ensure_collection(
         client.delete_collection(collection_name)
     except UnexpectedResponse:
         pass  #collection non esiste — la creiamo
-
     dimension = get_embedding_dimension()
-    # Configurazione vettori
     vectors_config: dict[str, Any] = {
         # Vettori densi per semantic search
         "dense": qmodels.VectorParams(
@@ -114,7 +112,7 @@ def ensure_collection(
     client.create_payload_index(
         collection_name=collection_name,
         field_name="tenant_id",
-        field_schema=qmodels.PayloadSchemaType.KEYWORD,
+        field_schema=qmodels.PayloadSchemaType.KEYWORD,  #KEYWORD è una stringa e.g. dell'enum
     )
     client.create_payload_index(
         collection_name=collection_name,

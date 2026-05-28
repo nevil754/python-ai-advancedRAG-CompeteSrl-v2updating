@@ -127,7 +127,6 @@ flow:
 5. quando la risposta è completa, allora aggiorna session Redis - mette risposta in cache - incrementa usage_stats per il billing
 //quindi Celery entra in gioco se la query triggera un'azione lenta e.g.upload 200docs / web scapring aggressivo (ricordati che con Tavily hai 1k req/mese free, quindi va bene solo x development!! )
 
-
 -Memoria Temporale Graph(anche di anni) per agents:
 🔥--ZEP(https://github.com/getzep/zep?utm_source=chatgpt.com): self-hosted, memoria persistente temporal resoning knowledge graph dinamico context retrieval ultraveloce, e.g.2024 Nelvison preferisce Nvidia 2026 Nelvison preferisce SpaceX quindi il system sa cosa era vero quando è cambiato ed cosa oggi è vero! GOOD GOOD.
 --Mem0: memory abstraction layer minimal molto piu semplice di Zep, ok production ready.
