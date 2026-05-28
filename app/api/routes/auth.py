@@ -95,7 +95,7 @@ async def login(request: LoginRequest) -> TokenResponse:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account utente disabilitato",
         )
-    #3. Verifica password
+    #3.verifica password
     if not verify_password(request.password, user.password_hash):  #check se request.password == user.password_hash
         logger.warning(
             "Tentativo login fallito",
@@ -106,13 +106,13 @@ async def login(request: LoginRequest) -> TokenResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenziali non valide",
         )
-    #4. Aggiorna last_login
+    #4.aggiorna last_login
     async with tenant_db.aget_session(request.tenant_slug) as session:
         await session.execute(
             text("UPDATE users SET last_login = GETUTCDATE() WHERE id = :id"),  #update ora ultimo login
             {"id": user.id}   #paramenter binding x evitare sql injection
         )
-    #5. Genera JWT
+    #5.genera JWT
     token = create_access_token(data={  #crea token jwt con payload
         "sub": str(user.id),
         "email": user.email,
@@ -191,7 +191,21 @@ async def logout(tenant: CurrentTenant) -> dict:
             deleted += len(keys)
         if cursor == 0:
             break
-    logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)
+    logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)  #log w loguru, che crea record tipo
+    # {
+    #     "message": "Logout",
+    #     "extra": {
+    #         "user_id": "...",
+    #         "sessions_deleted": 5
+    #     }
+    # }
+    #pero nel tuo observability.py hai
+    #fmt = (
+    #    "<green>{time}</green> | "
+    #    "<level>{level}</level> | "
+    #    "<cyan>{name}</cyan>:<cyan>{line}</cyan> | "
+    #    "<level>{message}</level>"
+    #) quindi non hai {extra}, quindi in console non renderizzerai anche e.g. user_id e sessions_deleted, ma questi SERVONO CMNQ NEL RECORD LOGURU xk e.g. Grafana/OpenTelemetry/ELK li usano!!!
     return {"message": "Logout effettuato", "sessions_deleted": deleted}
 
 

@@ -146,5 +146,23 @@ config.yaml contiene parametri funzionali dell'app e nessun segreto, .env contie
 -@property   #trasforma function -> proprieta leggibile come attributo (quindi ora fai settings.sqlserver_url come se fosse una var normale)
 -SQLAlchemy: puo leggere molti db diversi (SQL Server, PostgreSQL, ect)
 
+logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)  #log w loguru, che crea record tipo
+# {
+#     "message": "Logout",
+#     "extra": {
+#         "user_id": "...",
+#         "sessions_deleted": 5
+#     }
+# }
+#pero nel tuo observability.py hai
+#fmt = (
+#    "<green>{time}</green> | "
+#    "<level>{level}</level> | "
+#    "<cyan>{name}</cyan>:<cyan>{line}</cyan> | "
+#    "<level>{message}</level>"
+#) quindi non hai {extra}, quindi in console non renderizzerai anche e.g. user_id e sessions_deleted, ma questi SERVONO CMNQ NEL RECORD LOGURU xk e.g. Grafana/OpenTelemetry/ELK li usano!!!
+
+
+
 
 
