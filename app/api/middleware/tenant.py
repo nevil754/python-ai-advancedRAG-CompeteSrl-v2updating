@@ -39,3 +39,5 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 request.state.user_id = payload.get("sub")
                 request.state.user_role = payload.get("role")
         return await call_next(request)
+
+
