@@ -147,7 +147,7 @@ def get_tenant_redis(
     return TenantRedis(tenant_id=tenant.tenant_id)
 
 async def require_admin(
-    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],  #questa funzione async produce oggetti AsyncSession usando yield, guarda ur notes about Yield, vedi che devi return un Generator!
 ) -> TenantContext:
     """
     Verifica che l'utente abbia ruolo admin.
@@ -162,9 +162,7 @@ async def require_admin(
         )
     return tenant
 
-# ─── Type aliases per comodità ────────────────────────────────
-# Uso nelle route: CurrentTenant invece di Annotated[TenantContext, Depends(...)]
-
+#Type aliases, usati nelle routes e.g. CurrentTenant invece di Annotated[TenantContext, Depends(...)]
 CurrentTenant = Annotated[TenantContext, Depends(get_current_tenant)]
 CurrentDB = Annotated[AsyncSession, Depends(get_db)]
 CurrentRedis = Annotated[TenantRedis, Depends(get_tenant_redis)]
