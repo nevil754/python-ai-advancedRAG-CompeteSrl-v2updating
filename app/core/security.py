@@ -1,7 +1,6 @@
 # app/core/security.py
 # Tutto ciò che riguarda autenticazione e crittografia.
 # JWT encode/decode, password hashing con bcrypt, API key generation.
-
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 import hashlib  #x hashing
 import secrets  #x generazione chiavi sicure
