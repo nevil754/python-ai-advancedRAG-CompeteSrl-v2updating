@@ -2,7 +2,6 @@
 # ˅  config.yaml 
 # ˅  .env    sovrascrivono config.yaml se trova match
 # ˅  env vars OS   sovrascrvono il result finora, sempre se trovano match
-
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 import os  #x variabili d'ambiente
 from functools import lru_cache   #@lru_cache(maxsize=1), serve per cache automatica python, quando questa funzione viene chiamata, la esegue UNA SOLA VOLTA e poi ricorda il risultato
@@ -88,8 +87,8 @@ class AppSettings(BaseSettings):
             f"&Encrypt=yes"
         )
 
-    redis_url: str = "redis://redis:6379/0"        # broker Celery + sessioni
-    redis_cache_url: str = "redis://redis:6379/1"  # cache RAG separata
+    redis_url: str = "redis://redis:6379/0"         #broker Celery + sessioni
+    redis_cache_url: str = "redis://redis:6379/1"   #cache RAG separata
     redis_password: str = ""
 
     retriever_search_type: str = "hybrid"

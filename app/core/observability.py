@@ -1,20 +1,18 @@
 # app/core/observability.py
 # Configura tutto il sistema di logging e tracing.
 # Chiamato UNA VOLTA all'avvio in main.py lifespan.
-
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 import sys
 import os
 from typing import TYPE_CHECKING 
-
 from loguru import logger   #plugin x logging avanzato
 
 if TYPE_CHECKING:
-    from app.core.settings import AppSettings  #questo import avviene solo a livello di type checking, non a runtime, così eviti problemi di import circolari quando settings importa questa funzione e questa funzione importa settings per leggere i valori di configurazione. In questo modo puoi usare "AppSettings" come tipo senza che venga importato realmente a runtime, evitando errori di importazione circolare.
+    from app.core.settings import AppSettings   #questo import avviene solo a livello di type checking, non a runtime, così eviti problemi di import circolari quando settings importa questa funzione e questa funzione importa settings per leggere i valori di configurazione. In questo modo puoi usare "AppSettings" come tipo senza che venga importato realmente a runtime, evitando errori di importazione circolare.
 
 def setup_all(settings: "AppSettings") -> None:
     """
-    Entry point unico — chiamato da main.py lifespan.
+    Entry point unico, chiamato da main.py lifespan.
     Configura logging, LangSmith e OpenTelemetry in sequenza!
     """
     setup_logging(settings)
@@ -26,7 +24,7 @@ def setup_logging(settings: "AppSettings") -> None:
     Configura Loguru come sistema di logging globale.
     Rimuove il handler di default e ne aggiunge uno configurato.
     """
-    logger.remove()  #loguru ha gia un hanlder di default, here lo elimino
+    logger.remove()  #loguru ha gia un handler di default, here lo elimino
     level = settings.log_level.upper()
     if settings.log_json_output:  #
         # Formato JSON per produzione — parsabile da Loki/Datadog/Elastic

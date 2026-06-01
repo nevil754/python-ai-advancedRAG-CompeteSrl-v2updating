@@ -1,8 +1,7 @@
 # Qdrant client singleton + gestione collection per tenant.
 # Ogni tenant ha la sua collection separata in Qdrant.
-
 from __future__ import annotations
-from functools import lru_cache  
+from functools import lru_cache  #x singleton cache
 from typing import Any   #typing generico python
 from loguru import logger
 from qdrant_client import AsyncQdrantClient, QdrantClient  #client sincrono easincrono per qdrant
@@ -18,16 +17,16 @@ def get_qdrant_client() -> QdrantClient:
     from app.core.settings import get_settings  #ur custom settings 
     settings = get_settings()
     logger.info("Connessione Qdrant", url=settings.qdrant_url)
-    kwargs: dict[str, Any] = {"url": settings.qdrant_url}  #costruisce parametri dinamici
+    kwargs: dict[str, Any] = {"url": settings.qdrant_url}  #costruisce parametri dinamici, edit x tutti
     if settings.qdrant_api_key:
-        kwargs["api_key"] = settings.qdrant_api_key
-    return QdrantClient(**kwargs)
+        kwargs["api_key"] = settings.qdrant_api_key  #edit only if settings.qdrant_api_key is true/present
+    return QdrantClient(**kwargs)  #equivale a QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key[questo modificato solo nella condition here qua sopra] ) se api_key è presente, altrimenti senza api_key
 
 
 @lru_cache(maxsize=1)  #cache per singleton
 def get_async_qdrant_client() -> AsyncQdrantClient:   #return async qdrant client
     """
-    Ritorna il client Qdrant asincrono (singleton).
+    Ritorna il client Qdrant Asincrono (singleton).
     Usato nelle route FastAPI per non bloccare l'event loop.
     """
     from app.core.settings import get_settings
@@ -35,20 +34,20 @@ def get_async_qdrant_client() -> AsyncQdrantClient:   #return async qdrant clien
     kwargs: dict[str, Any] = {"url": settings.qdrant_url}
     if settings.qdrant_api_key:
         kwargs["api_key"] = settings.qdrant_api_key
-    return AsyncQdrantClient(**kwargs)
+    return AsyncQdrantClient(**kwargs)   #return async client con params updated
 
 def get_collection_name(tenant_slug: str) -> str:
     """
     Genera il nome della collection Qdrant per un tenant.
     Convenzione: tenant_{slug}_documents
     Args:
-        tenant_slug: es. "acme-corp" → "tenant_acme_corp_documents"
+        tenant_slug: es. "acme-corp" -> "tenant_acme_corp_documents"
     """
-    safe_slug = tenant_slug.replace("-", "_").lower()
+    safe_slug = tenant_slug.replace("-", "_").lower()  #i - non sono validi nei nomi delle collection, quindi usiamo '_' invece.
     return f"tenant_{safe_slug}_documents"  #slug w '..documents' finale
 
 def get_memory_collection_name(tenant_slug: str) -> str:
-    """Collection per la semantic memory (fatti utente estratti da Zep-like layer)."""
+    """Collection per la semantic memory (fatti utente estratti da Zep-like layer!)."""
     safe_slug = tenant_slug.replace("-", "_").lower()
     return f"tenant_{safe_slug}_memory"  #slug w '..memory' finale
 
@@ -58,7 +57,7 @@ def ensure_collection(
 ) -> str:
     """
     Crea la collection Qdrant per un tenant se non esiste.
-    Idempotente — chiamabile più volte senza effetti collaterali.
+    Idempotente, chiamabile più volte senza effetti collaterali.
     Args:
         tenant_slug: slug del tenant
         force_recreate: se True, cancella e ricrea la collection
@@ -70,14 +69,13 @@ def ensure_collection(
     settings = get_settings()
     client = get_qdrant_client()
     collection_name = get_collection_name(tenant_slug)
-
     try:
         existing = client.get_collection(collection_name)
         if not force_recreate:
             logger.debug(f"Collection già esistente: {collection_name}")
             return collection_name
         logger.warning(f"force_recreate=True — cancello collection {collection_name}")
-        client.delete_collection(collection_name)
+        client.delete_collection(collection_name)  #🔥DELETE COLLECTION
     except UnexpectedResponse:
         pass  #collection non esiste — la creiamo
     dimension = get_embedding_dimension()

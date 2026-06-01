@@ -2,7 +2,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger   #plugin x logging avanzato
-
 from app.core.observability import setup_all  #import tutta la parte di observability (logging, tracing, metrics, ect)
 from app.core.settings import get_settings  #get_settings() lo userai dopo, serve per leggere file config.yaml
 from contextlib import asynccontextmanager  #import context manager async, serve x startup e shatdown dell'app
@@ -17,7 +16,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Environment {settings.app_environment}")
     setup_all(settings)
     await _check_services()  #function here qua sotto
-    if settings.app_environment != "development":   #se sei in producrion, ovviamente devi prima caricare tutti i models prima che l'utente possa usare l'app!
+    if settings.app_environment != "development":   #se sei in production, ovviamente devi prima caricare tutti i models prima che l'utente possa usare l'app!
         await _preload_models()
     logger.info("Startup completato, app pronta")
     yield  #YIELD, qua sopra tutto il code di startup, qua sotto tutto il code di shutdown(cosa fare quando l'app viene chiusa dall'utente)
@@ -51,7 +50,7 @@ def create_app() -> FastAPI:  #🔥app factory
 
     #chain middlewares
 
-    # CORS — in prod restringi origins alla tua app
+    # CORS, ovviamente in prod restringi origins alla tua app
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"] if settings.app_debug else ["https://FRONTEND-OR-BACKENDASPNETCORE"],
