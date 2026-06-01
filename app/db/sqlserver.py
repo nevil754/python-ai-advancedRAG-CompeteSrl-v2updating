@@ -67,14 +67,14 @@ class TenantDB:
     def __init__(self):
         self._sync_factory = sessionmaker(   #set machine che creerà sessioni pronte sincrone per il db 
             bind=get_sync_engine(),
-            autocommit=False,
-            autoflush=False,
+            autocommit=False,   #x non salvare auto le modifiche fino a quando non chiami session.commit()
+            autoflush=False,  #x non mandare auto la query al db fino a quando non chiami session.commit()
         )
-        self._async_factory = async_sessionmaker(
+        self._async_factory = async_sessionmaker(   #version ASYNC 
             bind=get_async_engine(),
             autocommit=False,
             autoflush=False,
-            expire_on_commit=False,
+            expire_on_commit=False,  #dopo ogni commit, gli objs restano validi in memoria 
         )
 
     @contextmanager
@@ -83,7 +83,7 @@ class TenantDB:
         Context manager sincrono per sessioni tenant.
         Imposta lo schema SQL Server all'inizio e fa rollback in caso di errore.
         """
-        session = self._sync_factory()
+        session = self._sync_factory()  #prendi factory sincrona
         try:
             self._set_schema_sync(session, tenant_slug)
             yield session
@@ -97,7 +97,7 @@ class TenantDB:
     @asynccontextmanager
     async def aget_session(
         self, tenant_slug: str
-    ) -> AsyncGenerator[AsyncSession, None]:
+    ) -> AsyncGenerator[AsyncSession, None]:   #version ASYNC
         """
         Context manager asincrono per sessioni tenant.
         Usato nelle route FastAPI per non bloccare l'event loop.
@@ -113,16 +113,16 @@ class TenantDB:
 
     def _set_schema_sync(self, session: Session, tenant_slug: str) -> None:
         """
-        Imposta lo schema del tenant sulla sessione SQL Server.
-        In SQL Server non esiste SET search_path come in Postgres —
-        usiamo ALTER USER per impostare il default schema della sessione.
+        Imposta lo schema del tenant sulla sessione SQL Server!
+        In SQL Server non esiste SET search_path come in Postgres, quindi
+        usiamo ALTER USER per impostare il default schema della sessione!
         """
         schema_name = _slug_to_schema(tenant_slug)
-        # Verifica che lo schema esista prima di impostarlo
+        #verifica che lo schema esista prima di impostarlo
         result = session.execute(
             text("SELECT 1 FROM sys.schemas WHERE name = :schema"),
             {"schema": schema_name}
-        ).fetchone()
+        ).fetchone()   #get 1 row, per verificare che schema esista
         if not result:
             raise ValueError(
                 f"Schema tenant '{schema_name}' non trovato. "
@@ -134,12 +134,12 @@ class TenantDB:
         )
         session.execute(text("COMMIT"))
 
-    async def _set_schema_async(
+    async def _set_schema_async(   #version ASYNC
         self, session: AsyncSession, tenant_slug: str
     ) -> None:
         """Versione async di _set_schema_sync."""
         schema_name = _slug_to_schema(tenant_slug)
-        result = await session.execute(
+        result = await session.execute(   #AWAIT! quindi è async 
             text("SELECT 1 FROM sys.schemas WHERE name = :schema"),
             {"schema": schema_name}
         )
@@ -160,7 +160,7 @@ class TenantDB:
         """
         Chiama la stored procedure sp_provision_tenant su SQL Server.
         Crea schema + tabelle per un nuovo tenant.
-        Idempotente — chiamabile più volte senza errori.
+        Idempotente, cioe lo puoi chiamare 1 o 100volte e non rompe nulla
         """
         async with self._async_factory() as session:
             try:
@@ -170,27 +170,27 @@ class TenantDB:
                             @slug = :slug,
                             @display_name = :display_name,
                             @plan = :plan
-                    """),
+                    """),  #🔥🔥EXECUTE stored procedure target (shared.sp_provision_tenant) con params!!
                     {"slug": slug, "display_name": display_name, "plan": plan}
                 )
-                await session.commit()
+                await session.commit()  #async
                 logger.info(
                     "Tenant provisionato",
                     slug=slug,
                     schema=_slug_to_schema(slug),
-                )
+                )  #here aggiungi i metadati strutturati, sono utili e.g. a opentelemetry/ELK/ect
             except Exception as e:
-                await session.rollback()
+                await session.rollback()   #esegui rollerback
                 logger.error(f"Errore provisioning tenant {slug}: {e}")
-                raise
+                raise  #rilanci l'errore
 
     @staticmethod
     async def ping() -> bool:
-        """Verifica connessione SQL Server. Usato in /health."""
+        """Verifica connessione SQL Server. Usato in /health"""
         try:
             engine = get_async_engine()
-            async with engine.connect() as conn:
-                await conn.execute(text("SELECT 1"))
+            async with engine.connect() as conn:  #apre connessione temp
+                await conn.execute(text("SELECT 1"))  #test query
             return True
         except Exception as e:
             logger.error(f"SQL Server ping fallito: {e}")
@@ -199,11 +199,11 @@ class TenantDB:
 def _slug_to_schema(slug: str) -> str:
     """
     Converte slug tenant nel nome dello schema SQL Server.
-    "acme-corp" → "tenant_acme_corp"
+    "acme-corp" -> "tenant_acme_corp"
     """
     return "tenant_" + slug.replace("-", "_").lower()
 
-# Singleton globale — importato da deps.py e dai worker Celery
-tenant_db = TenantDB()
+
+tenant_db = TenantDB()   #singleton globale, importato da deps.py e dai worker Celery
 
 
