@@ -1,0 +1,140 @@
+# =============================================================
+# app/core/embeddings.py
+# Wrapper fastembed per BAAI/BGE-M3.
+# Lazy loading — il modello viene caricato solo alla prima chiamata.
+# =============================================================
+
+from __future__ import annotations
+
+import asyncio
+from functools import lru_cache
+from typing import Any
+
+from loguru import logger
+
+
+@lru_cache(maxsize=1)
+def get_embedding_model() -> Any:
+    """
+    Carica e ritorna il modello fastembed.
+    Singleton — il modello da 500MB viene caricato una sola volta.
+
+    Il modello viene cercato prima nella cache_dir (evita re-download),
+    poi scaricato da HuggingFace se non presente.
+    """
+    from app.core.settings import get_settings
+    settings = get_settings()
+
+    from fastembed import TextEmbedding
+
+    logger.info(
+        "Caricamento modello embedding",
+        model=settings.embeddings_model,
+        cache_dir=settings.embeddings_cache_dir,
+    )
+
+    model = TextEmbedding(
+        model_name=settings.embeddings_model,
+        cache_dir=settings.embeddings_cache_dir,
+        max_length=512,       # max token per chunk — BAAI/BGE-M3 supporta 8192 ma 512 è ottimale
+        threads=4,            # thread per batch processing
+    )
+
+    logger.info("Modello embedding caricato", model=settings.embeddings_model)
+    return model
+
+
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    """
+    Genera embedding per una lista di testi.
+    Usato durante l'ingestion per vettorizzare i chunk.
+
+    Args:
+        texts: lista di stringhe da vettorizzare
+
+    Returns:
+        Lista di vettori float (uno per testo)
+    """
+    from app.core.settings import get_settings
+    settings = get_settings()
+
+    model = get_embedding_model()
+    batch_size = settings.embeddings_batch_size
+
+    logger.debug(f"Embedding {len(texts)} testi in batch da {batch_size}")
+
+    # fastembed ritorna un generator — converti in lista
+    vectors = list(model.embed(texts, batch_size=batch_size))
+    return [v.tolist() for v in vectors]
+
+
+def embed_query(text: str) -> list[float]:
+    """
+    Genera embedding per una singola query.
+    Più veloce di embed_texts per query singole perché salta il batching.
+
+    Args:
+        text: query dell'utente
+
+    Returns:
+        Vettore float della query
+    """
+    model = get_embedding_model()
+    vectors = list(model.query_embed([text]))  # query_embed ottimizza per retrieval
+    return vectors[0].tolist()
+
+
+async def aembed_texts(texts: list[str]) -> list[list[float]]:
+    """
+    Versione async di embed_texts.
+    fastembed è sincrono — eseguiamo in un thread pool per non bloccare l'event loop.
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, embed_texts, texts)
+
+
+async def aembed_query(text: str) -> list[float]:
+    """Versione async di embed_query."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, embed_query, text)
+
+
+def get_embedding_dimension() -> int:
+    """
+    Ritorna la dimensione del vettore per il modello corrente.
+    Necessario quando si crea una collection Qdrant.
+
+    BAAI/BGE-M3: 1024 dimensioni
+    nomic-embed-text: 768 dimensioni
+    """
+    model = get_embedding_model()
+    # Embed un testo dummy per ricavare la dimensione
+    test_vector = list(model.embed(["test"]))[0]
+    return len(test_vector)
+
+
+@lru_cache(maxsize=1)
+def get_reranker_model() -> Any:
+    """
+    Carica il modello di reranking cross-encoder.
+    Usato da app/rag/retrieval/reranker.py dopo il retrieval iniziale.
+
+    BAAI/bge-reranker-base: buon bilanciamento velocità/qualità
+    """
+    from app.core.settings import get_settings
+    settings = get_settings()
+
+    if not settings.reranker_enabled:
+        return None
+
+    from sentence_transformers import CrossEncoder
+
+    logger.info("Caricamento reranker", model=settings.reranker_model)
+
+    reranker = CrossEncoder(
+        settings.reranker_model,
+        max_length=512,
+    )
+
+    logger.info("Reranker caricato", model=settings.reranker_model)
+    return reranker
