@@ -35,9 +35,9 @@ def get_cache_redis() -> aioredis.Redis:
     settings = get_settings()
     return aioredis.from_url(  #crea client Redis async
         settings.redis_cache_url,
-        decode_responses=True,
-        socket_connect_timeout=5,
-        socket_timeout=5,
+        decode_responses=True,  #redis return stringhe non bytes
+        socket_connect_timeout=5,  #timeout connessione Redis
+        socket_timeout=5,  #timeout operazioni Redis
     )
 
 class TenantRedis:
@@ -58,8 +58,7 @@ class TenantRedis:
         """Costruisce chiave prefissata con tenant_id."""
         return f"tenant:{self.tenant_id}:" + ":".join(parts)
     
-    # ── Sessioni chat (short-term memory) ─────────────────────
-    async def get_session(self, session_id: str) -> list[dict]:
+    async def get_session(self, session_id: str) -> list[dict]:   #session chat (short-term memory)
         """
         Ritorna gli ultimi N messaggi della conversazione da Redis.
         Usato dal context_builder prima di ogni query RAG.
@@ -92,8 +91,7 @@ class TenantRedis:
         """Cancella la sessione — chiamato quando l'utente chiude la chat."""
         await self._redis.delete(self._key("session", session_id))
 
-    # ── Cache query RAG ───────────────────────────────────────
-    async def get_query_cache(self, query_hash: str) -> str | None:
+    async def get_query_cache(self, query_hash: str) -> str | None:    #cache query RAG
         """
         Cerca risposta cached per questa query.
         query_hash: hash MD5/SHA del testo della query normalizzato.
