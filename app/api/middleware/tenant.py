@@ -17,8 +17,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
     PUBLIC_PATHS = {"/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"}  #questi path non richiedono auth
 
-    async def dispatch(self, request: Request, call_next) -> Response:
-        #!remember inizializza sempre i campi nel request.state !!
+    async def dispatch(self, request: Request, call_next) -> Response:  #request è la richiesta corrente, call_next è la funzione che chiama il prossimo middleware o route handler
+        #🔥🔥la requesta quando arriva gia contiene headers,body,query params,cookie. HERE UTILIZZO request.state (che è uno spazio vuoto) per salvare dati custom!!
+        #🔥inizializzo i fields che voglio in request.state!!
         request.state.tenant_id = None
         request.state.tenant_slug = None
         request.state.user_id = None
@@ -36,6 +37,6 @@ class TenantMiddleware(BaseHTTPMiddleware):
                 request.state.tenant_slug = payload.get("tenant_slug")
                 request.state.user_id = payload.get("sub")
                 request.state.user_role = payload.get("role")
-        return await call_next(request)
+        return await call_next(request)  #continua la pipeline
 
 
