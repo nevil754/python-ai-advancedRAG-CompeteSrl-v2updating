@@ -23,13 +23,13 @@ def get_embedding_model() -> Any:
         model=settings.embeddings_model,
         cache_dir=settings.embeddings_cache_dir,
     )  #log strutturato, x essere letto chiarmanet da opentelemetry/ELK/ect
-    model = TextEmbedding(
-        model_name=settings.embeddings_model,
+    model = TextEmbedding(   #creazione model
+        model_name=settings.embeddings_model,  #ovviamnete scarica il model da HuggingFace e lo mette in cache_dir="./models" o lo prende da li se era gia scaricato
         cache_dir=settings.embeddings_cache_dir,
         max_length=512,   #max token per chunk — BAAI/BGE-M3 supporta 8192 ma 512 è perfect!
         threads=4,        #4 thread per batch processing
     )
-    logger.info("Modello embedding caricato", model=settings.embeddings_model)
+    logger.info("Modello embedding caricato", model=settings.embeddings_model)  #log strutturato
     return model
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
@@ -47,8 +47,13 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     batch_size = settings.embeddings_batch_size
     logger.debug(f"Embedding {len(texts)} testi in batch da {batch_size}")
     # fastembed ritorna un generator — converti in lista
-    vectors = list(model.embed(texts, batch_size=batch_size))   #EMBED() è di fastembed, fa il 
-    return [v.tolist() for v in vectors]
+    vectors = list(model.embed(texts, batch_size=batch_size))   #🔥🔥here accada l'embedding!! EMBED() è di fastembed
+    #otterrai qualcosa come
+    # [
+    # array([-0.1115,  0.0097,  0.0052,  0.0195, ...], dtype=float32),
+    # array([-0.1019,  0.0635, -0.0332,  0.0522, ...], dtype=float32)
+    # ]
+    return [v.tolist() for v in vectors]   #converts array([0.1, 0.2])(array numpy) -> [0.1, 0.2] perché Qdrant vuole liste normali per lavorare!!
 
 def embed_query(text: str) -> list[float]:
     """
