@@ -71,7 +71,7 @@ class TenantRedis:
         self,
         session_id: str,
         message: dict,
-        max_turns: int = 10,
+        max_turns: int = 10,   #
     ) -> None:
         """
         Aggiunge un messaggio alla sessione e mantiene solo gli ultimi max_turns*2.
@@ -80,10 +80,10 @@ class TenantRedis:
         from app.core.settings import get_settings
         settings = get_settings()
         key = self._key("session", session_id)
-        ttl = settings.cache_session_ttl_seconds
-        pipe = self._redis.pipeline()
+        ttl = settings.cache_session_ttl_seconds  #
+        pipe = self._redis.pipeline()   #pipeline= batch di operazioni (piu veloce)
         pipe.rpush(key, json.dumps(message, ensure_ascii=False))
-        pipe.ltrim(key, -(max_turns * 2), -1)
+        pipe.ltrim(key, -(max_turns * 2), -1)   #mantiene solo gli ultimi mexs (+2 xk ogni turno = 1 user + 1 assistant)
         pipe.expire(key, ttl)
         await pipe.execute()
 
