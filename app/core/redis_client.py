@@ -16,7 +16,6 @@ def get_redis() -> aioredis.Redis:
     """
     from app.core.settings import get_settings
     settings = get_settings()
-
     logger.info("Connessione Redis", url=settings.redis_url)
     return aioredis.from_url(
         settings.redis_url,
@@ -25,7 +24,6 @@ def get_redis() -> aioredis.Redis:
         socket_timeout=5,
         retry_on_timeout=True,
     )
-
 
 @lru_cache(maxsize=1)
 def get_cache_redis() -> aioredis.Redis:
@@ -36,7 +34,6 @@ def get_cache_redis() -> aioredis.Redis:
     """
     from app.core.settings import get_settings
     settings = get_settings()
-
     return aioredis.from_url(
         settings.redis_cache_url,
         decode_responses=True,
@@ -44,18 +41,15 @@ def get_cache_redis() -> aioredis.Redis:
         socket_timeout=5,
     )
 
-
 class TenantRedis:
     """
     Wrapper Redis con namespace isolation per tenant.
     Tutte le chiavi sono prefissate con 'tenant:{tenant_id}:'.
-
     Uso:
         redis = TenantRedis(tenant_id="acme-uuid")
         await redis.set_session(session_id, messages)
         await redis.get_query_cache(query_hash)
     """
-
     def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
         self._redis = get_redis()
@@ -64,9 +58,8 @@ class TenantRedis:
     def _key(self, *parts: str) -> str:
         """Costruisce chiave prefissata con tenant_id."""
         return f"tenant:{self.tenant_id}:" + ":".join(parts)
-
+    
     # ── Sessioni chat (short-term memory) ─────────────────────
-
     async def get_session(self, session_id: str) -> list[dict]:
         """
         Ritorna gli ultimi N messaggi della conversazione da Redis.
@@ -75,7 +68,7 @@ class TenantRedis:
         key = self._key("session", session_id)
         raw = await self._redis.lrange(key, 0, -1)
         return [json.loads(m) for m in raw]
-
+    
     async def append_message(
         self,
         session_id: str,
@@ -88,10 +81,8 @@ class TenantRedis:
         """
         from app.core.settings import get_settings
         settings = get_settings()
-
         key = self._key("session", session_id)
         ttl = settings.cache_session_ttl_seconds
-
         pipe = self._redis.pipeline()
         pipe.rpush(key, json.dumps(message, ensure_ascii=False))
         pipe.ltrim(key, -(max_turns * 2), -1)
@@ -103,14 +94,13 @@ class TenantRedis:
         await self._redis.delete(self._key("session", session_id))
 
     # ── Cache query RAG ───────────────────────────────────────
-
     async def get_query_cache(self, query_hash: str) -> str | None:
         """
         Cerca risposta cached per questa query.
         query_hash: hash MD5/SHA del testo della query normalizzato.
         """
         return await self._cache.get(self._key("cache", "query", query_hash))
-
+    
     async def set_query_cache(
         self,
         query_hash: str,
@@ -134,9 +124,8 @@ class TenantRedis:
         if keys:
             await self._cache.delete(*keys)
         return len(keys)
-
+    
     # ── Rate limiting ─────────────────────────────────────────
-
     async def check_rate_limit(
         self,
         user_id: str,
@@ -145,27 +134,22 @@ class TenantRedis:
     ) -> tuple[bool, int]:
         """
         Verifica e incrementa il rate limit per un utente.
-
         Returns:
             Tuple (allowed, current_count)
             allowed: True se sotto il limite, False se superato
         """
         from app.core.settings import get_settings
         settings = get_settings()
-
         max_requests = limit or settings.rate_limit_requests_per_minute
         key = self._key("ratelimit", user_id)
-
         pipe = self._redis.pipeline()
         pipe.incr(key)
         pipe.expire(key, window_seconds)
         results = await pipe.execute()
         count = results[0]
-
         return count <= max_requests, count
-
+    
     # ── Job status (per polling frontend) ────────────────────
-
     async def set_job_status(
         self,
         job_id: str,
@@ -180,9 +164,8 @@ class TenantRedis:
         """Legge status job — ritorna None se scaduto o inesistente."""
         raw = await self._redis.get(self._key("job", job_id))
         return json.loads(raw) if raw else None
-
+    
     # ── Pulizia tenant ────────────────────────────────────────
-
     async def flush_tenant(self) -> int:
         """
         Cancella TUTTE le chiavi di questo tenant da Redis.
@@ -192,7 +175,6 @@ class TenantRedis:
         pattern = f"tenant:{self.tenant_id}:*"
         deleted = 0
         cursor = 0
-
         while True:
             cursor, keys = await self._redis.scan(
                 cursor=cursor, match=pattern, count=100
@@ -202,7 +184,6 @@ class TenantRedis:
                 deleted += len(keys)
             if cursor == 0:
                 break
-
         # Stessa cosa sul DB cache
         cursor = 0
         while True:
@@ -214,7 +195,6 @@ class TenantRedis:
                 deleted += len(keys)
             if cursor == 0:
                 break
-
         logger.info(f"Flush tenant Redis completato", tenant=self.tenant_id, deleted=deleted)
         return deleted
 
