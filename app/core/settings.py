@@ -1,12 +1,12 @@
 # UNICA fonte di verità per tutta la CONFIGURAZIONE (mischi insieme vars di config.yaml + .env ) 🔥
 # ˅  config.yaml 
 # ˅  .env    sovrascrivono config.yaml se trova match
-# ˅  env vars OS   sovrascrvono il result finora, sempre se trovano match
+# ˅  env vars OS   sovrascrivono il result finora, sempre se trovano match
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 import os  #x variabili d'ambiente
 from functools import lru_cache   #@lru_cache(maxsize=1), serve per cache automatica python, quando questa funzione viene chiamata, la esegue UNA SOLA VOLTA e poi ricorda il risultato
 from pathlib import Path  #molto meglio di os.path, supporta operazioni più complesse sui path in modo più intuitivo
-from typing import Literal  #x typing python, server per dire che una var puo essere solo di valori specificati e.g.Literal["development", "staging", "production"] = "development"
+from typing import Literal  #x typing python, serve per dire che una var puo essere solo di valori specificati e.g.Literal["development", "staging", "production"] = "development"
 import yaml   #x legger file config.yaml
 from pydantic import Field, field_validator   #x validazione campi
 from pydantic_settings import BaseSettings, SettingsConfigDict   #x settings avanzati, BaseSettings legge auto .env file
@@ -31,7 +31,6 @@ class AppSettings(BaseSettings):
     """
     Ogni campo può essere sovrascritto uso case-insesitive
     """
-
     model_config = SettingsConfigDict(   #config pydantic settings
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",  #encoding file
@@ -53,7 +52,7 @@ class AppSettings(BaseSettings):
     llm_max_tokens: int = 2048
     llm_timeout: int = 120
     llm_streaming: bool = True
-    llm_num_ctx: int = 2048               # context window Ollama
+    llm_num_ctx: int = 2048    #finestra contesto massima, piu è alto più memoria conversazionale ma piu ram
 
     embeddings_provider: str = "fastembed"
     embeddings_model: str = "BAAI/BGE-M3"
@@ -85,10 +84,10 @@ class AppSettings(BaseSettings):
             f"?driver={self.sqlserver_driver.replace(' ', '+')}"   #sostituisce spazi con +, necessario per pyodbc
             f"&TrustServerCertificate=yes"
             f"&Encrypt=yes"
-        )
+        )  #crea e.g. "mssql+pyodbc://SA:password@sqlserver:1433/RAGChat?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes&Encrypt=yes"
 
-    redis_url: str = "redis://redis:6379/0"         #broker Celery + sessioni
-    redis_cache_url: str = "redis://redis:6379/1"   #cache RAG separata
+    redis_url: str = "redis://redis:6379/0"         #x broker celery + sessioni + rate limit
+    redis_cache_url: str = "redis://redis:6379/1"   #x cache RAG separata
     redis_password: str = ""
 
     retriever_search_type: str = "hybrid"
@@ -141,8 +140,8 @@ class AppSettings(BaseSettings):
     web_search_provider: str = "tavily"
     tavily_api_key: str = ""
 
-    celery_broker_url: str = "redis://redis:6379/0"
-    celery_result_backend: str = "redis://redis:6379/0"
+    celery_broker_url: str = "redis://redis:6379/0"   #uso datbase logico 0 (sempre all'interno sempre della stessa istanza Redis)
+    celery_result_backend: str = "redis://redis:6379/0"  #uso datbase logico 0 (sempre all'interno sempre della stessa istanza Redis)
 
     openai_api_key: str = ""
     google_api_key: str = ""

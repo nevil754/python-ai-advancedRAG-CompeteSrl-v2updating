@@ -24,7 +24,7 @@ embeddings:
   model: "BAAI/BGE-M3" #"nomic-embed-text:latest"  #magari posso anche usare qua un modello di gemini(google)
   base_url: "" #ollama "http://localhost:11434"
   batch_size: 64   #numero documenti elaborati insieme, piu è alto piu è veloce ma piu ram
-  cache_dir: "/app/.cache/embeddings"  #dir cache modelli, evita re-download ad ogni restart
+  cache_dir: "/app/.cache/embeddings"  #🔥🔥dir cache modelli, evita re-download ad ogni restart
 
 llm:
   provider: "ollama" #"openai" #"google"   

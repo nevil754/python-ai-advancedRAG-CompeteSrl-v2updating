@@ -108,7 +108,7 @@ NEL MIO TENANT-ARCHITECTURE
 
 ########REDIS & CELERY
 REDIS
-Redis supporta fino a 16 database🔥(da 0 a 15) nello stesso processo, separati logicamente. Così un FLUSHDB sulla cache non tocca la coda Celery.
+Redis supporta fino a 16 databases logici (all'interno sempre della stessa istanza Redis)🔥(da 0 a 15) nello stesso processo, separati logicamente. Così un FLUSHDB sulla cache non tocca la coda Celery.
 -quando fastapi riceve un upload di un documento, scrive un mex Redis nella coda of target tenant tenant.AZIENDAX.default, celery legge quella coda e prende il task.
 -quando celery finisce un task, scrive risulato in Redis con chiave celery-task-meta-{task_id} (i risultati hanno TTL tempo di vita di 24h poi vengono cancellate da redis). fastapi puo sempre interrogare AsyncResult(task_id) e cosi sapere se la task è Pending | Started | Success | Failure. 
 -utillizzo di Redis per cachare risposte rag (e.g.cache:{tid}:query:{hash}) / sessioni chat degli ultimi N turni (session:{tid}:{user}) / rate limiting per tenant 
