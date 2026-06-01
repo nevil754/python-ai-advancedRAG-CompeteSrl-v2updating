@@ -154,15 +154,14 @@ class TenantRedis:
     ) -> None:
         """Salva status di un job di ingestion, polling dal frontend"""
         key = self._key("job", job_id)   #costruisce chiave e.g. tenant:abc123:job:job123 per tracciare lo status di questo job
-        await self._redis.setex(key, ttl, json.dumps(status))  
+        await self._redis.setex(key, ttl, json.dumps(status))   #json.dumps converte il dict in stringa JSON, setex salva la stringa in Redis con TTL
             #setex = set + expire insieme
 
     async def get_job_status(self, job_id: str) -> dict | None:
-        """Legge status job — ritorna None se scaduto o inesistente."""
-        raw = await self._redis.get(self._key("job", job_id))
-        return json.loads(raw) if raw else None
+        """Legge status job, ritorna None se scaduto o inesistente."""
+        raw = await self._redis.get(self._key("job", job_id))  #ur redis self (che è a sua volta un get_redis()), e prende prende quello con key target
+        return json.loads(raw) if raw else None   #json.loads converte la stringa JSON in dict python, se raw è None ritorna None
 
-    # ── Pulizia tenant ────────────────────────────────────────
     async def flush_tenant(self) -> int:
         """
         Cancella TUTTE le chiavi di questo tenant da Redis.
