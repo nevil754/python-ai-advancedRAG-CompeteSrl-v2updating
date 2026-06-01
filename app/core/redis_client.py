@@ -115,15 +115,14 @@ class TenantRedis:
     async def invalidate_query_cache(self) -> int:
         """
         Invalida tutta la cache query di questo tenant.
-        Chiamato dopo ogni nuova ingestion — i nuovi doc cambiano le risposte.
+        Chiamato dopo ogni nuova ingestion🔥🔥, i nuovi doc cambiano le risposte.
         """
-        pattern = self._key("cache", "query", "*")
+        pattern = self._key("cache", "query", "*")  #pattern e.g. tenant:abc123:cache:query:* per trovare tutte le cache query di questo tenant
         keys = await self._cache.keys(pattern)
         if keys:
-            await self._cache.delete(*keys)
-        return len(keys)
+            await self._cache.delete(*keys)   #cancella tutte le chiavi trovate, *keys espande la lista in argomenti separati
+        return len(keys)   #return only the lenght of the keys deleted
     
-    # ── Rate limiting ─────────────────────────────────────────
     async def check_rate_limit(
         self,
         user_id: str,
