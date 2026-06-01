@@ -56,7 +56,7 @@ class TenantRedis:
 
     def _key(self, *parts: str) -> str:
         """Costruisce chiave prefissata con tenant_id."""
-        return f"tenant:{self.tenant_id}:" + ":".join(parts)
+        return f"tenant:{self.tenant_id}:" + ":".join(parts)  #e.g. self._key("session", "123") -> tenant:abc123:session:123
     
     async def get_session(self, session_id: str) -> list[dict]:   #session chat (short-term memory)
         """
@@ -64,8 +64,8 @@ class TenantRedis:
         Usato dal context_builder prima di ogni query RAG.
         """
         key = self._key("session", session_id)
-        raw = await self._redis.lrange(key, 0, -1)
-        return [json.loads(m) for m in raw]
+        raw = await self._redis.lrange(key, 0, -1)  #ur redis self (che è a sua volta un get_redis()), e prende la lista di messaggi (che sono stringhe JSON) con lrange (0,-1 prende tutta la lista!)
+        return [json.loads(m) for m in raw]   #la lista di mex in json (cioe raw), per cisuan mex lo converto in python e lo metto nella lista ('[]')
     
     async def append_message(
         self,
