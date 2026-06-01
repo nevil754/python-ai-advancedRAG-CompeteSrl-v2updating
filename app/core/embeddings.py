@@ -47,8 +47,9 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     batch_size = settings.embeddings_batch_size
     logger.debug(f"Embedding {len(texts)} testi in batch da {batch_size}")
     # fastembed ritorna un generator — converti in lista
-    vectors = list(model.embed(texts, batch_size=batch_size))   #🔥🔥here accada l'embedding!! EMBED() è di fastembed
-    #otterrai qualcosa come
+    vectors = list(model.embed(texts, batch_size=batch_size))   #🔥🔥here accada l'embedding docs!!
+    #🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
+    #otterrai qualcosa come 
     # [
     # array([-0.1115,  0.0097,  0.0052,  0.0195, ...], dtype=float32),
     # array([-0.1019,  0.0635, -0.0332,  0.0522, ...], dtype=float32)
@@ -58,25 +59,26 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
 def embed_query(text: str) -> list[float]:
     """
     Genera embedding per una singola query.
-    Più veloce di embed_texts per query singole perché salta il batching.
+    Più veloce di embed_texts per query singole perché salta il batching!
     Args:
         text: query dell'utente
     Returns:
         Vettore float della query
     """
     model = get_embedding_model()
-    vectors = list(model.query_embed([text]))  # query_embed ottimizza per retrieval
-    return vectors[0].tolist()
+    vectors = list(model.query_embed([text]))  #🔥🔥here accada l'embedding docs!!
+    #🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
+    return vectors[0].tolist()  #return il primo elem xk hai passato [query] una lista con 1 solo elem
 
-async def aembed_texts(texts: list[str]) -> list[list[float]]:
+async def aembed_texts(texts: list[str]) -> list[list[float]]:  #async
     """
     Versione async di embed_texts.
-    fastembed è sincrono — eseguiamo in un thread pool per non bloccare l'event loop.
+    fastembed è sincrono, eseguiamo in un thread pool per non bloccare l'event loop.
     """
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, embed_texts, texts)
 
-async def aembed_query(text: str) -> list[float]:
+async def aembed_query(text: str) -> list[float]:  #async
     """Versione async di embed_query."""
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, embed_query, text)
@@ -85,12 +87,12 @@ def get_embedding_dimension() -> int:
     """
     Ritorna la dimensione del vettore per il modello corrente.
     Necessario quando si crea una collection Qdrant.
+    e.g.
     BAAI/BGE-M3: 1024 dimensioni
     nomic-embed-text: 768 dimensioni
     """
     model = get_embedding_model()
-    # Embed un testo dummy per ricavare la dimensione
-    test_vector = list(model.embed(["test"]))[0]
+    test_vector = list(model.embed(["test"]))[0]  #dummy x ottenere la dimension del vettore
     return len(test_vector)
 
 @lru_cache(maxsize=1)
