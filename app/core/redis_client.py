@@ -5,36 +5,35 @@ from __future__ import annotations  #abilita forward references e typing moderno
 import json
 from functools import lru_cache  #x singleton cache
 from typing import Any  #x typing generico python
-import redis.asyncio as aioredis   #x versione async di redis
+import redis.asyncio as aioredis   #x Redis asincrono🔥 (non blocca FastAPI!)
 from loguru import logger
 
 @lru_cache(maxsize=1)   #decoratore che trasforma la funzione in un singleton, quindi get_qdrant_client() ritorna sempre la stessa istanza di QdrantClient, evitando overhead di connessioni multiple
-def get_redis() -> aioredis.Redis:
+def get_redis() -> aioredis.Redis:  #crea una sola connessione x processo
     """
     Ritorna il client Redis asincrono (singleton).
-    Connesso al DB 0 — broker Celery + sessioni + rate limiting.
+    Connesso al DB 0, questo verra utilizzato x sessioni, broker, rate limit
     """
     from app.core.settings import get_settings
     settings = get_settings()
-    logger.info("Connessione Redis", url=settings.redis_url)
-    return aioredis.from_url(
+    logger.info("Connessione Redis", url=settings.redis_url)  
+    return aioredis.from_url(    #return client Redis async (xk utilizzo aioredis)
         settings.redis_url,
-        decode_responses=True,
-        socket_connect_timeout=5,
-        socket_timeout=5,
-        retry_on_timeout=True,
+        decode_responses=True,   #redis return stringhe non bytes
+        socket_connect_timeout=5,   #timeout connessione Redis
+        socket_timeout=5,    #timeout operazioni Redis
+        retry_on_timeout=True,    #resilienza contro timeout temporanei
     )
 
 @lru_cache(maxsize=1)
 def get_cache_redis() -> aioredis.Redis:
     """
-    Client Redis per il DB 1 — cache RAG separata dal broker.
-    Separare i DB permette di fare FLUSHDB sulla cache
-    senza toccare le code Celery.
+    Client Redis per il DB 1, cache RAG separata dal broker.
+    serve x cache RAG, cosi puoi fare FLUSH cache senza rompere code Celery!!
     """
     from app.core.settings import get_settings
     settings = get_settings()
-    return aioredis.from_url(
+    return aioredis.from_url(  #crea client Redis async
         settings.redis_cache_url,
         decode_responses=True,
         socket_connect_timeout=5,
