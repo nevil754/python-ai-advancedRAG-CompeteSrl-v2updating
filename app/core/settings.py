@@ -171,7 +171,7 @@ def _apply_yaml_overrides() -> None:
     if not cfg:
         return
     mappings: list[tuple[str, str]] = [  #crea lista di coppie(cioe tuple)
-        #mapping file config.yaml path → nome env var (create here qua sopra)
+        #mapping file config.yaml path -> nome env var (create here qua sopra)
         #ricordati che il '.' indica nested
         ("llm.provider",            "LLM_PROVIDER"),
         ("llm.model",               "LLM_MODEL"),
@@ -184,7 +184,7 @@ def _apply_yaml_overrides() -> None:
         ("embeddings.model",        "EMBEDDINGS_MODEL"),
         ("embeddings.batch_size",   "EMBEDDINGS_BATCH_SIZE"),
         ("embeddings.cache_dir",    "EMBEDDINGS_CACHE_DIR"),
-        ("vectorstore.url",         "QDRANT_URL"),    #🔥ora QDRANT_URL è la variabile d'ambiente che userai nel codice per connetterti a Qdrant, 
+        ("vectorstore.url",         "QDRANT_URL"),    #🔥🔥ora QDRANT_URL è la variabile d'ambiente che userai nel codice per connetterti a Qdrant, 
         #⚠️ QUINDI SE CAMBI IL NOMES NEL FILE CONFIG.YAML, RICORDATI DI CAMBIARLO ANCHE QUI!! ALTRIMENTI non link nell'app!! 
         #"QDRANT_URL" è il tuo "qdrant_url" here qua sopra in AppSettings, mentre "vectorstore.url" è il path in config.yaml
         ("vectorstore.collection_name", "QDRANT_COLLECTION_NAME"),
