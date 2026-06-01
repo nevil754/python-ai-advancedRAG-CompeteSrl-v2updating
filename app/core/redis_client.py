@@ -165,22 +165,22 @@ class TenantRedis:
     async def flush_tenant(self) -> int:
         """
         Cancella TUTTE le chiavi di questo tenant da Redis.
-        Chiamato durante l'offboarding.
-        ATTENZIONE: usa SCAN non KEYS per non bloccare Redis in prod.
+        Chiamato durante l'offboarding (QUANDO IL CLIENT CANCELLA IL SUO ACCOUNT).
+        remmeber: usa SCAN non KEYS per non bloccare Redis in prod!
         """
         pattern = f"tenant:{self.tenant_id}:*"
         deleted = 0
         cursor = 0
         while True:
-            cursor, keys = await self._redis.scan(
-                cursor=cursor, match=pattern, count=100
-            )
+            cursor, keys = await self._redis.scan(  #scan itera su tutte le chiavi che matchano il pattern, evitando di bloccare Redis come farebbe KEYS in prod!!
+                cursor=cursor, match=pattern, count=100  #count è N keys per iterazione
+            )   #scan() di redis return a tupla (nuovo_cursor, lista_chiavi[]), il cursor è il 'segnalibro' ed avanza fino a quando arriva a fine 'libro' quindi torna all'inizio a [0]
             if keys:
                 await self._redis.delete(*keys)
                 deleted += len(keys)
             if cursor == 0:
                 break
-        # Stessa cosa sul DB cache
+        #fai stessa cosa x DB cache 🔥🔥
         cursor = 0
         while True:
             cursor, keys = await self._cache.scan(
@@ -191,10 +191,9 @@ class TenantRedis:
                 deleted += len(keys)
             if cursor == 0:
                 break
-        logger.info(f"Flush tenant Redis completato", tenant=self.tenant_id, deleted=deleted)
+        logger.info(f"Flush tenant Redis completato", tenant=self.tenant_id, deleted=deleted)  #log con dati strutturati, utile per e.g.opentelemetry/ELK/ect
         return deleted
 
-    # ── Health check ──────────────────────────────────────────
     @staticmethod
     async def ping() -> bool:
         """Verifica che Redis sia raggiungibile. Usato in /health endpoint."""
