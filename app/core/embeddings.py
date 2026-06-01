@@ -111,9 +111,9 @@ def get_reranker_model() -> Any:
     reranker = CrossEncoder(
         settings.reranker_model,
         max_length=512,  #max token per chunk
-    )
+    )  #gli altri setups in file config.yaml in reranking cioe top_k e initial_k verranno usati da altre parti
     #🔥reranking CrossEncoder fa (query, documento) -> score. è piu lento dell'embeddings.
-    logger.info("Reranker caricato", model=settings.reranker_model)
+    logger.info("Reranker caricato", model=settings.reranker_model)  #log strutturato
     return reranker
 
 
