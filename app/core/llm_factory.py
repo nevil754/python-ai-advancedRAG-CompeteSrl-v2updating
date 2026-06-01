@@ -8,12 +8,11 @@ from langchain_core.language_models import BaseChatModel
 from loguru import logger
 from app.core.settings import get_settings
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=1)  #decoratore che trasforma la funzione in un singleton, quindi get_qdrant_client() ritorna sempre la stessa istanza di QdrantClient, evitando overhead di connessioni multiple
 def get_llm() -> BaseChatModel:
     """
     Costruisce e ritorna l'istanza LLM configurata.
-    Singleton — creata una sola volta per tutto il processo.
-
+    Singleton: creata una sola volta per tutto il processo.
     Provider supportati (da config.yaml llm.provider):
         - ollama   → ChatOllama (modello locale via Ollama)
         - openai   → ChatOpenAI (GPT-4, gpt-4.1-mini, ecc.)
@@ -84,7 +83,7 @@ def _build_google(settings: Any) -> BaseChatModel:
         max_output_tokens=settings.llm_max_tokens,
     )
 
-def get_llm_for_tenant(
+def get_llm_for_tenant(   #custom llm passi come param here e.g. {"provider": "openai", "model": "xxxxx", "api_key": "..."}
     tenant_settings: dict | None = None,
 ) -> BaseChatModel:
     """
@@ -97,9 +96,9 @@ def get_llm_for_tenant(
         LLM configurato per quel tenant, oppure LLM globale se no override.
     """
     if not tenant_settings:
-        return get_llm()
+        return get_llm()  #se non ci sono override custom per tenant, ritorna LLM globale
     settings = get_settings()
-    provider = tenant_settings.get("provider", settings.llm_provider).lower()
+    provider = tenant_settings.get("provider", settings.llm_provider).lower()  #passi come param e.g. {"provider": "openai", "model": "xxxxx", "api_key": "..."}
     if provider == "openai":
         from langchain_openai import ChatOpenAI
         return ChatOpenAI(
@@ -109,6 +108,6 @@ def get_llm_for_tenant(
             max_tokens=settings.llm_max_tokens,
             streaming=settings.llm_streaming,
         )
-    # Per altri provider usa il default globale
+    #per altri e.g. ollama o google LI DEVI FARE QUA, altrimenti viene usato QUELLI GLOBALI DI DEFAULT (che quindi il system li sceglie da config.py )
     return get_llm()
 
