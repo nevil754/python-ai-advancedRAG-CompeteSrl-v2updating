@@ -65,7 +65,7 @@ class TenantDB:
             await session.execute(text("SELECT * FROM documents"))
     """
     def __init__(self):
-        self._sync_factory = sessionmaker(
+        self._sync_factory = sessionmaker(   #set machine che creerà sessioni pronte sincrone per il db 
             bind=get_sync_engine(),
             autocommit=False,
             autoflush=False,
