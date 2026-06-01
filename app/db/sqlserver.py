@@ -2,26 +2,26 @@
 # TenantDB: gestione connessioni SQL Server con schema switching.
 # Ogni request imposta lo schema del tenant sulla connessione.
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
-from contextlib import asynccontextmanager, contextmanager
-from functools import lru_cache
-from typing import AsyncGenerator, Generator
+from contextlib import asynccontextmanager, contextmanager  #x creare context manager sincroni e asincroni
+from functools import lru_cache  #x caching e singleton
+from typing import AsyncGenerator, Generator   #quando @asynccontextmanager su una funzione allora quella funzione ritorna un AsyncGenerator, mentre quando @contextmanager su una funzione quella funzione ritorna un Generator
 from loguru import logger
-from sqlalchemy import create_engine, event, text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine, event, text   #SQLAlchemy sync, sqlalchemy puo leggere sia sqlserver/postresql/mysql, text è per query raw
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine  #versione async di sqlanchemy, async_sessionmaker è la versione async di sessionmaker, create_async_engine è la versione async di create_engine
+from sqlalchemy.orm import Session, sessionmaker  #Session è la classe base per le sessioni sincrone, sessionmaker è una factory per creare sessioni
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=1)   #decoratore che trasforma la funzione in un singleton, quindi get_qdrant_client() ritorna sempre la stessa istanza di QdrantClient, evitando overhead di connessioni multiple
 def get_sync_engine():
-    """Engine SQLAlchemy sincrono — usato nei worker Celery."""
+    """Engine SQLAlchemy sincrono, usato nei worker Celery."""
     from app.core.settings import get_settings
     settings = get_settings()
-    engine = create_engine(
+    engine = create_engine(  #crea connection sqlalchemy
         settings.sqlserver_url,
-        pool_size=5,
-        max_overflow=10,
-        pool_pre_ping=True,        # verifica connessione prima di usarla
-        pool_recycle=3600,         # ricicla connessioni ogni ora
-        echo=settings.app_debug,   # log SQL queries in debug mode
+        pool_size=5,  #5 connessioni aperte
+        max_overflow=10,  #fino a 10 connessioni extra temp
+        pool_pre_ping=True,       #prima di usare una connessione esegue SELECT 1 per verificare che sia viva
+        pool_recycle=3600,         #dopo 1ora fa chiudi->riapri, per evitare timeout
+        echo=settings.app_debug,   #settings.app_debug è True allora vedi tutte le query sql generate da sqlalchemy nei log
     )
     logger.info("Engine SQL Server sincrono creato")
     return engine
@@ -29,17 +29,17 @@ def get_sync_engine():
 @lru_cache(maxsize=1)
 def get_async_engine():
     """
-    Engine SQLAlchemy asincrono — usato nelle route FastAPI.
+    Engine SQLAlchemy asincrono, usato nelle route FastAPI.
     Usa aioodbc come driver async per SQL Server.
     """
     from app.core.settings import get_settings
     settings = get_settings()
-    # URL async: sostituisce mssql+pyodbc con mssql+aioodbc
+    #URL async: sostituisce mssql+pyodbc con mssql+aioodbc
     async_url = settings.sqlserver_url.replace(
         "mssql+pyodbc", "mssql+aioodbc"
-    )
-    engine = create_async_engine(
-        async_url,
+    )  #replace mssql+pyodbc -> mssql+aioodbc, quindi utilizzi driver aioodbc CHE E' ASYNC🔥!!
+    engine = create_async_engine(   #crea connection ASYNC sqlalchemy
+        async_url,  
         pool_size=5,
         max_overflow=10,
         pool_pre_ping=True,
@@ -205,3 +205,5 @@ def _slug_to_schema(slug: str) -> str:
 
 # Singleton globale — importato da deps.py e dai worker Celery
 tenant_db = TenantDB()
+
+
