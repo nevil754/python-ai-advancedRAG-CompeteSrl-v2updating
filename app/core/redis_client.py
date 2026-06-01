@@ -16,7 +16,7 @@ def get_redis() -> aioredis.Redis:  #crea una sola connessione x processo
     """
     from app.core.settings import get_settings
     settings = get_settings()
-    logger.info("Connessione Redis", url=settings.redis_url)  
+    logger.info("Connessione Redis", url=settings.redis_url)
     return aioredis.from_url(    #return client Redis async (xk utilizzo aioredis)
         settings.redis_url,
         decode_responses=True,   #redis return stringhe non bytes
@@ -57,7 +57,7 @@ class TenantRedis:
     def _key(self, *parts: str) -> str:
         """Costruisce chiave prefissata con tenant_id."""
         return f"tenant:{self.tenant_id}:" + ":".join(parts)  #e.g. self._key("session", "123") -> tenant:abc123:session:123
-    
+
     async def get_session(self, session_id: str) -> list[dict]:   #session chat (short-term memory)
         """
         Ritorna gli ultimi N messaggi della conversazione da Redis.
@@ -66,13 +66,13 @@ class TenantRedis:
         key = self._key("session", session_id)  #builds e.g. tenant:abc123:session:123 la parte di 'session' e '123'(che sarebbe il session_id)
         raw = await self._redis.lrange(key, 0, -1)  #ur redis self (che è a sua volta un get_redis()), e prende la lista di messaggi (che sono stringhe JSON) con lrange (0,-1 prende tutta la lista!) utilizzando la key (ur custom)
         return [json.loads(m) for m in raw]   #la lista di mex in json (cioe raw), per ciascun mex lo converto in python e lo metto nella lista ('[]')
-          #return a list of python dict 
+          #return a list of python dict
 
     async def append_message(
         self,
         session_id: str,
         message: dict,
-        max_turns: int = 10,   
+        max_turns: int = 10,
     ) -> None:
         """
         Aggiunge un messaggio alla sessione e mantiene solo gli ultimi max_turns*2.
@@ -83,7 +83,7 @@ class TenantRedis:
         key = self._key("session", session_id)   #ottieni la key costruita e.g. tenant:abc123:session:123
         ttl = settings.cache_session_ttl_seconds  #create alias
         pipe = self._redis.pipeline()   #pipeline= batch di operazioni (piu veloce)
-        pipe.rpush(key, json.dumps(message, ensure_ascii=False))  #aggiunge message alla pipeline, json.dumps() converts in json, ensure_ascii=False per supportare caratteri unicode senza escape 
+        pipe.rpush(key, json.dumps(message, ensure_ascii=False))  #aggiunge message alla pipeline, json.dumps() converts in json, ensure_ascii=False per supportare caratteri unicode senza escape
         pipe.ltrim(key, -(max_turns * 2), -1)  #avendo tutta la pipeline, mantiene solo i mex dalla coda max_turn*2 cioe (xk ogni turno = 1 user+1 assistant)
         pipe.expire(key, ttl)   #setta l'expire della target session ad 1h, quindi dopo 1h di inattività la sessione viene cancellata automaticamente da Redis evitando cosi l'accumulo di dati vecchi e inutili
         await pipe.execute()   #esegue tutte le operazioni in pipeline in un colpo solo
@@ -98,7 +98,7 @@ class TenantRedis:
         query_hash: hash MD5/SHA del testo della query normalizzato.
         """
         return await self._cache.get(self._key("cache", "query", query_hash))   #costruisce chiave e.g. tenant:abc123:cache:query:hash123 e cerca la risposta cached in Redis, ritorna stringa o None se non trovata
-    
+
     async def set_query_cache(
         self,
         query_hash: str,
@@ -122,12 +122,12 @@ class TenantRedis:
         if keys:
             await self._cache.delete(*keys)   #cancella tutte le chiavi trovate, *keys espande la lista in argomenti separati
         return len(keys)   #return only the lenght of the keys deleted
-    
+
     async def check_rate_limit(
         self,
         user_id: str,
         limit: int | None = None,
-        window_seconds: int = 60,
+        window_seconds: int = 60,   #finestra di tempo in secondi per il rate limit, default 60s (1 minuto)
     ) -> tuple[bool, int]:
         """
         Verifica e incrementa il rate limit per un utente.
@@ -138,30 +138,30 @@ class TenantRedis:
         from app.core.settings import get_settings
         settings = get_settings()
         max_requests = limit or settings.rate_limit_requests_per_minute
-        key = self._key("ratelimit", user_id)
+        key = self._key("ratelimit", user_id)  #costruisce chiave e.g. tenant:abc123:ratelimit:user123 per tracciare le richieste di questo utente
         pipe = self._redis.pipeline()
-        pipe.incr(key)
-        pipe.expire(key, window_seconds)
-        results = await pipe.execute()
-        count = results[0]
-        return count <= max_requests, count
-    
-    # ── Job status (per polling frontend) ────────────────────
+        pipe.incr(key)  #ogni req, incrementa il contatore (🔥VIENE SALVATO IN REDIS SOTTO QUESTA KEY, non la salviamo in una variabile particolare)
+        pipe.expire(key, window_seconds)    #setta l'expire della target session ad X, quindi dopo X di inattività la sessione viene cancellata automaticamente da Redis evitando cosi l'accumulo di dati vecchi e inutili
+        results = await pipe.execute()  #esegue tutte le operazioni in pipeline in un colpo solo
+        count = results[0]  #results è un array cioè  [ 1 (è il risultato di INCR), True (è il risultato di EXPIRE) ]
+        return (count <= max_requests, count)   #return tupla (True/False, numero attuale di richieste fatte)
+
     async def set_job_status(
         self,
         job_id: str,
         status: dict,
-        ttl: int = 86400,
+        ttl: int = 86400,  #1 day
     ) -> None:
-        """Salva status di un job di ingestion — polling dal frontend."""
-        key = self._key("job", job_id)
-        await self._redis.setex(key, ttl, json.dumps(status))
+        """Salva status di un job di ingestion, polling dal frontend"""
+        key = self._key("job", job_id)   #costruisce chiave e.g. tenant:abc123:job:job123 per tracciare lo status di questo job
+        await self._redis.setex(key, ttl, json.dumps(status))  
+            #setex = set + expire insieme
 
     async def get_job_status(self, job_id: str) -> dict | None:
         """Legge status job — ritorna None se scaduto o inesistente."""
         raw = await self._redis.get(self._key("job", job_id))
         return json.loads(raw) if raw else None
-    
+
     # ── Pulizia tenant ────────────────────────────────────────
     async def flush_tenant(self) -> int:
         """
