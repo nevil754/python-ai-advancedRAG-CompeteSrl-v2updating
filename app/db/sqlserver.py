@@ -3,7 +3,7 @@
 # Ogni request imposta lo schema del tenant sulla connessione.
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from contextlib import asynccontextmanager, contextmanager  #x creare context manager sincroni e asincroni
-from functools import lru_cache  #x caching e singleton
+from functools import lru_cache  #x singleton cache
 from typing import AsyncGenerator, Generator   #quando @asynccontextmanager su una funzione allora quella funzione ritorna un AsyncGenerator, mentre quando @contextmanager su una funzione quella funzione ritorna un Generator
 from loguru import logger
 from sqlalchemy import create_engine, event, text   #SQLAlchemy sync, sqlalchemy puo leggere sia sqlserver/postresql/mysql, text è per query raw

@@ -2,7 +2,7 @@
 # Ogni tenant ha la sua collection separata in Qdrant.
 from __future__ import annotations
 from functools import lru_cache  #x singleton cache
-from typing import Any   #typing generico python
+from typing import Any   #x typing generico python
 from loguru import logger
 from qdrant_client import AsyncQdrantClient, QdrantClient  #client sincrono easincrono per qdrant
 from qdrant_client.http import models as qmodels  #modelli/schema qdrant

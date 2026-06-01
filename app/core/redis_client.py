@@ -1,14 +1,14 @@
 # app/core/redis_client.py
 # TenantRedis: wrapper Redis con namespace isolation per tenant.
 # Ogni chiave è prefissata con tenant:{id}: per isolamento completo.
-from __future__ import annotations
+from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 import json
-from functools import lru_cache
-from typing import Any
-import redis.asyncio as aioredis
+from functools import lru_cache  #x singleton cache
+from typing import Any  #x typing generico python
+import redis.asyncio as aioredis   #x versione async di redis
 from loguru import logger
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=1)   #decoratore che trasforma la funzione in un singleton, quindi get_qdrant_client() ritorna sempre la stessa istanza di QdrantClient, evitando overhead di connessioni multiple
 def get_redis() -> aioredis.Redis:
     """
     Ritorna il client Redis asincrono (singleton).
@@ -229,3 +229,5 @@ class TenantRedis:
         except Exception as e:
             logger.error(f"Redis ping fallito: {e}")
             return False
+
+
