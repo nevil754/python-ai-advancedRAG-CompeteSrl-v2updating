@@ -1,7 +1,7 @@
 # app/core/llm_factory.py
 # Factory per costruire l'istanza LLM da config.yaml / .env.
 # Cambiare provider = cambiare 1 riga in config.yaml, zero codice.
-from __future__ import annotations
+from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from functools import lru_cache
 from typing import Any
 from langchain_core.language_models import BaseChatModel
