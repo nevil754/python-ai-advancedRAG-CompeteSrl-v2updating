@@ -163,8 +163,14 @@ logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)  #log w 
 #    "<level>{message}</level>"
 #) quindi non hai {extra}, quindi in console non renderizzerai anche e.g. user_id e sessions_deleted, ma questi SERVONO CMNQ NEL RECORD LOGURU xk e.g. Grafana/OpenTelemetry/ELK li usano!!!
 - @lru_cache(maxsize=1)  trasforma la functione in singleton, quindi la seconda volta se l'istanza è cia in cache allora ritornalo al chiamante senza doverlo ricaricare.
-- 
-
+-embeddings
+model = get_embedding_model()
+vectors = list(model.query_embed([text]))  #🔥🔥here accada l'embedding docs!!
+#🔥🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
+-reranking
+from sentence_transformers import CrossEncoder  #🔥CrossEncoder è il wrapper
+reranker = CrossEncoder(settings.reranker_model, max_length=512,  #max token per chunk)
+#🔥reranking CrossEncoder fa (query, documento) -> score. è piu lento dell'embeddings.
 
 
 

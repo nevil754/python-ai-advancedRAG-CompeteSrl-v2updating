@@ -67,7 +67,7 @@ def embed_query(text: str) -> list[float]:
     """
     model = get_embedding_model()
     vectors = list(model.query_embed([text]))  #🔥🔥here accada l'embedding docs!!
-    #🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
+    #🔥🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
     return vectors[0].tolist()  #return il primo elem xk hai passato [query] una lista con 1 solo elem
 
 async def aembed_texts(texts: list[str]) -> list[list[float]]:  #async
@@ -100,17 +100,20 @@ def get_reranker_model() -> Any:
     """
     Carica il modello di reranking cross-encoder.
     Usato da app/rag/retrieval/reranker.py dopo il retrieval iniziale.
-    BAAI/bge-reranker-base: buon bilanciamento velocità/qualità
+    io ho scelto BAAI/bge-reranker-base ottimo buon bilanciamento velocità/qualità!
     """
     from app.core.settings import get_settings
     settings = get_settings()
     if not settings.reranker_enabled:
         return None
-    from sentence_transformers import CrossEncoder
-    logger.info("Caricamento reranker", model=settings.reranker_model)
+    from sentence_transformers import CrossEncoder  #🔥CrossEncoder è il wrapper
+    logger.info("Caricamento reranker", model=settings.reranker_model)  #log strutturato
     reranker = CrossEncoder(
         settings.reranker_model,
-        max_length=512,
+        max_length=512,  #max token per chunk
     )
+    #🔥reranking CrossEncoder fa (query, documento) -> score. è piu lento dell'embeddings.
     logger.info("Reranker caricato", model=settings.reranker_model)
     return reranker
+
+
