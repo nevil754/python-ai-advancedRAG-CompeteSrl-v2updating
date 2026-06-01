@@ -34,7 +34,7 @@ def get_cache_redis() -> aioredis.Redis:
     from app.core.settings import get_settings
     settings = get_settings()
     return aioredis.from_url(  #crea client Redis async
-        settings.redis_cache_url,
+        settings.redis_cache_url,   #GET L'URL DAI SETTINGS PER LA CACHE!!
         decode_responses=True,  #redis return stringhe non bytes
         socket_connect_timeout=5,  #timeout connessione Redis
         socket_timeout=5,  #timeout operazioni Redis
@@ -63,15 +63,16 @@ class TenantRedis:
         Ritorna gli ultimi N messaggi della conversazione da Redis.
         Usato dal context_builder prima di ogni query RAG.
         """
-        key = self._key("session", session_id)
-        raw = await self._redis.lrange(key, 0, -1)  #ur redis self (che è a sua volta un get_redis()), e prende la lista di messaggi (che sono stringhe JSON) con lrange (0,-1 prende tutta la lista!)
-        return [json.loads(m) for m in raw]   #la lista di mex in json (cioe raw), per cisuan mex lo converto in python e lo metto nella lista ('[]')
-    
+        key = self._key("session", session_id)  #builds e.g. tenant:abc123:session:123 la parte di 'session' e '123'(che sarebbe il session_id)
+        raw = await self._redis.lrange(key, 0, -1)  #ur redis self (che è a sua volta un get_redis()), e prende la lista di messaggi (che sono stringhe JSON) con lrange (0,-1 prende tutta la lista!) utilizzando la key (ur custom)
+        return [json.loads(m) for m in raw]   #la lista di mex in json (cioe raw), per ciascun mex lo converto in python e lo metto nella lista ('[]')
+          #return a list of python dict 
+
     async def append_message(
         self,
         session_id: str,
         message: dict,
-        max_turns: int = 10,   #
+        max_turns: int = 10,   
     ) -> None:
         """
         Aggiunge un messaggio alla sessione e mantiene solo gli ultimi max_turns*2.
@@ -79,24 +80,24 @@ class TenantRedis:
         """
         from app.core.settings import get_settings
         settings = get_settings()
-        key = self._key("session", session_id)
-        ttl = settings.cache_session_ttl_seconds  #
+        key = self._key("session", session_id)   #ottieni la key costruita e.g. tenant:abc123:session:123
+        ttl = settings.cache_session_ttl_seconds  #create alias
         pipe = self._redis.pipeline()   #pipeline= batch di operazioni (piu veloce)
-        pipe.rpush(key, json.dumps(message, ensure_ascii=False))
-        pipe.ltrim(key, -(max_turns * 2), -1)   #mantiene solo gli ultimi mexs (+2 xk ogni turno = 1 user + 1 assistant)
-        pipe.expire(key, ttl)
-        await pipe.execute()
+        pipe.rpush(key, json.dumps(message, ensure_ascii=False))  #aggiunge message alla pipeline, json.dumps() converts in json, ensure_ascii=False per supportare caratteri unicode senza escape 
+        pipe.ltrim(key, -(max_turns * 2), -1)  #avendo tutta la pipeline, mantiene solo i mex dalla coda max_turn*2 cioe (xk ogni turno = 1 user+1 assistant)
+        pipe.expire(key, ttl)   #setta l'expire della target session ad 1h, quindi dopo 1h di inattività la sessione viene cancellata automaticamente da Redis evitando cosi l'accumulo di dati vecchi e inutili
+        await pipe.execute()   #esegue tutte le operazioni in pipeline in un colpo solo
 
     async def clear_session(self, session_id: str) -> None:
-        """Cancella la sessione — chiamato quando l'utente chiude la chat."""
-        await self._redis.delete(self._key("session", session_id))
+        """Cancella la sessione, chiamato quando l'utente chiude la chat."""
+        await self._redis.delete(self._key("session", session_id))  #dopo aver ottenuto la key costruita e.g. tenant:abc123:session:123 cancella la session target
 
     async def get_query_cache(self, query_hash: str) -> str | None:    #cache query RAG
         """
         Cerca risposta cached per questa query.
         query_hash: hash MD5/SHA del testo della query normalizzato.
         """
-        return await self._cache.get(self._key("cache", "query", query_hash))
+        return await self._cache.get(self._key("cache", "query", query_hash))   #costruisce chiave e.g. tenant:abc123:cache:query:hash123 e cerca la risposta cached in Redis, ritorna stringa o None se non trovata
     
     async def set_query_cache(
         self,
@@ -107,9 +108,9 @@ class TenantRedis:
         """Salva risposta RAG in cache con TTL configurabile."""
         from app.core.settings import get_settings
         settings = get_settings()
-
-        key = self._key("cache", "query", query_hash)
-        await self._cache.setex(key, ttl or settings.cache_query_ttl_seconds, response)
+        key = self._key("cache", "query", query_hash)  #costruisce chiave e.g. tenant:abc123:cache:query:hash123
+        await self._cache.setex(key, ttl or settings.cache_query_ttl_seconds, response)  #setta la risposta RAG in cache con ttl
+           #setex = set + expire insieme
 
     async def invalidate_query_cache(self) -> int:
         """
@@ -196,7 +197,6 @@ class TenantRedis:
         return deleted
 
     # ── Health check ──────────────────────────────────────────
-
     @staticmethod
     async def ping() -> bool:
         """Verifica che Redis sia raggiungibile. Usato in /health endpoint."""
