@@ -71,42 +71,42 @@ def ensure_collection(
     collection_name = get_collection_name(tenant_slug)
     try:
         existing = client.get_collection(collection_name)
-        if not force_recreate:
+        if not force_recreate:   #ricordi, force_recreate è False di default, pero se è true allora significa che la collection deve essere creata
             logger.debug(f"Collection già esistente: {collection_name}")
             return collection_name
         logger.warning(f"force_recreate=True — cancello collection {collection_name}")
         client.delete_collection(collection_name)  #🔥DELETE COLLECTION
     except UnexpectedResponse:
-        pass  #collection non esiste — la creiamo
+        pass  #anche se catturi un errore, non è un problema, significa solo che la collection non esiste e quindi here continuiamo
     dimension = get_embedding_dimension()
-    vectors_config: dict[str, Any] = {
-        # Vettori densi per semantic search
-        "dense": qmodels.VectorParams(
+    vectors_config: dict[str, Any] = {  #dizionario python
+        #vettori densi per semantic search
+        "dense": qmodels.VectorParams(  #VectorParams serve per definire dimensione/metrica/storage/ect per vettore
             size=dimension,
             distance=qmodels.Distance[settings.qdrant_distance],
-            on_disk=True,             # vettori su disco per risparmiare RAM
+            on_disk=True,             #🔥🔥vettori su ssd per risparmiare RAM! praticamente obbligatorio in enterprise
         )
     }
-    # Vettori sparsi per BM25 hybrid search
+    #vettori sparsi per BM25 hybrid search
     sparse_vectors_config = None
     if settings.qdrant_use_sparse:
         sparse_vectors_config = {
             "sparse": qmodels.SparseVectorParams(
-                index=qmodels.SparseIndexParams(on_disk=True)
+                index=qmodels.SparseIndexParams(on_disk=True)  #configurazione dell'indice sparse
             )
         }
     client.create_collection(
         collection_name=collection_name,
-        vectors_config=vectors_config,
-        sparse_vectors_config=sparse_vectors_config,
+        vectors_config=vectors_config,    #ur setted here qua sopra
+        sparse_vectors_config=sparse_vectors_config,    #ur setted here qua sopra
         on_disk_payload=settings.qdrant_on_disk_payload,
         # ottimizza per ricerche frequenti
-        optimizers_config=qmodels.OptimizersConfigDiff(
-            indexing_threshold=20_000,
-            memmap_threshold=50_000,
+        optimizers_config=qmodels.OptimizersConfigDiff(   #🔥set gli ottimizzatori interni di Qdrant, DATA LA QUANTITA DI DATAS UTILIZZI TECHNIQUES DI INDEXES DIFFERENTI
+            indexing_threshold=20_000,  #quando una segment supera 20.000 punti, crea l'indice HNSW per ricerche più veloci
+            memmap_threshold=50_000,   #quando una segment supera 50.000 punti, sposta i dati su disco (memmap) per risparmiare RAM
         ),
     )
-    # Crea indice su tenant_id per filtri veloci
+    #crea indexes su tenant_id per filtri veloci
     client.create_payload_index(
         collection_name=collection_name,
         field_name="tenant_id",
@@ -122,7 +122,7 @@ def ensure_collection(
         field_name="doc_type",
         field_schema=qmodels.PayloadSchemaType.KEYWORD,
     )
-    logger.info(
+    logger.info(     #logging
         "Collection Qdrant creata",
         collection=collection_name,
         dimension=dimension,
@@ -130,22 +130,22 @@ def ensure_collection(
     )
     return collection_name
 
-async def aensure_collection(tenant_slug: str, force_recreate: bool = False) -> str:
+async def aensure_collection(tenant_slug: str, force_recreate: bool = False) -> str:  #versione Async di ensure_collection
     """Versione async di ensure_collection."""
     import asyncio
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, ensure_collection, tenant_slug, force_recreate)
 
-async def adelete_tenant_collections(tenant_slug: str) -> None:
+async def adelete_tenant_collections(tenant_slug: str) -> None:  #cancella tutte le collectionsdi un target tenant
     """
     Cancella tutte le collection Qdrant di un tenant.
-    Chiamato durante l'offboarding del tenant.
+    Chiamato durante l'offboarding del tenant (quando un cliente è cancellato dalla piattaforma).
     """
     client = get_async_qdrant_client()
-    for get_name in [get_collection_name, get_memory_collection_name]:
+    for get_name in [get_collection_name, get_memory_collection_name]:  #è come dire functions = [function1, function2], quindi ora iteri e nel first cycle get_name = get_collection_name, nel secondo ciclo get_name = get_memory_collection_name
         name = get_name(tenant_slug)
         try:
-            await client.delete_collection(name)
+            await client.delete_collection(name)  #in questo modo nel first cycle eseguo un delete su tenant_{safe_slug}_documents, mentre nel secondo cycle eseguo un delete su tenant_{safe_slug}_memory
             logger.info(f"Collection cancellata: {name}")
         except Exception as e:
             logger.warning(f"Impossibile cancellare collection {name}: {e}")
