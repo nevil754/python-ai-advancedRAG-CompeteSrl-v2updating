@@ -47,7 +47,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     batch_size = settings.embeddings_batch_size
     logger.debug(f"Embedding {len(texts)} testi in batch da {batch_size}")
     # fastembed ritorna un generator — converti in lista
-    vectors = list(model.embed(texts, batch_size=batch_size))
+    vectors = list(model.embed(texts, batch_size=batch_size))   #EMBED() è di fastembed, fa il 
     return [v.tolist() for v in vectors]
 
 def embed_query(text: str) -> list[float]:
