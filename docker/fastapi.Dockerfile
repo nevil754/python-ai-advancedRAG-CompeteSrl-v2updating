@@ -1,8 +1,6 @@
-# =============================================================
 # RAG Enterprise Legal — FastAPI image
 # Multi-stage build: builder installa dipendenze,
 # runtime è l'immagine finale leggera
-# =============================================================
 
 FROM python:3.11-slim AS builder
 
@@ -28,7 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 
 FROM python:3.11-slim AS runtime
-#crei stage chiamato 'runtime', in questa farai solor runtime non quello che hai fatto in 'builder'. python:3.11-slim è immagine Debian minimal molto piu piccola della full
+#crei stage chiamato 'runtime', in questa farai solo runtime non quello che hai fatto in 'builder'. python:3.11-slim è immagine Debian minimal molto piu piccola della full
 RUN apt-get update && apt-get install -y --no-install-recommends \
     unixodbc \
     curl \
@@ -47,7 +45,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Copia codice applicazione
+#copia codice applicazione
 COPY app/ ./app/
 COPY config/ ./config/
 COPY main.py .
@@ -68,5 +66,4 @@ EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", \
      "--workers", "1", "--loop", "uvloop", "--http", "httptools"]
 #avvia FastAPI, --host 0.0.0.0 espone server all'esterno container, --port 8000 è porta standard FastAPI, --workers 1 per sviluppo (⚠️in prod aumentare o usare gunicorn), --loop uvloop e --http httptools migliorano performance FastAPI, ottimo per produzione!!
-
 

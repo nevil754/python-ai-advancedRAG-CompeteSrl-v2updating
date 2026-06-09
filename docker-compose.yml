@@ -236,4 +236,3 @@ volumes:  #docker named values, qui definiamo i volumi usati dai container per l
     driver: local
 #i volumes sono area persistente ESTERNA AL CONTAINER, su linux solitamente in /var/lib/docker/volumes/, su Windows Docker Desktop solitamente C:\Users\Username\AppData\Local\docker\volumes. LI GESTISCE DOCKER
 
-

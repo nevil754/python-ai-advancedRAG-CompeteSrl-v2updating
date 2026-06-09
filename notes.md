@@ -178,7 +178,7 @@ rag-enterprise/
 │   │   ├── agents/
 │   │   │   ├── router_agent.py    ← decide quale agent/tool usare
 │   │   │   ├── rag_agent.py       ← agent RAG classico
-│   │   │   ├── web_agent.py       ← tavily + beautifulsoup per ricerca web
+│   │   │   ├── web_agent.py       ← tavily(1k/req free inzialia, fa web scraping e ti return gia dati strutturati x llm e.g.chatgpt) + beautifulsoup per ricerca web
 │   │   │   ├── sql_agent.py       ← NL→SQL su DB del tenant
 │   │   │   └── tools/
 │   │   │       ├── search_tool.py

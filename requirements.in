@@ -25,6 +25,8 @@ markitdown>=0.0.1  #converte docs->markdown pulito strutturato
 markdown2==2.5.1  #converte markdown → HTML
 xhtml2pdf==0.2.17  #converte HTML → PDF
 
+#per ora non utilizzo LibreOffice(utilizzata in prj mikeoss-competesrl), è img docker pesante e richiede installazione su pc/server. magari puoi vedere se utilizzarla in futuro cmnq ora sei gia top con le libs 
+
 pandas==2.2.3 #x tabelle/csv/ect
 tavily-python==0.5.0  #motore di ricerca web progettato per RAG e agenti, è “LLM-ready results” quindi ti restituisce gia anche summary-extracted text-relevance score, 💰free solo fino a 1,000 API credits/month (OTTIMO QUINDI DOVE QUESTA FEAT NON E' FONDAMENTALE MA VUOI AVERLA & easy)
 ddgs>=9.10.0   #duckduckgo search (era chiamato duckduckgo-search), ti da i links come te li darebbe google se fai una ricerca manualmente. "Dimmi dove si trova l’informazione"

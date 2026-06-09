@@ -7,7 +7,7 @@ import os  #x variabili d'ambiente
 from functools import lru_cache   #@lru_cache(maxsize=1), serve per cache automatica python, quando questa funzione viene chiamata, la esegue UNA SOLA VOLTA e poi ricorda il risultato
 from pathlib import Path  #molto meglio di os.path, supporta operazioni più complesse sui path in modo più intuitivo
 from typing import Literal  #x typing python, serve per dire che una var puo essere solo di valori specificati e.g.Literal["development", "staging", "production"] = "development"
-import yaml   #x legger file config.yaml
+import yaml   #x leggere file config.yaml
 from pydantic import Field, field_validator   #x validazione campi
 from pydantic_settings import BaseSettings, SettingsConfigDict   #x settings avanzati, BaseSettings legge auto .env file
 
@@ -35,7 +35,7 @@ class AppSettings(BaseSettings):
         env_file=str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",  #encoding file
         case_sensitive=False,
-        extra="ignore",           # 🔥🔥ignora variabili env sconosciute, ALTRIMENTI CRASHA!!
+        extra="ignore",          #🔥🔥ignora variabili env sconosciute, ALTRIMENTI CRASHA!!
         populate_by_name=True,   #permette di popolare i campi anche usando il nome del campo invece del nome della variabile d'ambiente e.g. llm_provider invece di LLM_PROVIDER, utile se vuoi usare nomi più leggibili nel codice (non vuoi che siano tutti sempre in maiuscolo)
     )
 
@@ -228,6 +228,4 @@ def get_settings() -> AppSettings:  #return type of AppSettings!
     return AppSettings()
 
 settings = get_settings()   #istanza globale, importa questa nei modules che lo vogliono!
-
-
 

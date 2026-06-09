@@ -12,8 +12,8 @@ version: "3.8"
 services:
  
   fastapi:
-    # Hot reload: uvicorn rileva modifiche ai .py e si riavvia automaticamente
-    # In produzione NON vuoi questo, rallenta e consuma più CPU
+    #hot reload: uvicorn rileva modifiche ai .py e si riavvia automaticamente
+    #in produzione NON vuoi questo, rallenta e consuma più CPU
     command: >
       uvicorn main:app
       --host 0.0.0.0
@@ -23,13 +23,13 @@ services:
       --reload-dir /app/config
       --log-level debug
     environment:
-      # Sovrascrive environment del docker-compose.yml base
+      #sovrascrive environment del docker-compose.yml base
       APP_ENVIRONMENT: "development"
       APP_DEBUG: "true"
       LOG_LEVEL: "DEBUG"
     volumes:
-      #Monta codice sorgente LIVE nel container
-      #Ogni modifica al codice è visibile SUBITO senza rebuild
+      #monta codice sorgente LIVE nel container
+      #ogni modifica al codice è visibile SUBITO senza rebuild
       - ./app:/app/app          #codice Python
       - ./config:/app/config    #yaml config
       - ./main.py:/app/main.py  #entry point
@@ -39,7 +39,7 @@ services:
       - "5678:5678"   # debugpy — VS Code remote debugger (opzionale)
  
   celery-worker-high:
-    # In dev: meno concurrency, log più verbosi
+    #in dev: meno concurrency, log più verbosi
     command: >
       celery -A app.workers.celery_app.celery_app worker
       --queues=high,shared_cleanup
@@ -77,8 +77,8 @@ services:
       - ./config:/app/config
  
   qdrant:
-    # In dev: esponi anche la porta gRPC per tool esterni (es. Qdrant Web UI)
-    # e abbassa log level per non sporcare il terminale
+    #in dev: esponi anche la porta gRPC per tool esterni (es. Qdrant Web UI)
+    #e abbassa log level per non sporcare il terminale
     environment:
       QDRANT__LOG_LEVEL: "WARN"   # meno rumore in dev
     ports:
@@ -86,17 +86,17 @@ services:
       - "6334:6334"
  
   redis:
-    # In dev: niente password per semplicità
-    # Sovrascrive il command del file base che usa --requirepass
+    #in dev: niente password per semplicità
+    #sovrascrive il command del file base che usa --requirepass
     command: >
       redis-server
       --maxmemory 512mb
       --maxmemory-policy allkeys-lru
       --appendonly no
       --loglevel warning
-    # ATTENZIONE: rimuoviamo --requirepass in dev
-    # Quindi REDIS_URL nei servizi deve essere senza password:
-    # redis://redis:6379/0  (non redis://:password@redis:6379/0)
+    #⚠️⚠️ATTENZIONE: rimuoviamo --requirepass in dev
+    #quindi REDIS_URL nei servizi deve essere senza password:
+    #redis://redis:6379/0  (non redis://:password@redis:6379/0)
     environment:
       REDIS_PASSWORD: ""
  
@@ -105,4 +105,3 @@ services:
       # In dev usa meno RAM
       MSSQL_MEMORY_LIMIT_MB: 1024
 
-      
