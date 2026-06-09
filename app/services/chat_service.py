@@ -205,13 +205,15 @@ class ChatService:
         #incrementa i contatori tuoi di redis
         pipe.incrby(f"{base}:tokens_in", tokens_in)   #incrementa tokens_in del redis session target
         pipe.incrby(f"{base}:tokens_out", tokens_out)
-        pipe.incr(f"{base}:queries")
-        pipe.expire(f"{base}:tokens_in", 172800)   # 48h TTL
+        pipe.incr(f"{base}:queries")   #incrementa queries di 1 ogni volta che fai una query, senza tokens_in/out, solo numero query totali
+        #setta l'expire dei contatori
+        pipe.expire(f"{base}:tokens_in", 172800)   #48h TTL(time-to-live), redis cancella automaticamente la chiave dopo 48h, cosi non accumuli dati vecchi inutili
         pipe.expire(f"{base}:tokens_out", 172800)
         pipe.expire(f"{base}:queries", 172800)
-        await pipe.execute()
+        await pipe.execute()  #invia batch di operazioni a redis
 
 def _hash_query(question: str, conv_id: str) -> str:
     """Hash deterministica per la cache query."""
-    normalized = question.strip().lower()
-    return hashlib.md5(f"{conv_id}:{normalized}".encode()).hexdigest()
+    normalized = question.strip().lower()  #elimini spazi laterali e rendi tutto minuscolo
+    return hashlib.md5(f"{conv_id}:{normalized}".encode()).hexdigest()   #🔥🔥crei hash md5 di conv_id + domanda normalizzata, cosi se stessa domanda in conversazione diversa, hai hash diverso, e.g. conv1:ciao -> hash1, conv2:ciao -> hash2 diverso da hash1
+
