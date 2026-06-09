@@ -158,6 +158,8 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 -@property   #trasforma function -> proprieta leggibile come attributo (quindi ora fai settings.sqlserver_url come se fosse una var normale)
 🔥-SQLAlchemy (best only in python): puo lavorare con SQL Server, PostgreSQL, MySQL ect, perche non parla direttamente con il db ma invece con i drivers (chiamati "DBAPI"), quindi in pratica se vuoi usare un db target devi avere sqlalchemy + importare driver target (e.g.sqlserver usa pyodbc, postgresql usa psycopg2) + e modifichi con tue info la connection string.
 quando hai tutto ok, grazie a sqlalchemy puoi fare: obj python al posto delle tabs, execute sql query raw, scrivere sql query con interpolation python.
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession  #x session db asyncrona
 -loguru x logs strutturati ottimi x OpenTelemetry/ELK/ect!
 logger.info("Logout", user_id=tenant.user_id, sessions_deleted=deleted)  #log w loguru, che crea record tipo
 # {

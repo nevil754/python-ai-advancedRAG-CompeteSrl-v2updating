@@ -5,15 +5,14 @@
 # =============================================================
 
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
-import hashlib  
-import json
+import hashlib   #x creare le hash x le queries
+import json   #x fare json.dumps() converts python obj in corrisponding json formatted string
 import time
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator, Any  
 from uuid import uuid4
-from loguru import logger
+from loguru import logger   #x logging strutturato
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy.ext.asyncio import AsyncSession  #x session db asyncrona
 from app.core.redis_client import TenantRedis
 from app.core.settings import get_settings
 from app.rag.retrieval.retriever import retrieve
@@ -26,12 +25,11 @@ settings = get_settings()
 class ChatService:
     """
     Servizio che gestisce il ciclo completo di una query RAG.
-
     Flusso completo:
     1. Check cache Redis (risposta già calcolata?)
     2. Carica sessione chat da Redis (short-term memory)
-    3. Retrieval: dense + sparse → RRF → MMR → reranker
-    4. Generation: prompt → LLM → risposta
+    3. Retrieval: dense + sparse -> RRF -> MMR -> reranker
+    4. Generation: prompt -> LLM -> risposta
     5. Salva messaggio in SQL Server
     6. Aggiorna sessione Redis
     7. Salva in cache Redis
