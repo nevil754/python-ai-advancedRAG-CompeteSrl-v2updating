@@ -140,8 +140,8 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 
 ########
 -config.yaml contiene parametri funzionali dell'app e nessun segreto, .env contiene SOLO segreti che non vanno su .git.
--json.loads(): converts json strutturato in corrisponfing python obj.
--json.dumps(): converts python obj in corrisponding json formatted string.
+-json.loads(): converts json strutturato in corrisponfing python obj
+-json.dumps(): converts python obj in corrisponding json formatted string
 
 ########
 

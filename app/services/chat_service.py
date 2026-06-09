@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession  #x session db asyncrona
 from app.core.redis_client import TenantRedis
 from app.core.settings import get_settings
 from app.rag.retrieval.retriever import retrieve
-from app.rag.generation.chain import arun_rag_chain, astream_rag_chain
+from app.rag.generation.chain import arun_rag_chain, astream_rag_chain  #versione normale e versione streaming sse
 from app.rag.memory.context_builder import format_sources_for_response
 
 
@@ -63,34 +63,24 @@ class ChatService:
             dict con answer, conversation_id, message_id, sources, ecc.
         """
         conv_id = conversation_id or str(uuid4())   #se l'utente non ha una conversazione, crei un uuid4 nuovo
-
-        # 2. Check cache
         query_hash = _hash_query( question, conv_id )   #_hash_query() è here in basso a file
-        cached = await self.redis.get_query_cache(query_hash)
+        cached = await self.redis.get_query_cache(query_hash)  #cerchi risposta gia cachata 
         if cached:
             logger.debug("Cache hit per query RAG")
             return json.loads(cached)
-
-        # 3. Carica sessione (short-term memory)
-        session_messages = await self.redis.get_session(conv_id)
-
-        # 4. Retrieval
-        chunks = retrieve(
+        session_messages = await self.redis.get_session(conv_id)  #🔥carichi session target (short-term memory)
+        chunks = retrieve(  #retrieval
             query=question,
             tenant_slug=self.tenant_slug,
             tenant_id=self.tenant_id,
             collection_id=collection_id,
         )
-
-        # 5. Generation
-        result = await arun_rag_chain(
+        result = await arun_rag_chain(   #runni versione normale
             question=question,
             chunks=chunks,
             session_messages=session_messages,
         )
-
-        # 6. Salva messaggi in SQL Server
-        message_id = await self._save_messages(
+        message_id = await self._save_messages(   #salva mexs in sqlserver
             conv_id=conv_id,
             question=question,
             answer=result["answer"],
@@ -99,33 +89,27 @@ class ChatService:
             tokens_out=result.get("tokens_out", 0),
             latency_ms=result.get("latency_ms", 0),
         )
-
-        # 7. Aggiorna sessione Redis
         await self.redis.append_message(conv_id, {
             "role": "user", "content": question
-        }, settings.memory_short_term_turns)
+        }, settings.memory_short_term_turns)  #alla sessione target di redis aggiungi nella cache {conversationid , {user, content}, limite turni(per mantenere solo gli ultimi N turni) }
         await self.redis.append_message(conv_id, {
             "role": "assistant", "content": result["answer"]
-        }, settings.memory_short_term_turns)
-
-        # 8. Cache risposta
-        response = {
+        }, settings.memory_short_term_turns)   #fai la stessa cosa per role 'assistant'
+        #in questo modo su redis in target session, salvi sia la domanda dell'user che la risposta!
+        response = {  #build obj 
             "answer": result["answer"],
             "conversation_id": conv_id,
             "message_id": message_id,
-            "sources": result["sources"],
+            "sources": result["sources"],   #citazioni
             "tokens_in": result.get("tokens_in"),
             "tokens_out": result.get("tokens_out"),
             "latency_ms": result.get("latency_ms"),
         }
-        await self.redis.set_query_cache(query_hash, json.dumps(response))
-
-        # 9. Incrementa stats Redis per usage rollup notturno
+        await self.redis.set_query_cache( query_hash, json.dumps(response) )   #salvi la risposta, json.dumps() converts python obj in corrisponding json formatted string
         await self._increment_usage_stats(
             tokens_in=result.get("tokens_in", 0),
             tokens_out=result.get("tokens_out", 0),
         )
-
         return response
 
     async def stream_query(   #versione streaming SSE
@@ -172,7 +156,7 @@ class ChatService:
         conv_id: str,
         question: str,
         answer: str,
-        sources: list[dict],
+        sources: list[dict],   #citazioni
         tokens_in: int = 0,
         tokens_out: int = 0,
         latency_ms: int = 0,
@@ -180,8 +164,6 @@ class ChatService:
         """Salva domanda + risposta in SQL Server. Ritorna message_id della risposta."""
         from app.core.settings import get_settings
         settings = get_settings()
-
-        # Crea conversazione se non esiste
         await self.db.execute(
             text("""
                 IF NOT EXISTS (SELECT 1 FROM conversations WHERE id = :id)
@@ -190,7 +172,6 @@ class ChatService:
             """),
             {"id": conv_id, "user_id": self.user_id}
         )
-
         # Salva messaggio utente
         await self.db.execute(
             text("""
@@ -236,7 +217,6 @@ class ChatService:
         pipe.expire(f"{base}:tokens_out", 172800)
         pipe.expire(f"{base}:queries", 172800)
         await pipe.execute()
-
 
 def _hash_query(question: str, conv_id: str) -> str:
     """Hash deterministica per la cache query."""
