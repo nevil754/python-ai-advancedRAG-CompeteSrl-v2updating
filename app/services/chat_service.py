@@ -59,15 +59,13 @@ class ChatService:
     ) -> dict[str, Any]:
         """
         Esegue una query RAG completa (non streaming).
-
         Returns:
             dict con answer, conversation_id, message_id, sources, ecc.
         """
-        # 1. Genera o usa conversation_id esistente
-        conv_id = conversation_id or str(uuid4())
+        conv_id = conversation_id or str(uuid4())   #se l'utente non ha una conversazione, crei un uuid4 nuovo
 
         # 2. Check cache
-        query_hash = _hash_query(question, conv_id)
+        query_hash = _hash_query( question, conv_id )   #_hash_query() è here in basso a file
         cached = await self.redis.get_query_cache(query_hash)
         if cached:
             logger.debug("Cache hit per query RAG")
@@ -130,7 +128,7 @@ class ChatService:
 
         return response
 
-    async def stream_query(
+    async def stream_query(   #versione streaming SSE
         self,
         question: str,
         conversation_id: str | None = None,
