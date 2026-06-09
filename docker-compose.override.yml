@@ -28,12 +28,12 @@ services:
       APP_DEBUG: "true"
       LOG_LEVEL: "DEBUG"
     volumes:
-      # Monta codice sorgente LIVE nel container
-      # Ogni modifica al codice è visibile SUBITO senza rebuild
-      - ./app:/app/app          # codice Python
-      - ./config:/app/config    # yaml config
-      - ./main.py:/app/main.py  # entry point
-    # In dev apriamo anche porta debug se usi debugger remoto (es. VS Code attach)
+      #Monta codice sorgente LIVE nel container
+      #Ogni modifica al codice è visibile SUBITO senza rebuild
+      - ./app:/app/app          #codice Python
+      - ./config:/app/config    #yaml config
+      - ./main.py:/app/main.py  #entry point
+    #in dev apriamo anche porta debug se usi debugger remoto (es. VS Code attach)
     ports:
       - "8000:8000"
       - "5678:5678"   # debugpy — VS Code remote debugger (opzionale)

@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   #     > /etc/apt/sources.list.d/mssql-release.list
   #aggiunge repository Microsoft SQL Server
 #&& apt-get update   ricarica repository
-#&& ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18   installa driver ODBC Microsoft SQL Server, ACCEPT_EULA=Y  → accetti licenza Microsoft automaticamente
+#&& ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18   installa driver ODBC Microsoft SQL Server, ACCEPT_EULA=Y  -> accetti licenza Microsoft automaticamente
 #&& apt-get clean \ && rm -rf /var/lib/apt/lists/*    riduce dimensione immagine eliminando cache apt, MOLTO IMPORTANTE!
 
 WORKDIR /build

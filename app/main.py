@@ -104,11 +104,11 @@ async def _check_services() -> None:  #function health x startup
 async def _preload_models() -> None:
     try:
         import asyncio  #x use aync and await
-        from app.core.embeddings import get_embedding_model, get_reranker_model  #ur custom
-        loop = asyncio.get_event_loop()  #ottieni event loop corrente, x eseguire code async in parallelo
+        from app.core.embeddings import get_embedding_model, get_reranker_model    #ur custom
+        loop = asyncio.get_event_loop()    #ottieni event loop corrente, x eseguire code async in parallelo
         await loop.run_in_executor(None, get_embedding_model)   #🔥CARICA MODELLO Embedding IN THREAD SEPARATO!!
         logger.info("Modello embedding pre-caricato")
-        from app.core.settings import get_settings  #riprendi get_settings 
+        from app.core.settings import get_settings    #riprendi get_settings 
         if get_settings().reranker_enabled:
             await loop.run_in_executor(None, get_reranker_model)  #🔥CARICA MODELLO Reranker IN THREAD SEPARATO!!
             logger.info("Reranker pre-caricato")

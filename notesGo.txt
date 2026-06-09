@@ -80,7 +80,7 @@ e.g. record di audit
   "tokens_used": 1200,
   "status": "success"
 }
-cosi anche per compliance legale (GDPR / GDPR-like), puoi rispondere alle domanda dell'utente “Cosa avete fatto con i miei dati?”. senza saresti 'cieco'.
+cosi anche per compliance legale (GDPR / GDPR-like), puoi rispondere alle domanda dell'utente "Cosa avete fatto con i miei dati?". senza saresti 'cieco'.
 
 IDENTITY(1,1)
 NEWSEQUENTIALID(): UUID/GUID univoco MA sequenziale
