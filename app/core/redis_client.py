@@ -165,7 +165,7 @@ class TenantRedis:
     async def flush_tenant(self) -> int:
         """
         Cancella TUTTE le chiavi di questo tenant da Redis.
-        Chiamato durante l'offboarding (QUANDO IL CLIENT CANCELLA IL SUO ACCOUNT).
+        Chiamato durante l'offboarding (🔦 QUANDO IL CLIENT CANCELLA IL SUO ACCOUNT).
         remmeber: usa SCAN non KEYS per non bloccare Redis in prod!
         """
         pattern = f"tenant:{self.tenant_id}:*"

@@ -3,65 +3,53 @@
 # Task Celery per manutenzione e pulizia.
 # =============================================================
 
-from __future__ import annotations
-
-from loguru import logger
-from sqlalchemy import text
-
-from app.workers.celery_app import celery_app
+from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
+from loguru import logger  #x logging strutturato
+from sqlalchemy import text   #x query sql manuali
+from app.workers.celery_app import celery_app  #ur custom
 
 
 @celery_app.task(
-    name="app.workers.cleanup_tasks.purge_tenant",
-    acks_late=True,
+    name="app.workers.cleanup_tasks.purge_tenant",   #the name
+    acks_late=True,  #🔥🔥il task viene confermato successfully solo DOPO il completamento 
 )
-def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:
+def purge_tenant(tenant_id: str, tenant_slug: str) -> dict:  #DELETE COMPLETO e irreversibile X L'UTENTE, cancella sql schema - qdrant collections - redis keys
     """
     Offboarding completo di un tenant.
     Cancella: schema SQL Server, collection Qdrant, chiavi Redis.
     IRREVERSIBILE — usare con cautela.
     """
-    import asyncio
+    import asyncio   #x async functions
     from app.db.sqlserver import tenant_db
     from app.core.vectorstore import adelete_tenant_collections
     from app.core.redis_client import TenantRedis
 
     logger.warning(f"Purge tenant avviato: {tenant_slug}")
-
-    # 1. Cancella collection Qdrant
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(adelete_tenant_collections(tenant_slug))
+    loop = asyncio.new_event_loop()  #crea event loop manuale  
+    loop.run_until_complete( adelete_tenant_collections(tenant_slug) )   #esegue il delete sul tenant tenant_{safe_slug}_documents e anche sul tenant tenant_{safe_slug}_memory
+    loop.close()  
+    loop = asyncio.new_event_loop()   #crea event loop manuale 
+    redis = TenantRedis( tenant_id = tenant_id )
+    deleted_keys = loop.run_until_complete( redis.flush_tenant() )   #cancella tutte le chiavi redis del tenant!
     loop.close()
-
-    # 2. Cancella chiavi Redis
-    loop = asyncio.new_event_loop()
-    redis = TenantRedis(tenant_id=tenant_id)
-    deleted_keys = loop.run_until_complete(redis.flush_tenant())
-    loop.close()
-
-    # 3. Cancella schema SQL Server
     schema_name = "tenant_" + tenant_slug.replace("-", "_")
     with tenant_db._sync_factory() as session:
-        # Disabilita tenant prima di cancellare
         session.execute(
             text("UPDATE shared.tenants SET is_active = 0 WHERE slug = :slug"),
             {"slug": tenant_slug}
-        )
-        # Drop schema (SQL Server richiede che sia vuoto prima)
-        # In prod potresti preferire solo disabilitare invece di cancellare
-        session.execute(text(f"DROP SCHEMA IF EXISTS [{schema_name}]"))
-
+        )   #disabilita tenant prima di cancellare
+        session.execute(text(f"DROP SCHEMA IF EXISTS [{schema_name}]"))  #⚠️⚠️ DROP SCHEMA è irreversibile, IN VERA PRODUCTION magari è consigliato solo disabilitare!!
+            #lo schema deve essere completamente vuoto!! altrimenti potresti avere errori t-sql tipo  'Cannot drop schema 'X' because it is being referenced by object 'Y''
     logger.info(
         "Purge tenant completato",
         tenant=tenant_slug,
         redis_keys_deleted=deleted_keys,
-    )
-    return {"status": "purged", "tenant": tenant_slug}
-
+    )   #x logging strutturato
+    return {"status": "purged", "tenant": tenant_slug}  #return dict
 
 @celery_app.task(
-    name="app.workers.cleanup_tasks.expire_sessions",
-    acks_late=True,
+    name="app.workers.cleanup_tasks.expire_sessions",   #the name
+    acks_late=True,    #🔥🔥il task viene confermato successfully solo DOPO il completamento 
 )
 def expire_sessions() -> dict:
     """
@@ -70,8 +58,8 @@ def expire_sessions() -> dict:
     Redis gestisce i TTL automaticamente, ma questo task
     fa pulizia esplicita per chiavi senza TTL o orfane.
     """
-    import asyncio
-    from app.core.redis_client import get_redis
+    import asyncio   #x async functs
+    from app.core.redis_client import get_redis   #ur custom
 
     async def _cleanup():
         client = get_redis()
@@ -90,10 +78,8 @@ def expire_sessions() -> dict:
             if cursor == 0:
                 break
         return fixed
-
     loop = asyncio.new_event_loop()
     fixed = loop.run_until_complete(_cleanup())
     loop.close()
-
     logger.info(f"Session cleanup: {fixed} chiavi senza TTL corrette")
     return {"fixed_keys": fixed}

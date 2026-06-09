@@ -136,7 +136,7 @@ async def aensure_collection(tenant_slug: str, force_recreate: bool = False) -> 
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, ensure_collection, tenant_slug, force_recreate)
 
-async def adelete_tenant_collections(tenant_slug: str) -> None:  #cancella tutte le collectionsdi un target tenant
+async def adelete_tenant_collections(tenant_slug: str) -> None:  #cancella tutte le collections di un target tenant
     """
     Cancella tutte le collection Qdrant di un tenant.
     Chiamato durante l'offboarding del tenant (quando un cliente è cancellato dalla piattaforma).
@@ -145,7 +145,7 @@ async def adelete_tenant_collections(tenant_slug: str) -> None:  #cancella tutte
     for get_name in [get_collection_name, get_memory_collection_name]:  #è come dire functions = [function1, function2], quindi ora iteri e nel first cycle get_name = get_collection_name, nel secondo ciclo get_name = get_memory_collection_name
         name = get_name(tenant_slug)
         try:
-            await client.delete_collection(name)  #in questo modo nel first cycle eseguo un delete su tenant_{safe_slug}_documents, mentre nel secondo cycle eseguo un delete su tenant_{safe_slug}_memory
+            await client.delete_collection(name)  #in questo modo nel FIRST cycle eseguo un delete su tenant_{safe_slug}_documents, mentre nel SECOND cycle eseguo un delete su tenant_{safe_slug}_memory
             logger.info(f"Collection cancellata: {name}")
         except Exception as e:
             logger.warning(f"Impossibile cancellare collection {name}: {e}")
