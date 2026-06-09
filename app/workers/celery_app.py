@@ -1,12 +1,10 @@
-# =============================================================
 # app/workers/celery_app.py
 # Celery factory: definisce l'app, le code e il routing dei task.
 # Importato da tutti i worker e da chi fa il dispatch dei task.
-# =============================================================
 
 from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from celery import Celery  #x celery
-from kombu import Queue  #kombu è la lib AMQP usata internamente da celery per gestire code, exchange, routing, ecc
+from kombu import Queue  #kombu è la lib AMQP(Advanced Message Queuing Protocol) usata internamente da celery per gestire code, mexs, routing, ecc
 from app.core.settings import get_settings
 
 settings = get_settings()
@@ -66,3 +64,5 @@ def create_celery_app() -> Celery:  #this is a factory function, non è singleto
 
 
 celery_app = create_celery_app()    #istanza globale, importata dai moduli worker
+
+
