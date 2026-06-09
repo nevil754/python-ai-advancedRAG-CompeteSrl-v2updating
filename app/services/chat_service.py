@@ -10,7 +10,6 @@ import json
 import time
 from typing import AsyncGenerator, Any
 from uuid import uuid4
-
 from loguru import logger
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,8 +20,8 @@ from app.rag.retrieval.retriever import retrieve
 from app.rag.generation.chain import arun_rag_chain, astream_rag_chain
 from app.rag.memory.context_builder import format_sources_for_response
 
-settings = get_settings()
 
+settings = get_settings()
 
 class ChatService:
     """
