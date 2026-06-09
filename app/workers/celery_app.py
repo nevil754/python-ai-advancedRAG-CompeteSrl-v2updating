@@ -62,7 +62,6 @@ def create_celery_app() -> Celery:  #this is a factory function, non è singleto
 
     return app
 
-
 celery_app = create_celery_app()    #istanza globale, importata dai moduli worker
 
 

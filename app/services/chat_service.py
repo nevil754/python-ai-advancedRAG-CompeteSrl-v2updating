@@ -4,9 +4,8 @@
 # Coordina: cache → retrieval → generation → memory → DB.
 # =============================================================
 
-from __future__ import annotations
-
-import hashlib
+from __future__ import annotations  #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
+import hashlib  
 import json
 import time
 from typing import AsyncGenerator, Any

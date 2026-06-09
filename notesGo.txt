@@ -119,7 +119,7 @@ per eseguire jobs in background, si attiva automaticamente e.g.caricamente di pd
 -prefetch_multiplier=1  1 WORKER PUO PRENDERE SOLO 1 TASK ALLA VOLTA, questo evita e.g. che un worker si carica di piu tasks in memoria e va in oom!!
 -hai 2 code separate: 'high' e 'default',  🔥questo evita che un tenant che carica 200pdf insieme non blocchi negli altri tenat le risposte chat in real-time
 -celery ha un componente che si chiama 'Celery Beat' che fa da scheduler('from celery.schedules import crontab', azioni che succedono auto ogni X time), il problema è che CeleryBeat mantiene tutto in RAM!!
-quindi al posto utilizzi 🔥RedBeat che salva i task periodoci in modo persistente su redis, quindi ora il flow diventa: redbeat legge redis -> capisce quali tasks devono partire -> invia task a celery -> update stato.
+quindi al posto utilizzi 🔥RedBeat (plugin celery-redbeat) che salva i task periodoci in modo persistente su redis, quindi ora il flow diventa: redbeat legge redis -> capisce quali tasks devono partire -> invia task a celery -> update stato.
 //quindi ora redis diventa anche un db per schedulers! 
 
 flow:
@@ -145,7 +145,16 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 
 ########
 
--yield: turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and 🔥Generator funct per return data non usano 'return' ma usano 'yield'.
+-from typing import AsyncGenerator  & yield, utilizzati x streaming SSE (token by token): turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and 🔥Generator funct per return data non usano 'return' ma usano 'yield'.
+//from fastapi.responses import StreamingResponse  #🔥x streaming response, fastapi apre connessione http lunga
+//return StreamingResponse(  #FASTAPI APRE CONNESSIONE HTTP LUNGA
+//      event_generator(),  #ogni yield viene inviato immediatamente 
+//      media_type="text/event-stream",  #🔥 fondamentale il browser DEVE sapere che questo è SSE
+//      headers={
+//          "Cache-Control": "no-cache",   #no cache
+//          "X-Accel-Buffering": "no",    #🔥disabilita buffering nginx, altrimenti nginx potrebbe accumulare tutto e restituire tutto solo alla fine!!
+//      },
+//  )
 -@property   #trasforma function -> proprieta leggibile come attributo (quindi ora fai settings.sqlserver_url come se fosse una var normale)
 🔥-SQLAlchemy (best only in python): puo lavorare con SQL Server, PostgreSQL, MySQL ect, perche non parla direttamente con il db ma invece con i drivers (chiamati "DBAPI"), quindi in pratica se vuoi usare un db target devi avere sqlalchemy + importare driver target (e.g.sqlserver usa pyodbc, postgresql usa psycopg2) + e modifichi con tue info la connection string.
 quando hai tutto ok, grazie a sqlalchemy puoi fare: obj python al posto delle tabs, execute sql query raw, scrivere sql query con interpolation python.
