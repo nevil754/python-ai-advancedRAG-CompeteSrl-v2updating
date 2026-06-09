@@ -3,18 +3,16 @@
 # Gestione collection (cartelle logiche di documenti per tenant).
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations   #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import text
-
+from sqlalchemy import text   #x query sql manuali
 from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.core.vectorstore import ensure_collection, get_collection_name
 from app.schemas.common import PaginatedResponse
 from app.schemas.document import CollectionCreate, CollectionSchema
 
-router = APIRouter(prefix="/collections", tags=["collections"])
 
+router = APIRouter(prefix="/collections", tags=["collections"])
 
 @router.post("", response_model=CollectionSchema, status_code=status.HTTP_201_CREATED)
 async def create_collection(

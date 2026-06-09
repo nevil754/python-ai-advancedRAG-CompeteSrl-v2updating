@@ -63,23 +63,24 @@ def expire_sessions() -> dict:
 
     async def _cleanup():
         client = get_redis()
-        # Cerca chiavi sessione senza TTL (anomalie)
-        cursor = 0
-        fixed = 0
+        #cerca chiavi sessione senza TTL(time-to-live) cioe anomalie
+        cursor = 0   #paginazione redis scan
+        fixed = 0  #contatore modifiche
         while True:
-            cursor, keys = await client.scan(
-                cursor=cursor, match="tenant:*:session:*", count=200
-            )
+            cursor, keys = await client.scan( cursor=cursor, match="tenant:*:session:*", count=200 )  #cerca chiavi redis con pattern session tenant, e prende a batchs di 200
             for key in keys:
-                ttl = await client.ttl(key)
-                if ttl == -1:  # nessun TTL impostato
-                    await client.expire(key, 86400)
+                ttl = await client.ttl(key)  #check ttl della key target
+                if ttl == -1:  #se è -1, cioe quindi nessun TTL impostato
+                    await client.expire(key, 86400)  #imposta ttl a 24h
                     fixed += 1
-            if cursor == 0:
+            if cursor == 0:  #se ritorna all'inizio cioe a 0, allora abbiamo finito di scansionare tutte le chiavi
                 break
         return fixed
+    
     loop = asyncio.new_event_loop()
-    fixed = loop.run_until_complete(_cleanup())
+    fixed = loop.run_until_complete( _cleanup() )
     loop.close()
     logger.info(f"Session cleanup: {fixed} chiavi senza TTL corrette")
     return {"fixed_keys": fixed}
+
+
