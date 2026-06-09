@@ -104,3 +104,5 @@ services:
     environment:
       # In dev usa meno RAM
       MSSQL_MEMORY_LIMIT_MB: 1024
+
+      
