@@ -124,30 +124,28 @@ class ChatService:
         """
         conv_id = conversation_id or str(uuid4())
         session_messages = await self.redis.get_session(conv_id)
-
         chunks = retrieve(
             query=question,
             tenant_slug=self.tenant_slug,
             tenant_id=self.tenant_id,
             collection_id=collection_id,
         )
-
         full_answer = ""
         async for token in astream_rag_chain(
             question=question,
             chunks=chunks,
             session_messages=session_messages,
         ):
-            full_answer += token
-            yield token
-
-        # Dopo lo streaming, salva in DB e Redis
-        await self._save_messages(
+            full_answer += token   #accumuli la risposta
+            yield token  #invio immediato e.g. al frontend
+        #now finito streaming
+        await self._save_messages(  #save on db sqlserver
             conv_id=conv_id,
             question=question,
             answer=full_answer,
             sources=format_sources_for_response(chunks),
         )
+        #save on cache redis
         await self.redis.append_message(conv_id, {"role": "user", "content": question})
         await self.redis.append_message(conv_id, {"role": "assistant", "content": full_answer})
 
@@ -164,53 +162,48 @@ class ChatService:
         """Salva domanda + risposta in SQL Server. Ritorna message_id della risposta."""
         from app.core.settings import get_settings
         settings = get_settings()
-        await self.db.execute(
+        await self.db.execute(   #query raw 
             text("""
                 IF NOT EXISTS (SELECT 1 FROM conversations WHERE id = :id)
                 INSERT INTO conversations (id, user_id, mode)
                 VALUES (:id, :user_id, 'rag')
-            """),
+            """),   #i ':' sono x i placeholders
             {"id": conv_id, "user_id": self.user_id}
-        )
-        # Salva messaggio utente
+        )  #crei la conversazione se non esiste
         await self.db.execute(
             text("""
                 INSERT INTO messages (conversation_id, role, content)
                 VALUES (:conv_id, 'user', :content)
             """),
             {"conv_id": conv_id, "content": question}
-        )
-
-        # Salva risposta assistant
+        )  #salvi mex utente
         result = await self.db.execute(
             text("""
                 INSERT INTO messages
-                    (conversation_id, role, content, sources,
-                     tokens_in, tokens_out, latency_ms)
+                    (conversation_id, role, content, sources, tokens_in, tokens_out, latency_ms)
                 OUTPUT INSERTED.id
-                VALUES (:conv_id, 'assistant', :content, :sources,
-                        :tokens_in, :tokens_out, :latency_ms)
-            """),
+                VALUES (:conv_id, 'assistant', :content, :sources, :tokens_in, :tokens_out, :latency_ms)
+            """),   #output inserted.id ritorna l'id della riga appena inserita
             {
                 "conv_id": conv_id,
                 "content": answer,
-                "sources": json.dumps(sources),
+                "sources": json.dumps(sources),  #json.dumps() converts python obj in corrisponding json formatted string
                 "tokens_in": tokens_in,
                 "tokens_out": tokens_out,
                 "latency_ms": latency_ms,
             }
-        )
+        )  #salvi risposta assistant
         row = result.fetchone()
         return row[0] if row else 0
 
-    async def _increment_usage_stats(self, tokens_in: int, tokens_out: int) -> None:
-        """Incrementa contatori Redis per il rollup notturno."""
+    async def _increment_usage_stats( self, tokens_in: int, tokens_out: int ) -> None:
+        """Incrementa contatori Redis per il rollup notturno. serve x analytics"""
         from datetime import date
-        today = date.today().isoformat()
+        today = date.today().isoformat()   #data di oggi e.g.2026-06-09
         base = f"tenant:{self.tenant_id}:stats:{today}"
-
-        pipe = self.redis._redis.pipeline()
-        pipe.incrby(f"{base}:tokens_in", tokens_in)
+        pipe = self.redis._redis.pipeline()   # crea pipeline= batch di operazioni (piu veloce)
+        #incrementa i contatori tuoi di redis
+        pipe.incrby(f"{base}:tokens_in", tokens_in)   #incrementa tokens_in del redis session target
         pipe.incrby(f"{base}:tokens_out", tokens_out)
         pipe.incr(f"{base}:queries")
         pipe.expire(f"{base}:tokens_in", 172800)   # 48h TTL
