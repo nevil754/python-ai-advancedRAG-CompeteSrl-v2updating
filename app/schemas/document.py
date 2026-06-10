@@ -21,7 +21,6 @@ class CollectionSchema(BaseModel):
     qdrant_name: str
     is_active: bool
     created_at: datetime
-
     class Config:
         from_attributes = True
 
@@ -39,7 +38,6 @@ class DocumentSchema(BaseModel):
     language: str | None
     created_at: datetime
     updated_at: datetime
-
     class Config:
         from_attributes = True
 

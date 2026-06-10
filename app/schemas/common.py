@@ -16,14 +16,13 @@ from pydantic import BaseModel, Field
 T = TypeVar("T")
 
 
-class PaginatedResponse(BaseModel, Generic[T]):
+class PaginatedResponse( BaseModel, Generic[T] ):
     """Response paginata generica. Usata da tutte le route che listano risorse."""
     items: list[T]
     total: int
     page: int
     page_size: int
     has_more: bool
-
     @classmethod   #per creare mini-classe con gia init - 
     def build(cls, items: list[T], total: int, page: int, page_size: int):
         return cls(
@@ -33,7 +32,6 @@ class PaginatedResponse(BaseModel, Generic[T]):
             page_size=page_size,
             has_more=(page * page_size) < total,
         )
-
 
 class ErrorResponse(BaseModel):
     """Risposta di errore standardizzata."""

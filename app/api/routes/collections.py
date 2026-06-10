@@ -25,8 +25,8 @@ async def create_collection(
     from python_slugify import slugify   #x trasformare "Fatture 2025" -> "fatture-2025"
 
     coll_id = str(uuid4())  #genera e formatta in str
-    qdrant_name = f"tenant_{tenant.tenant_slug.replace('-','_')}_{slugify(body.name)}"   #nome collection qdrant, unico per tenant
-    ensure_collection( tenant.tenant_slug )  #assicura che la collection base esista
+    qdrant_name = f"tenant_{tenant.tenant_slug.replace('-','_')}_{slugify(body.name)}"   #nome collection qdrant, unico per tenant. e.g. tenant "acme-corp" e collection "Fatture 2025"  -> tenant_acme_corp_fatture-2025
+    ensure_collection( tenant.tenant_slug )   #assicura che la collection base esista
     await db.execute(
         text("""
             INSERT INTO collections (id, name, description, qdrant_name, created_by)
@@ -41,12 +41,12 @@ async def create_collection(
         }  #i ':' sono i placeholder
     )
     row = await db.execute(
-        text("SELECT * FROM collections WHERE id = :id"), {"id": coll_id}
+        text("SELECT * FROM collections WHERE id = :id"), {"id": coll_id}  #recupera record appena creato
     )
-    return CollectionSchema.model_validate(dict(row.fetchone()._mapping))
+    return CollectionSchema.model_validate( dict(row.fetchone()._mapping) )   #fetchone() prende 1 row, _mapping converte row sqlalchemy in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in CollectionSchema
 
 
-@router.get("", response_model=PaginatedResponse[CollectionSchema])
+@router.get("", response_model=PaginatedResponse[CollectionSchema])   #risposta type PaginatedResponse con items di tipo CollectionSchema, validata con pydantic
 async def list_collections(
     tenant: CurrentTenant,
     db: CurrentDB,

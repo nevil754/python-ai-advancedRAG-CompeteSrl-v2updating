@@ -35,8 +35,8 @@ CREATE TABLE shared.tenants (
     max_users       INT                 NOT NULL DEFAULT 10,
     max_tokens_day  BIGINT              NOT NULL DEFAULT 100000,  --🔥RATE LIMIT TOKEN X DAY!!
     settings        NVARCHAR(MAX)       NULL,       -- JSON: feature flags, custom prompts, ecc.
-    created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),  --return data e ora corrente del server SQL in formato UTC
-    updated_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+    created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),  --return data e ora corrente del server SQL in formato UTC
+    updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT PK_tenants PRIMARY KEY (id),
     CONSTRAINT UQ_tenants_slug UNIQUE (slug),
     CONSTRAINT CK_tenants_plan CHECK (plan IN ('starter','pro','enterprise'))
@@ -58,7 +58,7 @@ CREATE TABLE shared.audit_log (  --FONDAMENTALE in contesti enterprise, con ques
     ip_address  NVARCHAR(45)            NULL,
     user_agent  NVARCHAR(500)           NULL,
     metadata    NVARCHAR(MAX)           NULL,       -- JSON
-    created_at  DATETIME2               NOT NULL DEFAULT GETUTCDATE(),  --return data e ora corrente del server SQL in formato UTC
+    created_at  DATETIME2(3)               NOT NULL DEFAULT SYSUTCDATETIME(),  --return data e ora corrente del server SQL in formato UTC
     CONSTRAINT PK_audit_log PRIMARY KEY (id),
     CONSTRAINT FK_audit_tenants FOREIGN KEY (tenant_id) REFERENCES shared.tenants(id)
 );
@@ -100,9 +100,9 @@ CREATE TABLE shared.api_keys (
     [name]        NVARCHAR(255)       NOT NULL,
     scopes      NVARCHAR(500)       NOT NULL DEFAULT 'read,write',
     is_active   BIT                 NOT NULL DEFAULT 1,
-    last_used   DATETIME2           NULL,
-    expires_at  DATETIME2           NULL,
-    created_at  DATETIME2           NOT NULL DEFAULT GETUTCDATE(),  --return data e ora corrente del server SQL in formato UTC
+    last_used   DATETIME2(3)           NULL,
+    expires_at  DATETIME2(3)           NULL,
+    created_at  DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),  --return data e ora corrente del server SQL in formato UTC
     CONSTRAINT PK_api_keys PRIMARY KEY (id),
     CONSTRAINT UQ_api_keys_hash UNIQUE (key_hash),
     CONSTRAINT FK_api_keys_tenants FOREIGN KEY (tenant_id) REFERENCES shared.tenants(id)
@@ -156,9 +156,9 @@ BEGIN  --inizio del corpo
         role            NVARCHAR(50)        NOT NULL DEFAULT ''user'',
         password_hash   NVARCHAR(255)       NULL,
         is_active       BIT                 NOT NULL DEFAULT 1,
-        last_login      DATETIME2           NULL,
+        last_login      DATETIME2(3)           NULL,
         settings        NVARCHAR(MAX)       NULL,
-        created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+        created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_users] PRIMARY KEY (id),
         CONSTRAINT [UQ_' + @schema_name + '_users_email] UNIQUE (email),
         CONSTRAINT [CK_' + @schema_name + '_users_role] CHECK (role IN (''admin'',''user'',''viewer''))
@@ -180,7 +180,7 @@ BEGIN  --inizio del corpo
         is_active       BIT                 NOT NULL DEFAULT 1,
         metadata        NVARCHAR(MAX)       NULL,
         created_by      UNIQUEIDENTIFIER    NULL,
-        created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),  
+        created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),  
         CONSTRAINT [PK_' + @schema_name + '_collections] PRIMARY KEY (id),
         CONSTRAINT [UQ_' + @schema_name + '_qdrant_name] UNIQUE (qdrant_name)
     )';
@@ -208,8 +208,8 @@ BEGIN  --inizio del corpo
         language        NVARCHAR(10)        NULL DEFAULT ''it'',
         metadata        NVARCHAR(MAX)       NULL,
         uploaded_by     UNIQUEIDENTIFIER    NULL,
-        created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
-        updated_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+        created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
+        updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_documents] PRIMARY KEY (id),
         CONSTRAINT [CK_' + @schema_name + '_doc_status] CHECK (
             status IN (''pending'',''processing'',''ready'',''error'',''deleted'')
@@ -243,8 +243,8 @@ BEGIN  --inizio del corpo
         error_msg       NVARCHAR(MAX)       NULL,
         retry_count     TINYINT             NOT NULL DEFAULT 0,
         started_at      DATETIME2           NULL,
-        finished_at     DATETIME2           NULL,
-        created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+        finished_at     DATETIME2(3)           NULL,
+        created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_jobs] PRIMARY KEY (id),
         CONSTRAINT [CK_' + @schema_name + '_job_status] CHECK (
             status IN (''queued'',''running'',''done'',''failed'',''cancelled'')
@@ -267,8 +267,8 @@ BEGIN  --inizio del corpo
         mode            NVARCHAR(50)        NOT NULL DEFAULT ''rag'',  -- rag | agent | sql
         is_archived     BIT                 NOT NULL DEFAULT 0,
         metadata        NVARCHAR(MAX)       NULL,
-        created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
-        updated_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+        created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
+        updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_convs] PRIMARY KEY (id)
     )';
     EXEC sp_executesql @sql;
@@ -291,7 +291,7 @@ BEGIN  --inizio del corpo
         latency_ms          INT                     NULL,
         model_used          NVARCHAR(100)           NULL,
         hallucination_score FLOAT                   NULL,   -- da ragas
-        created_at          DATETIME2               NOT NULL DEFAULT GETUTCDATE(),
+        created_at          DATETIME2(3)               NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_msgs] PRIMARY KEY (id),
         CONSTRAINT [CK_' + @schema_name + '_msg_role] CHECK (role IN (''user'',''assistant'',''system''))
     )';
@@ -318,7 +318,7 @@ BEGIN  --inizio del corpo
         user_id     UNIQUEIDENTIFIER     NOT NULL,
         rating      TINYINT              NOT NULL,   -- 1=thumbs_up, 0=thumbs_down
         comment     NVARCHAR(1000)       NULL,
-        created_at  DATETIME2            NOT NULL DEFAULT GETUTCDATE(),
+        created_at  DATETIME2(3)            NOT NULL DEFAULT SYSUTCDATETIME(),
         CONSTRAINT [PK_' + @schema_name + '_feedback] PRIMARY KEY (id)
     )';
     EXEC sp_executesql @sql;
