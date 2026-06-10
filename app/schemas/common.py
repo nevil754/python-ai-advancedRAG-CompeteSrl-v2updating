@@ -24,7 +24,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     page_size: int
     has_more: bool
 
-    @classmethod
+    @classmethod   #per creare mini-classe con gia init - 
     def build(cls, items: list[T], total: int, page: int, page_size: int):
         return cls(
             items=items,

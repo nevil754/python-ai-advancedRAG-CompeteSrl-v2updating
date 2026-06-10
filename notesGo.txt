@@ -84,7 +84,8 @@ cosi anche per compliance legale (GDPR / GDPR-like), puoi rispondere alle domand
 
 IDENTITY(1,1)
 NEWSEQUENTIALID(): UUID/GUID univoco MA sequenziale
-GETUTCDATE()  return data e ora corrente del server SQL in formato UTC
+🔥DATETIME2(3)  datetime2 è piu preciso del legacy DATETIME, e con 3 arrivi fino ai millisencondi, quindi in production DATETIME2(3) è quasi lo standart odierno
+🔥GETUTCDATE()  return DATETIME legacy cioe data e ora corrente del server SQL in formato UTC, MA OGGI E' CONSIGLIATO INVECE 🔥SYSUTCDATETIME() che return DATETIME2!!
 i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto
 i [] wrappano i nomi particolari delle tue tabelle, cosi che anche i caratteri speciali sono letti ok
 DECLARE crea var locale
@@ -145,6 +146,7 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 -*args vs **kargs:  
     *args serve per passare numero X di vars e.g. ad una funzione e.g. def sum(*args),
     **kargs per passare X vars in key-value 
+-@classmethod : per creare gia pseudo classe gia pronto, con init - ...
 
 ########
 

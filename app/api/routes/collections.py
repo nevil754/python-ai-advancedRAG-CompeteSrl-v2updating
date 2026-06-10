@@ -14,7 +14,7 @@ from app.schemas.document import CollectionCreate, CollectionSchema
 
 router = APIRouter(prefix="/collections", tags=["collections"])
 
-@router.post("", response_model=CollectionSchema, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CollectionSchema, status_code=status.HTTP_201_CREATED)  #risposta type CollectionSchema validata con pydantic
 async def create_collection(
     body: CollectionCreate,
     tenant: CurrentTenant,
@@ -22,16 +22,11 @@ async def create_collection(
 ) -> CollectionSchema:
     """Crea una nuova collection per il tenant."""
     from uuid import uuid4
-    from python_slugify import slugify
+    from python_slugify import slugify   #x trasformare "Fatture 2025" -> "fatture-2025"
 
-    coll_id = str(uuid4())
-    # Nome collection Qdrant: unico per tenant
-    qdrant_name = f"tenant_{tenant.tenant_slug.replace('-','_')}_{slugify(body.name)}"
-
-    # Crea collection Qdrant
-    ensure_collection(tenant.tenant_slug)  # assicura che la collection base esista
-
-    # Salva in SQL Server
+    coll_id = str(uuid4())  #genera e formatta in str
+    qdrant_name = f"tenant_{tenant.tenant_slug.replace('-','_')}_{slugify(body.name)}"   #nome collection qdrant, unico per tenant
+    ensure_collection( tenant.tenant_slug )  #assicura che la collection base esista
     await db.execute(
         text("""
             INSERT INTO collections (id, name, description, qdrant_name, created_by)
@@ -43,9 +38,8 @@ async def create_collection(
             "desc": body.description,
             "qdrant_name": qdrant_name,
             "user_id": tenant.user_id,
-        }
+        }  #i ':' sono i placeholder
     )
-
     row = await db.execute(
         text("SELECT * FROM collections WHERE id = :id"), {"id": coll_id}
     )
@@ -86,3 +80,4 @@ async def delete_collection(
         text("UPDATE collections SET is_active = 0 WHERE id = :id"),
         {"id": collection_id}
     )
+

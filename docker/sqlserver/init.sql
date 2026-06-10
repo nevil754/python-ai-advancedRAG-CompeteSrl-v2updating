@@ -180,7 +180,7 @@ BEGIN  --inizio del corpo
         is_active       BIT                 NOT NULL DEFAULT 1,
         metadata        NVARCHAR(MAX)       NULL,
         created_by      UNIQUEIDENTIFIER    NULL,
-        created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),
+        created_at      DATETIME2           NOT NULL DEFAULT GETUTCDATE(),  
         CONSTRAINT [PK_' + @schema_name + '_collections] PRIMARY KEY (id),
         CONSTRAINT [UQ_' + @schema_name + '_qdrant_name] UNIQUE (qdrant_name)
     )';
