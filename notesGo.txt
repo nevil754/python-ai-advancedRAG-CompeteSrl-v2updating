@@ -141,9 +141,10 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 
 ########ARCHITECTURE
 -stateless vs stateful service: con stateless il servizio NON conserva memoria tra una richiesta e l’altra OGNI RICHIESTA E' INDIPENDENTE E' FACILEMENTE SCALABILE, con stateful il servizio conserva stato/dati tra richieste.
-//nella mia app: stateless(sono fastapi, celerey workers, api gateway) e stateful(redis, sqlserver, qdrant). quindi se usi Kubernetes
--kubernetes x scalare: il tuo prj è gia ottimo monolith (non necessarrio trasformarlo in architettura microservices a meno che non vuoi suddividere il lavoro tra piu devs/ oppure diventa big), per i pods di kubenetes(ciascun pod puo contentere 1/1+ sotto-containers e.g.fastapi) amano i STATELESS!!
-KUBERNETES SCALA I SERVIZI STATELESS, quindi HORIZONTAL-SCALING!!
+//nella mia app ho stateless(sono fastapi, celerey workers, api gateway) e stateful(redis, sqlserver, qdrant).
+/nella mia app pero il mio single microservice (tutto il mio blocco di docker-compose) non avrà mai molto traffico/utenti contemporanei, quindi non necessatrio usare Kubernetes, cmnq here see how kubernetes works...
+-kubernetes x scalare: il tuo prj è gia ottimo monolith (non necessarrio trasformarlo in architettura microservices a meno che non vuoi suddividere il lavoro tra piu devs/ oppure diventa big), per i pods di kubenetes(ciascun pod puo contentere 1/1+ sotto-containers e.g.fastapi) k8 ama gli STATELESS!!
+🔥🔥KUBERNETES SCALA I SERVIZI STATELESS, quindi HORIZONTAL-SCALING!! // il VERTICAL-SCALING si fa aumentanto le risorse hardware su una target istanza e.g. 1 server  4 CPU 8GB RAM -> 16 CPU 64GB RAM
 -redis/sqlserver/qdrant sono solitamente STATEFUL(hanno dati che devono restare coerenti, non puoi avere copie indipendenti), quindi NON utilizzare kubernetes ma usa invece:
 --redis: redis managed (consigliato), Redis cluster stateful set (avanzato)
 --sql server: managed DB (consigliato), StatefulSet+AlwaysOn
