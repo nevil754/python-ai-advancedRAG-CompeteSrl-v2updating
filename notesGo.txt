@@ -230,3 +230,26 @@ quindi in realta il famoso che tutti amano 'alverare di agenti' in realta è 1 m
 quindi oggi l' 80% dei FAMOSI "multi-agent systems" sono in realtà workflow orchestrati🔥.
 - https://github.com/garrytan/gstack by Gary Tan (YC Combinator CEO):  utile SOLO se il prj/repo è migliaia di files (altrimenti è piu semplice e anche piu potente claude come lo utilizzi normalmente), al posto di usare claude normal che ci puo mettere anche 20+ minutes per analizzare il code base, usi questo.  con questi runni multipli agenti anche parzialmente in parallelo (quindi risparmi tempo), ogni agente vede solo i suoi files (invece di all repository), al livello di utilizzo di tokens questo system ne puo utilizzare anche di piu (x2/x3) di claude nromal (perche gli agents si scambiano anche il contexts), questo system lo utilizzi da CLI(interfaccia a linea di comando), ogni agente lavora nel suo worktree git (very good, very da pro). task enorme (repo enorme) -> suddividi -> molti agenti -> ogni agente lavora su un pezzo,  molto utile SOLO se code base enorme il claude normale ci metterebbe tantissimo TEMPO perche fa un medium-task a cascata uno dopo l'altro.
 -collaborazione pratica a prj azienda: 
+//cloni repo aziendale
+git clone git@github.com:azienda/progetto.git
+cd progetto
+//crei branch dalla base corretta 
+git checkout develop
+git pull
+git checkout -b feature/login-google
+//lavori e fai commit 
+git add .
+git commit -m "Aggiunto login con Google OAuth"
+//aggiorni il branch prima della PR
+git fetch origin
+git rebase origin/develop
+//push branch 
+git push origin feature/login-google
+//apri pull request da 
+feature/login-google → develop
+//code review obbligatoria (almeno 1/2 reviews), CI/CD automatica (test, lint, build), eventuali fix obbligatori
+//Merge (gestito da maintainer o dev senior)
+//differenze Merge vs Rebase: merge(mantiene storia completa, crea commit “merge”), rebase(riscrive la storia, MOLTO USATO IN AZIENDA). in azienda di solito si usa rebase, in repository opensource di solito si usa merge.
+
+
+
