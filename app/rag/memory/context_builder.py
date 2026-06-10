@@ -31,39 +31,35 @@ def build_rag_context(
     context_parts = []
     total_chars = 0
     for i, chunk in enumerate(chunks, 1):
-        source_label = f"[Fonte {i}: {chunk.filename}"
+        source_label = f"[Fonte {i}: {chunk.filename}"  #crea e.g. [Fonte 2: contratto.pdf
         if chunk.page_number:
-            source_label += f", p.{chunk.page_number}"
-        source_label += "]"
+            source_label += f", p.{chunk.page_number}"  #aggiungi concatenazione 
+        source_label += "]"  #chiudi str con ']'
 
         chunk_text = f"{source_label}\n{chunk.text}"
         chunk_chars = len(chunk_text)
-
-        if total_chars + chunk_chars > max_context_chars:
+        if total_chars + chunk_chars > max_context_chars:  #importante!! NON DEVI SUPERARE IL LIMITE DI CHARS!!
             logger.debug(f"Contesto troncato a {i-1} chunk per limite caratteri")
             break
 
         context_parts.append(chunk_text)
         total_chars += chunk_chars
-
-    context = "\n\n---\n\n".join(context_parts) if context_parts else ""
+    context = "\n\n---\n\n".join(context_parts) if context_parts else "" 
 
     # ── Storico conversazione ─────────────────────────────────
     history_parts = []
     for msg in session_messages:
-        role = msg.get("role", "user")
+        role = msg.get("role", "user")   #default a 'user' se manca il value della key 'role'
         content = msg.get("content", "")
         prefix = "Utente" if role == "user" else "Assistente"
         history_parts.append(f"{prefix}: {content}")
 
     history = "\n".join(history_parts) if history_parts else "Nessuna conversazione precedente."
-
     # ── Fatti utente (v2 long-term memory) ───────────────────
     facts_text = ""
     if user_facts:
         facts_parts = [f"- {f['fact_key']}: {f['fact_value']}" for f in user_facts]
         facts_text = "\n".join(facts_parts)
-
     logger.debug(
         "Context assemblato",
         chunks=len(context_parts),
