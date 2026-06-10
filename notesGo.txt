@@ -146,11 +146,10 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 -*args vs **kargs:  
     *args serve per passare numero X di vars e.g. ad una funzione e.g. def sum(*args),
     **kargs per passare X vars in key-value 
--@classmethod : per creare gia pseudo classe gia pronto, con init - ...
+-@classmethod : per creare metodo che appartiene alla classe, NON all'istanza. come primo param della function devi usare 'cls'
 - tenant: Annotated[TenantContext, Depends(get_current_tenant)],  #Annotated blocca il type che puo essere solo di quel tipo, 🔥Depends(...) dice a fastpi di eseguire PRIMA get_current_tenant e poi SOLO DOPO questa funct
 
-
-########
+cls########
 
 -from typing import AsyncGenerator  & yield, utilizzati x streaming SSE (token by token): turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and 🔥Generator funct per return data non usano 'return' ma usano 'yield'.
 //from fastapi.responses import StreamingResponse  #🔥x streaming response, fastapi apre connessione http lunga

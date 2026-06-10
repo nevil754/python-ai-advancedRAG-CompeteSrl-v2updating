@@ -5,16 +5,14 @@
 # sono per la validazione API, i modelli SQLAlchemy per il DB.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations   #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from datetime import datetime
 from typing import Any, Generic, TypeVar
 from uuid import UUID
-
 from pydantic import BaseModel, Field
 
-T = TypeVar("T")
 
+T = TypeVar("T")
 
 class PaginatedResponse( BaseModel, Generic[T] ):
     """Response paginata generica. Usata da tutte le route che listano risorse."""
