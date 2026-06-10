@@ -53,7 +53,6 @@ def build_rag_context(
         content = msg.get("content", "")
         prefix = "Utente" if role == "user" else "Assistente"
         history_parts.append(f"{prefix}: {content}")
-
     history = "\n".join(history_parts) if history_parts else "Nessuna conversazione precedente."
     # ── Fatti utente (v2 long-term memory) ───────────────────
     facts_text = ""
@@ -66,13 +65,10 @@ def build_rag_context(
         history_turns=len(session_messages),
         context_chars=total_chars,
     )
-
     return {
         "context": context,
-        "history": history,
-        "facts": facts_text,
+        "history": history,        "facts": facts_text,
     }
-
 
 def format_sources_for_response(chunks: list[RetrievedChunk]) -> list[dict]:
     """
