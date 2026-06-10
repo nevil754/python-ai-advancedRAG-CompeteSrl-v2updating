@@ -162,6 +162,7 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
     **kargs per passare X vars in key-value 
 🔥-@classmethod : per creare metodo che appartiene alla classe, NON all'istanza. come primo param della function devi usare 'cls', quindi questa funct diventa un factory method cosi non devi scrivere ovunque PaginatedResponse(...) !!
 - tenant: Annotated[TenantContext, Depends(get_current_tenant)],  #Annotated blocca il type che puo essere solo di quel tipo, 🔥Depends(...) dice a fastpi di eseguire PRIMA get_current_tenant e poi SOLO DOPO questa funct
+-from typing import Any, Generic, TypeVar   #Generic per tipi generici, TypeVar per definire variabili di tipo generico
 
 ########
 
@@ -210,5 +211,20 @@ reranker = CrossEncoder(settings.reranker_model, max_length=512,  #max token per
 --cosine similarity (è lo standart moderno today in rag): quanto sono simili 2 vettori? misura l'angolo tra i vettori, formula cos(A,B) = (A · B) / (||A|| ||B||), nei rag solitamente è 0.70-0.95 (1 sarebbe 2 vettori completamente identici).
 --HNSW (Hierarchical Navigable Small World) : usato da qdrant, quando fai qdrant.search() allora qdrant fa HNSW graph->cosine similarity->top k.
 --dot product: formula A · B, molto usata quando i vettori sono normalizzati in openai/pinecone/weaviate
-- from typing import Any, Generic, TypeVar   #Generic per tipi generici, TypeVar per definire variabili di tipo generico
+-agent AI: un agent è di solito è llm+prompt specializzato+tool+obbiettivo.
+quindi in realta il famoso che tutti amano 'alverare di agenti' in realta è 1 modello llm -> 23 prompt specializzati -> pipeline coordinata.
+                Orchestrator (QUESTO è l'unico che decide🔥(ASSAI SCONSIGLIATO DI FARE PIU DI 1 agent che puo decidere, many bugs/difficie tests, ect)!! creato con LangGraph(TOP)/crewai/ect)
+                      │
+     ┌────────────────┼───────────────┐
+     │                │               │
+ Planner         Researcher       Developer
+     │                │               │
+     └────────────────┼───────────────┘
+                      │
+                  Reviewer
+                      │
+                     QA
+                      │
+                   Output
+quindi oggi l' 80% dei FAMOSI "multi-agent systems" sono in realtà workflow orchestrati🔥.
 
