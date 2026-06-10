@@ -4,40 +4,32 @@
 # short-term memory + retrieved chunks + user facts.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations   #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from typing import Any
-
-from loguru import logger
-
-from app.rag.retrieval.retriever import RetrievedChunk
-
+from loguru import logger  #x logging strutturato
+from app.rag.retrieval.retriever import RetrievedChunk  #ur custom
 
 def build_rag_context(
     chunks: list[RetrievedChunk],
     session_messages: list[dict],
-    user_facts: list[dict] | None = None,
-    max_context_chars: int = 12000,
+    user_facts: list[dict] | None = None, 
+    max_context_chars: int = 12000,   #🔥max CONTEXT window!!
 ) -> dict[str, str]:
     """
     Assembla il contesto per il prompt RAG.
-
     Args:
         chunks: chunk recuperati dal retriever
         session_messages: ultimi N messaggi dalla sessione Redis
         user_facts: fatti estratti sull'utente (long-term memory, v2)
         max_context_chars: limite totale caratteri per il contesto
-
     Returns:
         dict con:
             context: testo dei chunk formattato
             history: storico conversazione formattato
             facts: fatti utente formattati (se presenti)
     """
-    # ── Contesto documenti ────────────────────────────────────
     context_parts = []
     total_chars = 0
-
     for i, chunk in enumerate(chunks, 1):
         source_label = f"[Fonte {i}: {chunk.filename}"
         if chunk.page_number:

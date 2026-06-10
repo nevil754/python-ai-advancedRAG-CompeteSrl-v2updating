@@ -139,6 +139,17 @@ flow:
 
 memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovresti aggiungere anche 'summary' 'conversation_summaries' 'user_facts', e in app/rag/memory/long_term.py file dovresti aggiungere methodo summarize_conversation() e anche per estrazione extract_facts_from_conversation() e poi nel app/rag/memory/context_builder.py in build_context() assembli TUTTO le info (anche quelle di anni fa) prima di passare all'LLM. abilita anche memroy nel config.yaml.
 
+########ARCHITECTURE
+-stateless vs stateful service: con stateless il servizio NON conserva memoria tra una richiesta e l’altra OGNI RICHIESTA E' INDIPENDENTE E' FACILEMENTE SCALABILE, con stateful il servizio conserva stato/dati tra richieste.
+//nella mia app: stateless(sono fastapi, celerey workers, api gateway) e stateful(redis, sqlserver, qdrant). quindi se usi Kubernetes
+-kubernetes x scalare: il tuo prj è gia ottimo monolith (non necessarrio trasformarlo in architettura microservices a meno che non vuoi suddividere il lavoro tra piu devs/ oppure diventa big), per i pods di kubenetes(ciascun pod puo contentere 1/1+ sotto-containers e.g.fastapi) amano i STATELESS!!
+KUBERNETES SCALA I SERVIZI STATELESS, quindi HORIZONTAL-SCALING!!
+-redis/sqlserver/qdrant sono solitamente STATEFUL(hanno dati che devono restare coerenti, non puoi avere copie indipendenti), quindi NON utilizzare kubernetes ma usa invece:
+--redis: redis managed (consigliato), Redis cluster stateful set (avanzato)
+--sql server: managed DB (consigliato), StatefulSet+AlwaysOn
+--qdrant: cloud(consigliato), cluster con shard
+
+
 ########
 -config.yaml contiene parametri funzionali dell'app e nessun segreto, .env contiene SOLO segreti che non vanno su .git.
 - from pydantic import BaseModel, Field.  class User(BaseModel): name:str, age:int   : grazie a BaseModel se ricevi obj {"name": "Mario", "age": "123"} allora pyndatic fa la validazione automatica, e puoi fare anche e.g. user.model_dump(), fastapi usa BaseModel per generare swagger ui, openai schemas, ect. 

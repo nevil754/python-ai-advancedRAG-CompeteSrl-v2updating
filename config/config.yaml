@@ -30,7 +30,7 @@ llm:
   provider: "ollama" #"openai" #"google"   
   model: "llama3.1" #"tinyllama:latest" #"gpt-4.1-mini" #"gemini-2.0-flash"
   #api_key: "${GOOGLE_API_KEY}"  #ora gestito da 'settings.py'
-  num_ctx: 2048   #finestra contesto massima, piu è alto più memoria conversazionale ma piu ram
+  num_ctx: 2048   #🔥finestra contesto massima, piu è alto più memoria conversazionale ma piu ram
   api_key: "${OLLAMA_API_KEY}"
   base_url: "http://ollama:11434"
   temperature: 0.0  #'creatività'del modello, 0=deterministico 1=massima creatività
@@ -59,9 +59,9 @@ vectorstore:
   api_key: "${QDRANT_API_KEY}"    #chiave auth, anche ok vuoto in dev, ma ovviamente 🔥obbligatorio in prod
   collection_name: "collection-competeSrl-RAGv2"
   use_sparse: true
-  force_recreate: false   #se true allora cancella e ricrea la collection ad ogni avvio, ok sviluppo per evitare dati obsoleti ma in produzione deve essere false
-  distance: "Cosine"  #Cosine | Dot | Euclid
-  on_disk_payload: true   #metadata su disco anziché RAM, molto utile grandi dataset!
+  force_recreate: false    #se true allora cancella e ricrea la collection ad ogni avvio, ok sviluppo per evitare dati obsoleti ma in produzione deve essere false
+  distance: "Cosine"   #Cosine | Dot | Euclid
+  on_disk_payload: true    #metadata su disco anziché RAM, molto utile grandi dataset!
 
 memory:  #memoria conversazionale
   short_term_turns: 10       #ultimi N messaggi mantenuti in Redis

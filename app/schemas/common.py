@@ -11,7 +11,6 @@ from typing import Any, Generic, TypeVar   #Generic per tipi generici, TypeVar p
 from uuid import UUID
 from pydantic import BaseModel, Field   #BaseModel è la classe base per i modelli pyndatic, Field è usato per aggiungere validazione e metadata ai campi dei modelli
 
-
 T = TypeVar("T")   #crea un tipo generico
 
 class PaginatedResponse( BaseModel, Generic[T] ):
@@ -36,7 +35,6 @@ class ErrorResponse(BaseModel):
     error: str
     detail: str | None = None
     request_id: str | None = None
-
 
 class SuccessResponse(BaseModel):
     """Risposta di successo generica per operazioni senza body."""
