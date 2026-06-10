@@ -141,15 +141,17 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 
 ########
 -config.yaml contiene parametri funzionali dell'app e nessun segreto, .env contiene SOLO segreti che non vanno su .git.
+- from pydantic import BaseModel, Field.  class User(BaseModel): name:str, age:int   : grazie a BaseModel se ricevi obj {"name": "Mario", "age": "123"} allora pyndatic fa la validazione automatica, e puoi fare anche e.g. user.model_dump(), fastapi usa BaseModel per generare swagger ui, openai schemas, ect. 
+Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., min_length=3, max_length=50)
 -json.loads(): converts json strutturato in corrisponfing python obj
 -json.dumps(): converts python obj in corrisponding json formatted string
 -*args vs **kargs:  
     *args serve per passare numero X di vars e.g. ad una funzione e.g. def sum(*args),
     **kargs per passare X vars in key-value 
--@classmethod : per creare metodo che appartiene alla classe, NON all'istanza. come primo param della function devi usare 'cls'
+🔥-@classmethod : per creare metodo che appartiene alla classe, NON all'istanza. come primo param della function devi usare 'cls', quindi questa funct diventa un factory method cosi non devi scrivere ovunque PaginatedResponse(...) !!
 - tenant: Annotated[TenantContext, Depends(get_current_tenant)],  #Annotated blocca il type che puo essere solo di quel tipo, 🔥Depends(...) dice a fastpi di eseguire PRIMA get_current_tenant e poi SOLO DOPO questa funct
 
-cls########
+########
 
 -from typing import AsyncGenerator  & yield, utilizzati x streaming SSE (token by token): turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and 🔥Generator funct per return data non usano 'return' ma usano 'yield'.
 //from fastapi.responses import StreamingResponse  #🔥x streaming response, fastapi apre connessione http lunga
@@ -191,5 +193,5 @@ vectors = list(model.query_embed([text]))  #🔥🔥here accada l'embedding docs
 from sentence_transformers import CrossEncoder  #🔥CrossEncoder è il wrapper
 reranker = CrossEncoder(settings.reranker_model, max_length=512,  #max token per chunk)
 #🔥reranking CrossEncoder fa (query, documento) -> score. è piu lento dell'embeddings.
-
+- from typing import Any, Generic, TypeVar   #Generic per tipi generici, TypeVar per definire variabili di tipo generico
 

@@ -7,12 +7,12 @@
 
 from __future__ import annotations   #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
 from datetime import datetime
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar   #Generic per tipi generici, TypeVar per definire variabili di tipo generico
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field   #BaseModel è la classe base per i modelli pyndatic, Field è usato per aggiungere validazione e metadata ai campi dei modelli
 
 
-T = TypeVar("T")
+T = TypeVar("T")   #crea un tipo generico
 
 class PaginatedResponse( BaseModel, Generic[T] ):
     """Response paginata generica. Usata da tutte le route che listano risorse."""
