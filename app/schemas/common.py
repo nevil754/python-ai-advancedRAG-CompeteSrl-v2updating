@@ -30,7 +30,7 @@ class PaginatedResponse( BaseModel, Generic[T] ):
             total=total,
             page=page,
             page_size=page_size,
-            has_more=(page * page_size) < total,
+            has_more=(page * page_size) < total,  #calcola se ci sono altre pagine, is True/False
         )
 
 class ErrorResponse(BaseModel):

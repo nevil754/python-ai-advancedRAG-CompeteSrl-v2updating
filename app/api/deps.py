@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 from typing import Annotated, AsyncGenerator
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status   #depends per iniettare dipendenze
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession   #per sessioni DB asincrone, SQLAlchemy puo leggere vari types of db SqlServer/PostgreSQL/ect
 from app.core.redis_client import TenantRedis  #ur custom
@@ -163,7 +163,7 @@ async def require_admin(
     return tenant
 
 #Type aliases, usati nelle routes e.g. CurrentTenant invece di Annotated[TenantContext, Depends(...)]
-CurrentTenant = Annotated[TenantContext, Depends(get_current_tenant)]
+CurrentTenant = Annotated[TenantContext, Depends(get_current_tenant)]  #depends per iniettare le dipendenze, quindi ogni volta che usi CurrentTenant in una route, FastAPI sa di dover eseguire get_current_tenant() per ottenere il TenantContext
 CurrentDB = Annotated[AsyncSession, Depends(get_db)]
 CurrentRedis = Annotated[TenantRedis, Depends(get_tenant_redis)]
 AdminOnly = Annotated[TenantContext, Depends(require_admin)]

@@ -147,6 +147,8 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
     *args serve per passare numero X di vars e.g. ad una funzione e.g. def sum(*args),
     **kargs per passare X vars in key-value 
 -@classmethod : per creare gia pseudo classe gia pronto, con init - ...
+- tenant: Annotated[TenantContext, Depends(get_current_tenant)],  #Annotated blocca il type che puo essere solo di quel tipo, 🔥Depends(...) dice a fastpi di eseguire PRIMA get_current_tenant e poi SOLO DOPO questa funct
+
 
 ########
 
