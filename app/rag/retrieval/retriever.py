@@ -150,14 +150,14 @@ def _rrf_fusion(  #🔥🔥RRF technique!!
     for rank, result in enumerate(dense):  #enumarate() iteri e ti da anche l'index 
         rid = str(result.id)
         if rid not in scores:
-            scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}
-        scores[rid]["score"] += 1.0 / (60 + rank + 1)
+            scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}  #pk ricorda scores dict[str, dict], e lo inizializzi
+        scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo e fai update 
     for rank, result in enumerate(sparse):
         rid = str(result.id)
         if rid not in scores:
             scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}
-        scores[rid]["score"] += 1.0 / (60 + rank + 1)
-    return sorted(scores.values(), key=lambda x: x["score"], reverse=True)
+        scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo e fai update
+    return sorted( scores.values(), key=lambda x: x["score"], reverse=True )    #
 
 def _mmr_rerank(
     query_vector: list[float],
@@ -239,3 +239,5 @@ def _build_sparse_vector(query: str) -> Any:
     vectors = list(model.embed([query]))
     v = vectors[0]
     return {"indices": v.indices.tolist(), "values": v.values.tolist()}
+
+
