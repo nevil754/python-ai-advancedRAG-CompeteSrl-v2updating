@@ -92,8 +92,8 @@ def ingest_document(
             session.execute(
                 text("""
                     UPDATE ingestion_jobs
-                    SET status = 'done',
-                        finished_at = SYSUTCDATETIME(),
+                    SET status = 'done', 
+                        finished_at = SYSUTCDATETIME(), 
                         progress_pct = 100
                     WHERE document_id = :doc_id
                 """),
@@ -126,11 +126,12 @@ def ingest_document(
             "chunk_count": result["chunk_count"],
             "elapsed_ms": elapsed_ms,
         }
+    
     except Exception as exc:
         log.error(f"Ingestion fallita: {exc}")
         with tenant_db.get_session(tenant_slug) as session:
             retry_count = self.request.retries
-            is_final = retry_count >= self.max_retries
+            is_final = retry_count >= self.max_retries  #visto che c'è >= allora python fa diventare is_final un boolean
             session.execute(
                 text("""
                     UPDATE ingestion_jobs
