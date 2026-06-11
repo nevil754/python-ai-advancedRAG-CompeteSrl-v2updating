@@ -104,7 +104,7 @@ rag-enterprise/
 │   ├── main.py                    ← FastAPI app factory, lifespan, router include
 │   │
 │   ├── api/
-│   │   ├── deps.py                ← ★ dipendenze condivise (get_tenant, get_db, ecc.)
+│   │   ├── deps.py                ← ⭐️ dipendenze condivise (get_tenant, get_db, ecc.)
 │   │   │
 │   │   ├── routes/
 │   │   │   ├── auth.py            ← login, logout, token refresh, api_keys
@@ -117,7 +117,7 @@ rag-enterprise/
 │   │   │   └── health.py          ← /health /ready /metrics
 │   │   │
 │   │   └── middleware/
-│   │       ├── tenant.py          ← ★ estrae tenant_id da JWT, inietta nel request.state
+│   │       ├── tenant.py          ← ⭐️ estrae tenant_id da JWT, inietta nel request.state
 │   │       ├── auth.py            ← verifica JWT, api key
 │   │       ├── rate_limit.py      ← per-tenant rate limiting via Redis
 │   │       └── logging.py         ← structured logging con request_id
@@ -132,7 +132,7 @@ rag-enterprise/
 │   │   └── observability.py       ← opentelemetry + langsmith setup
 │   │
 │   ├── db/
-│   │   ├── sqlserver.py           ← ★ TenantDB: engine, session, schema switching
+│   │   ├── sqlserver.py           ← ⭐️ TenantDB: engine, session, schema switching
 │   │   ├── models/
 │   │   │   ├── shared.py          ← SQLAlchemy models per schema shared
 │   │   │   └── tenant.py          ← SQLAlchemy models per schema tenant_*

@@ -82,7 +82,7 @@ async def list_documents(
         text(f"SELECT COUNT(*) FROM documents {where}"), params
     )
     #🔥🔥very good technique di costruzione!!
-    total = total_row.scalar() or 0
+    total = total_row.scalar() or 0   #scalar() è di db sqlserver, ritorna il primo valore della prima riga non in fomato Result (come return di default sqlserver) ma direttamente il valore pulito!
     rows = await db.execute(
         text(f"""
             SELECT id, collection_id, filename, original_name, file_size,
@@ -91,11 +91,11 @@ async def list_documents(
             FROM documents {where}
             ORDER BY created_at DESC
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-        """),
+        """),  #sqlalchemy fa gia automaticamente mapping :offset -> params["offset"] e :limit -> params["limit"]
         params   #params è un dict che contiene limit e offset.
     )
-    items = [DocumentSchema.model_validate(dict(r._mapping)) for r in rows]
-    return PaginatedResponse.build(items=items, total=total, page=page, page_size=page_size)
+    items = [ DocumentSchema.model_validate( dict(r._mapping) ) for r in rows ]  #_mapping converte row sqlalchemy in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in DocumentSchema. quindi il risultato è un array di types DocumentSchema
+    return PaginatedResponse.build( items=items, total=total, page=page, page_size=page_size )
 
 @router.get("/{document_id}/status", response_model=IngestionJobSchema)
 async def get_document_status(
@@ -113,10 +113,10 @@ async def get_document_status(
         """),
         {"doc_id": document_id}
     )
-    job = row.fetchone()
+    job = row.fetchone()  #fetchone() ritorna la prima riga del result set, o None se non ci sono rows
     if not job:
-        raise HTTPException(status_code=404, detail="Job non trovato")
-    return IngestionJobSchema.model_validate(dict(job._mapping))
+        raise HTTPException( status_code=404, detail="Job non trovato" )
+    return IngestionJobSchema.model_validate( dict(job._mapping) )   #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, model_validate() valida e trasforma in type IngestionJobSchema
 
 @router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(
@@ -133,13 +133,11 @@ async def delete_document(
         text("SELECT id, status FROM documents WHERE id = :id"),
         {"id": document_id}
     )
-    doc = row.fetchone()
+    doc = row.fetchone()   #fetchone() ritorna la prima riga del result set, o None se non ci sono rows
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
-    # Cancella vettori da Qdrant
-    from app.core.vectorstore import get_async_qdrant_client, get_collection_name
-    from qdrant_client.http import models as qmodels
-
+    from app.core.vectorstore import get_async_qdrant_client, get_collection_name   #ur custom
+    from qdrant_client.http import models as qmodels  #models ti da disponibili PointStruct, Filter, Distance, VectorParams, ...
     client = get_async_qdrant_client()
     collection = get_collection_name(tenant.tenant_slug)
     try:
