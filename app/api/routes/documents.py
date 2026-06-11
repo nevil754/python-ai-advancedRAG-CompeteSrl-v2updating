@@ -18,7 +18,7 @@ from app.services.document_service import DocumentService
 router = APIRouter(prefix="/documents", tags=["documents"])
 settings = get_settings()
 
-ALLOWED_EXTENSIONS = set(
+ALLOWED_EXTENSIONS = set(  #crea Set
     settings.ingestion_loader_extensions 
     if hasattr(settings, 'ingestion_loader_extensions') 
     else [".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"]
@@ -36,13 +36,13 @@ async def upload_document(
     Carica un documento e lo mette in coda per l'ingestion.
     Risponde subito con 202 — il processing avviene in background.
     """
-    suffix = "." + ( file.filename or "" ).rsplit(".", 1)[-1].lower()
+    suffix = "." + ( file.filename or "" ).rsplit(".", 1)[-1].lower()   #splitta partedo da detra sul char '.', 1 significa fa al max solo 1 split, quindi ora ottieni e.g. "xxx.pdf" -> ["xxx", "pdf"] quindi con [1] prendi solo l'estensione.
     if suffix not in {".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".md"}:
         raise HTTPException(
             status_code=400,
             detail=f"Formato non supportato: {suffix}. Accettati: pdf, docx, xlsx, pptx, txt, md"
         )
-    file_bytes = await file.read()
+    file_bytes = await file.read()  #carica tutto in ram
     service = DocumentService(
         db=db,
         tenant_id=tenant.tenant_id,
@@ -56,11 +56,10 @@ async def upload_document(
             collection_id=collection_id,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException( status_code=400, detail=str(e) )
+    return UploadResponse(**result)   #il **kargs unpack il dict di result e lo mette come key-value per il type UploadResponse
 
-    return UploadResponse(**result)
-
-@router.get("", response_model=PaginatedResponse[DocumentSchema])
+@router.get( "", response_model=PaginatedResponse[DocumentSchema] )
 async def list_documents(
     tenant: CurrentTenant,
     db: CurrentDB,
@@ -70,9 +69,9 @@ async def list_documents(
     status_filter: str | None = None,
 ) -> PaginatedResponse[DocumentSchema]:
     """Lista documenti del tenant con paginazione e filtri."""
-    offset = (page - 1) * page_size
+    offset = (page - 1) * page_size   #offset è il jump da dove deve iniziare, e.g. se setti che pagesize è 20elems allora per leggere pagina 3 devi saltare 40elems iniziali!
     where = "WHERE 1=1"
-    params: dict = {"limit": page_size, "offset": offset}
+    params: dict = { "limit": page_size, "offset": offset }
     if collection_id:
         where += " AND collection_id = :coll_id"
         params["coll_id"] = collection_id
@@ -82,6 +81,7 @@ async def list_documents(
     total_row = await db.execute(
         text(f"SELECT COUNT(*) FROM documents {where}"), params
     )
+    #🔥🔥very good technique di costruzione!!
     total = total_row.scalar() or 0
     rows = await db.execute(
         text(f"""
@@ -92,7 +92,7 @@ async def list_documents(
             ORDER BY created_at DESC
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
         """),
-        params
+        params   #params è un dict che contiene limit e offset.
     )
     items = [DocumentSchema.model_validate(dict(r._mapping)) for r in rows]
     return PaginatedResponse.build(items=items, total=total, page=page, page_size=page_size)
