@@ -87,27 +87,24 @@ def _parse_with_docling(file_path: str) -> ParsedDocument:
         for element in page.get_elements():
             page_text += element.text + "\n"
         pages.append(page_text)
-    if settings.ingestion_extract_tables:
+    if settings.ingestion_extract_tables:  #questo field esiste in config.yaml
         for table in doc.tables:
             tables.append({
                 "page": table.prov[0].page_no if table.prov else None,
                 "markdown": table.export_to_markdown(),
             })
-    # Metadata estratti dal documento
     metadata = {
         "parser": "docling",
         "page_count": len(doc.pages),
         "table_count": len(tables),
         "has_tables": len(tables) > 0,
     }
-
     logger.debug(
         "Docling parsing completato",
         pages=len(pages),
         tables=len(tables),
         chars=len(full_text),
     )
-
     return ParsedDocument(
         text=full_text,
         pages=pages,
@@ -116,28 +113,23 @@ def _parse_with_docling(file_path: str) -> ParsedDocument:
         page_count=len(pages),
     )
 
-
 def _parse_with_unstructured(file_path: str) -> ParsedDocument:
     """
     Parser generale con unstructured. Fallback per tutti i formati.
     Meno preciso di docling ma supporta più tipi di file.
     """
     from unstructured.partition.auto import partition
-
     elements = partition(
         filename=file_path,
         include_page_breaks=True,
         strategy="fast",
     )
-
     pages: list[str] = []
     current_page: list[str] = []
     tables: list[dict] = []
-
     for el in elements:
         el_type = type(el).__name__
         text = str(el)
-
         if el_type == "PageBreak":
             pages.append("\n".join(current_page))
             current_page = []
@@ -146,12 +138,9 @@ def _parse_with_unstructured(file_path: str) -> ParsedDocument:
             current_page.append(text)
         else:
             current_page.append(text)
-
     if current_page:
         pages.append("\n".join(current_page))
-
     full_text = "\n\n".join(pages)
-
     return ParsedDocument(
         text=full_text,
         pages=pages,
@@ -160,25 +149,20 @@ def _parse_with_unstructured(file_path: str) -> ParsedDocument:
         page_count=len(pages),
     )
 
-
 def _parse_excel(file_path: str) -> ParsedDocument:
     """Estrae testo da file Excel come tabelle markdown."""
     import openpyxl
-
     wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
     sheets_text: list[str] = []
-
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
         rows = []
         for row in ws.iter_rows(values_only=True):
             if any(cell is not None for cell in row):
                 rows.append(" | ".join(str(c or "") for c in row))
-
         if rows:
             sheet_md = f"## Foglio: {sheet_name}\n\n" + "\n".join(rows)
             sheets_text.append(sheet_md)
-
     full_text = "\n\n".join(sheets_text)
     return ParsedDocument(
         text=full_text,
@@ -188,12 +172,10 @@ def _parse_excel(file_path: str) -> ParsedDocument:
         page_count=1,
     )
 
-
 def _parse_text(file_path: str) -> ParsedDocument:
     """Lettura diretta per file .txt e .md."""
     with open(file_path, encoding="utf-8", errors="replace") as f:
         text = f.read()
-
     return ParsedDocument(
         text=text,
         pages=[text],
@@ -201,5 +183,4 @@ def _parse_text(file_path: str) -> ParsedDocument:
         metadata={"parser": "text"},
         page_count=1,
     )
-
 
