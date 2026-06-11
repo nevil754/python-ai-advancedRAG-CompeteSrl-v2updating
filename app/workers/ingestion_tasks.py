@@ -189,11 +189,9 @@ def reprocess_document(
             )
         )
     )
-
     logger.info(f"Vecchi vettori cancellati per documento {document_id}")
-
-    # Reingestisce
-    return ingest_document.apply_async(
+    return ingest_document.apply_async(  #ReIngerisci!!
         args=[tenant_id, tenant_slug, document_id, file_path],
         queue="low",
     )
+
