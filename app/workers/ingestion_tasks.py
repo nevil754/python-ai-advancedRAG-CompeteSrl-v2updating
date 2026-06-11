@@ -143,26 +143,23 @@ def ingest_document(
                 """),
                 {
                     "status": "failed" if is_final else "queued",
-                    "err": str(exc)[:2000],
+                    "err": str(exc)[:2000],  #prendi solo i primi 2k chars
                     "retries": retry_count + 1,
-                    "is_final": 1 if is_final else 0,
+                    "is_final": 1 if is_final else 0,   #1 = True, 0 = False
                     "doc_id": document_id,
                 }
             )
-            if is_final:
+            if is_final:  #cioe perche il numero massimo di retry è stato raggiunto!
                 session.execute(
                     text("UPDATE documents SET status = 'error' WHERE id = :id"),
                     {"id": document_id}
                 )
-
-        # Retry con backoff esponenziale: 60s, 120s, 240s
-        raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
-
+        raise self.retry( exc=exc, countdown=60 * (2 ** self.request.retries) )  #backoff esponenziale, quindi se è il primo retry (retries=0) allora countdown=60s, se è il secondo retry (retries=1) allora countdown=120s, se è il terzo retry (retries=2) allora countdown=240s.
 
 @celery_app.task(
-    bind=True,
+    bind=True,      #permette accesso a self (il classico self per l'istanza stessa)
     max_retries=2,
-    acks_late=True,
+    acks_late=True, #🔥il task viene confermato successfully solo DOPO il completamento
     name="app.workers.ingestion_tasks.reprocess_document",
 )
 def reprocess_document(
