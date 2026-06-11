@@ -47,7 +47,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     batch_size = settings.embeddings_batch_size
     logger.debug(f"Embedding {len(texts)} testi in batch da {batch_size}")
     # fastembed ritorna un generator — converti in lista
-    vectors = list(model.embed(texts, batch_size=batch_size))   #🔥🔥here accada l'embedding docs!!
+    vectors = list(model.embed(texts, batch_size=batch_size))   #🔥🔥🔥HERE ACCADE EMBEDDING DEI DOCS!!
     #🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
     #otterrai qualcosa come 
     # [

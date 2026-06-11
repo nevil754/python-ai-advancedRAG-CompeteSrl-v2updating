@@ -63,7 +63,7 @@ def parse_document(file_path: str) -> ParsedDocument:
     else:
         return _parse_with_unstructured(file_path)
 
-def _parse_with_docling(file_path: str) -> ParsedDocument:
+def _parse_with_docling(file_path: str) -> ParsedDocument:   #parse usando lib docling (l'hai gia scaricata)
     """
     Parser avanzato con docling.
     Preserva struttura documenti complessi: contratti, bilanci, normative.
@@ -113,7 +113,7 @@ def _parse_with_docling(file_path: str) -> ParsedDocument:
         page_count=len(pages),
     )
 
-def _parse_with_unstructured(file_path: str) -> ParsedDocument:
+def _parse_with_unstructured(file_path: str) -> ParsedDocument:   #parse usando lib unstructured (l'hai gia scaricata)
     """
     Parser generale con unstructured. Fallback per tutti i formati.
     Meno preciso di docling ma supporta più tipi di file.
@@ -149,6 +149,18 @@ def _parse_with_unstructured(file_path: str) -> ParsedDocument:
         page_count=len(pages),
     )
 
+def _parse_text(file_path: str) -> ParsedDocument:
+    """Lettura diretta per file .txt e .md."""
+    with open(file_path, encoding="utf-8", errors="replace") as f:
+        text = f.read()
+    return ParsedDocument(
+        text=text,
+        pages=[text],
+        tables=[],
+        metadata={"parser": "text"},
+        page_count=1,
+    )
+
 def _parse_excel(file_path: str) -> ParsedDocument:
     """Estrae testo da file Excel come tabelle markdown."""
     import openpyxl
@@ -169,18 +181,6 @@ def _parse_excel(file_path: str) -> ParsedDocument:
         pages=[full_text],
         tables=[],
         metadata={"parser": "openpyxl", "sheets": wb.sheetnames},
-        page_count=1,
-    )
-
-def _parse_text(file_path: str) -> ParsedDocument:
-    """Lettura diretta per file .txt e .md."""
-    with open(file_path, encoding="utf-8", errors="replace") as f:
-        text = f.read()
-    return ParsedDocument(
-        text=text,
-        pages=[text],
-        tables=[],
-        metadata={"parser": "text"},
         page_count=1,
     )
 

@@ -4,17 +4,14 @@
 # Orchestrata: dense search + sparse BM25 → RRF fusion → MMR → reranker
 # =============================================================
 
-from __future__ import annotations
-
-from dataclasses import dataclass
+from __future__ import annotations  #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
+from dataclasses import dataclass  #messo sopra una classe, ti da automaticamente __init__, __repr__, __eq__, ect
 from typing import Any
-
 from loguru import logger
+from app.core.settings import get_settings   #ur custom
 
-from app.core.settings import get_settings
 
 settings = get_settings()
-
 
 @dataclass
 class RetrievedChunk:
@@ -29,7 +26,6 @@ class RetrievedChunk:
     doc_type: str
     metadata: dict[str, Any]
 
-
 def retrieve(
     query: str,
     tenant_slug: str,
@@ -40,7 +36,6 @@ def retrieve(
 ) -> list[RetrievedChunk]:
     """
     Pipeline di retrieval completa.
-
     Flusso:
     1. Embed query (dense vector)
     2. Dense search su Qdrant (semantic)
@@ -48,7 +43,6 @@ def retrieve(
     4. RRF fusion dei due risultati
     5. MMR diversification
     6. Reranking cross-encoder (riduce da top_k a reranker_top_k)
-
     Args:
         query: domanda dell'utente
         tenant_slug: per collection name e filtro tenant
@@ -61,25 +55,18 @@ def retrieve(
         Lista di RetrievedChunk ordinati per rilevanza
     """
     k = top_k or settings.retriever_top_k
-
     logger.debug(f"Retrieval: query='{query[:50]}...', top_k={k}")
-
     # 1. Embedding query
-    from app.core.embeddings import embed_query
+    from app.core.embeddings import embed_query  #ur custom
     query_vector = embed_query(query)
-
-    # 2. Ricerca in Qdrant
     from app.core.vectorstore import get_qdrant_client, get_collection_name
     from qdrant_client.http import models as qmodels
-
     client = get_qdrant_client()
     collection_name = get_collection_name(tenant_slug)
-
-    # Costruisci filtro Qdrant — isolamento tenant SEMPRE applicato
-    must_conditions = [
+    must_conditions = [  #costruisci filtro qdrant
         qmodels.FieldCondition(
             key="tenant_id",
-            match=qmodels.MatchValue(value=tenant_id)
+            match=qmodels.MatchValue(value=tenant_id)  #🔥🔥SEMPRE TENENT ISOLATION!!
         )
     ]
     if collection_id:
@@ -94,10 +81,8 @@ def retrieve(
             must_conditions.append(
                 qmodels.FieldCondition(key=key, match=qmodels.MatchValue(value=value))
             )
-
     qdrant_filter = qmodels.Filter(must=must_conditions)
-
-    # 3a. Dense search (semantic similarity)
+    #🔥🔥 Dense Search (semantic similarity)
     dense_results = client.search(
         collection_name=collection_name,
         query_vector=qmodels.NamedVector(name="dense", vector=query_vector),
@@ -106,8 +91,7 @@ def retrieve(
         with_payload=True,
         score_threshold=0.3,
     )
-
-    # 3b. Sparse search (BM25 keyword) se abilitato
+    #🔥🔥 Sparse Search (BM25 keyword) se abilitato
     sparse_results = []
     if settings.qdrant_use_sparse:
         try:
@@ -123,10 +107,8 @@ def retrieve(
             )
         except Exception as e:
             logger.warning(f"Sparse search fallita: {e}")
-
     # 4. RRF fusion
     fused = _rrf_fusion(dense_results, sparse_results, k=k)
-
     # 5. MMR diversification
     if settings.retriever_strategy == "mmr" and len(fused) > 1:
         fused = _mmr_rerank(query_vector, fused, lambda_param=settings.retriever_mmr_lambda)
@@ -154,8 +136,7 @@ def retrieve(
     logger.debug(f"Retrieval completato: {len(chunks)} chunk")
     return chunks
 
-
-def _rrf_fusion(
+def _rrf_fusion(  #🔥🔥RRF technique!!
     dense: list,
     sparse: list,
     k: int = 60,
@@ -166,21 +147,17 @@ def _rrf_fusion(
     k=60 è il valore standard dalla letteratura.
     """
     scores: dict[str, dict] = {}
-
-    for rank, result in enumerate(dense):
+    for rank, result in enumerate(dense):  #enumarate() iteri e ti da anche l'index 
         rid = str(result.id)
         if rid not in scores:
             scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}
         scores[rid]["score"] += 1.0 / (60 + rank + 1)
-
     for rank, result in enumerate(sparse):
         rid = str(result.id)
         if rid not in scores:
             scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}
         scores[rid]["score"] += 1.0 / (60 + rank + 1)
-
     return sorted(scores.values(), key=lambda x: x["score"], reverse=True)
-
 
 def _mmr_rerank(
     query_vector: list[float],
@@ -194,14 +171,11 @@ def _mmr_rerank(
     lambda_param: 0=massima diversità, 1=massima rilevanza
     """
     import numpy as np
-
     if not results:
         return results
-
     k = top_k or len(results)
     selected = []
     remaining = list(results)
-
     # Vettori dei chunk (usiamo lo score come proxy della similarity)
     while len(selected) < k and remaining:
         if not selected:
@@ -224,9 +198,7 @@ def _mmr_rerank(
 
         selected.append(best)
         remaining.remove(best)
-
     return selected
-
 
 def _score_similarity(a: dict, b: dict) -> float:
     """Similarità approssimata tra due chunk basata sul filename e chunk_index."""
@@ -236,7 +208,6 @@ def _score_similarity(a: dict, b: dict) -> float:
         diff = abs(pa.get("chunk_index", 0) - pb.get("chunk_index", 0))
         return max(0, 1.0 - diff * 0.1)
     return 0.0
-
 
 def _cross_encoder_rerank(
     query: str,
@@ -249,27 +220,20 @@ def _cross_encoder_rerank(
     Riduce da initial_k (20) a top_k (5).
     """
     from app.core.embeddings import get_reranker_model
-
     reranker = get_reranker_model()
     if not reranker:
         return results[:top_k]
-
     pairs = [(query, r["payload"].get("text", "")) for r in results]
     scores = reranker.predict(pairs)
-
     for result, score in zip(results, scores):
         result["rerank_score"] = float(score)
-
     reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)
-
     logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
     return reranked[:top_k]
-
 
 def _build_sparse_vector(query: str) -> Any:
     """Costruisce vettore sparso BM25 per la query."""
     from fastembed import SparseTextEmbedding
-
     # Usa SPLADE o BM25 per il vettore sparso
     model = SparseTextEmbedding(model_name="prithivida/Splade_PP_en_v1")
     vectors = list(model.embed([query]))

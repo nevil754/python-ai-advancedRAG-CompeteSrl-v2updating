@@ -171,6 +171,8 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 🔥🔥-items = [ DocumentSchema.model_validate( dict(r._mapping) ) for r in rows ]  #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in DocumentSchema. quindi il risultato è un array di types DocumentSchema, OTTIMO X CONVERTIRE LE ROWS RESULT DAL DB -> DICT PYTHON CON OBJ VALIDATI  
 -return CollectionSchema.model_validate( dict(row.fetchone()._mapping) )   #fetchone() prende 1 row, _mapping converte row sqlalchemy in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in CollectionSchema
 -import asyncio; loop = asyncio.new_event_loop();
+!-zip: itera su piu liste (o sequenze) in parallelo, mettendo insieme gli elementi che sono nella stessa posizione index, e ottieni qualcosa come [(Xelems),(Xelems),(Xelems)].
+
 
 ########
 
@@ -233,6 +235,7 @@ reranker = CrossEncoder(settings.reranker_model, max_length=512,  #max token per
 --cosine similarity (è lo standart moderno today in rag): quanto sono simili 2 vettori? misura l'angolo tra i vettori, formula cos(A,B) = (A · B) / (||A|| ||B||), nei rag solitamente è 0.70-0.95 (1 sarebbe 2 vettori completamente identici).
 --HNSW (Hierarchical Navigable Small World) : usato da qdrant, quando fai qdrant.search() allora qdrant fa HNSW graph->cosine similarity->top k.
 --dot product: formula A · B, molto usata quando i vettori sono normalizzati in openai/pinecone/weaviate
+🔥🔥--RRF (Reciprocal Rank Fusion) (l'ho utilizzata in file retriever.py🚀🚀): in RAG quando fai Dense search il ranking è e.g.A → B → C, e invece quando fai Sparse search (BM25) il ranking puo essere e.g.C → A → D, dunque combini questi ranking con questa formula score=1/(rank+k) in questo modo i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono).
 -agent AI: un agent è di solito è llm+prompt specializzato+tool+obbiettivo.
 quindi in realta il famoso che tutti amano 'alverare di agenti' in realta è 1 modello llm -> 23 prompt specializzati -> pipeline coordinata.
                 Orchestrator (QUESTO è l'unico che decide🔥(ASSAI SCONSIGLIATO DI FARE PIU DI 1 agent che puo decidere, many bugs/difficie tests, ect)!! creato con LangGraph(TOP)/crewai/ect)
@@ -277,6 +280,6 @@ feature/login-google → develop
 --LoRA adapters: non modifichi il modello intero ma alleni solo piccole matrici low-rank (adapter), quindi qualita quasi identica al full fine-tuning costi molto ridotti e training anche su gpu piccole (e.g.T4).
 --Unsloth: framework ottimizzato per fine-tuning LLM, fa 2x–5x training speed  -70% VRAM usage   kernel CUDA ottimizzati, cosi hai training stabile.
 --GGUF: serve per il modello finale, dopo traning QLoRA hai base model (quantized 4-bit)++ LoRA adapters dopodiche gli adapters vengono fusi base model+adapters→full model  infine converti per l'export GGUF 16-bit (FP16 weights). quindi il training leggero lo fai 4bit mentre il modello finale sara molto piu stabile a 16-bit GGUF.
---RRF (Reciprocal Rank Fusion): in RAG quando fai Dense search il ranking è e.g.A → B → C, e invece quando fai Sparse search (BM25) il ranking puo essere e.g.C → A → D, dunque combini questi ranking con questa formula score=1/(rank+k) in questo modo i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono).
+
 
 
