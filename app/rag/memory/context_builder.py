@@ -35,30 +35,25 @@ def build_rag_context(
         if chunk.page_number:
             source_label += f", p.{chunk.page_number}"  #aggiungi concatenazione 
         source_label += "]"  #chiudi str con ']'
-
         chunk_text = f"{source_label}\n{chunk.text}"
         chunk_chars = len(chunk_text)
         if total_chars + chunk_chars > max_context_chars:  #importante!! NON DEVI SUPERARE IL LIMITE DI CHARS!!
-            logger.debug(f"Contesto troncato a {i-1} chunk per limite caratteri")
+            logger.debug(f"Contesto troncato a {i-1} chunk per limite caratteri!")
             break
-
         context_parts.append(chunk_text)
         total_chars += chunk_chars
     context = "\n\n---\n\n".join(context_parts) if context_parts else "" 
-
-    # ── Storico conversazione ─────────────────────────────────
     history_parts = []
     for msg in session_messages:
         role = msg.get("role", "user")   #default a 'user' se manca il value della key 'role'
         content = msg.get("content", "")
         prefix = "Utente" if role == "user" else "Assistente"
-        history_parts.append(f"{prefix}: {content}")
+        history_parts.append( f"{prefix}: {content}" )
     history = "\n".join(history_parts) if history_parts else "Nessuna conversazione precedente."
-    # ── Fatti utente (v2 long-term memory) ───────────────────
     facts_text = ""
     if user_facts:
-        facts_parts = [f"- {f['fact_key']}: {f['fact_value']}" for f in user_facts]
-        facts_text = "\n".join(facts_parts)
+        facts_parts = [ f"- { f['fact_key'] }: { f['fact_value'] }"  for f in user_facts ]  #array
+        facts_text = "\n".join( facts_parts )
     logger.debug(
         "Context assemblato",
         chunks=len(context_parts),
@@ -67,10 +62,11 @@ def build_rag_context(
     )
     return {
         "context": context,
-        "history": history,        "facts": facts_text,
+        "history": history,        
+        "facts": facts_text,
     }
 
-def format_sources_for_response(chunks: list[RetrievedChunk]) -> list[dict]:
+def format_sources_for_response( chunks: list[RetrievedChunk] ) -> list[dict]:
     """
     Formatta i chunk come lista di sorgenti per la risposta API.
     Incluso nel ChatResponse.sources.
@@ -81,8 +77,10 @@ def format_sources_for_response(chunks: list[RetrievedChunk]) -> list[dict]:
             "document_id": chunk.document_id,
             "filename": chunk.filename,
             "page_number": chunk.page_number,
-            "score": round(chunk.score, 4),
-            "snippet": chunk.text[:200] + "..." if len(chunk.text) > 200 else chunk.text,
+            "score": round(chunk.score, 4),   #4 decimali 
+            "snippet": chunk.text[:200] + "..." if len(chunk.text) > 200 else chunk.text,   # theseare200chars... oppure se i chars sono <200 allora return l'intero chunk.text
         }
         for chunk in chunks
     ]
+
+

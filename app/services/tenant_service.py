@@ -23,7 +23,6 @@ async def provision_tenant(
     """
     Provisioning completo di un nuovo tenant.
     Chiamato al signup di un nuovo cliente.
-
     Steps:
     1. Crea schema SQL Server con sp_provision_tenant
     2. Crea collection Qdrant dedicata
