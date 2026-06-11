@@ -50,8 +50,7 @@ def ingest_document(
     """
     from app.db.sqlserver import tenant_db
     from app.core.redis_client import TenantRedis
-    from app.rag.ingestion.pipeline import run_ingestion_pipeline
-
+    from app.rag.ingestion.pipeline import run_ingestion_pipeline  #ur custom
     task_id = self.request.id
     log = logger.bind(
         task_id=task_id,
@@ -59,14 +58,12 @@ def ingest_document(
         document_id=document_id,
     )
     log.info("Inizio ingestion documento")
-
-    # 1. Aggiorna status → running
     with tenant_db.get_session(tenant_slug) as session:
         session.execute(
             text("""
                 UPDATE ingestion_jobs
                 SET status = 'running',
-                    started_at = GETUTCDATE(),
+                    started_at = SYSUTCDATETIME(),
                     celery_task_id = :task_id
                 WHERE document_id = :doc_id
             """),
@@ -76,10 +73,8 @@ def ingest_document(
             text("UPDATE documents SET status = 'processing' WHERE id = :id"),
             {"id": document_id}
         )
-
     try:
-        start = time.time()
-
+        start = time.time()   #start timer 
         # 2-6. Pipeline completa: parse → chunk → embed → upsert Qdrant
         result = run_ingestion_pipeline(
             tenant_id=tenant_id,
@@ -88,21 +83,18 @@ def ingest_document(
             file_path=file_path,
             collection_id=collection_id,
         )
-
-        elapsed_ms = round((time.time() - start) * 1000)
+        elapsed_ms = round((time.time() - start) * 1000)  #calcolo tempo trascorso in ms
         log.info(
             "Pipeline completata",
             chunks=result["chunk_count"],
             elapsed_ms=elapsed_ms,
         )
-
-        # 7. Aggiorna status → done
         with tenant_db.get_session(tenant_slug) as session:
             session.execute(
                 text("""
                     UPDATE ingestion_jobs
                     SET status = 'done',
-                        finished_at = GETUTCDATE(),
+                        finished_at = SYSUTCDATETIME(),
                         progress_pct = 100
                     WHERE document_id = :doc_id
                 """),
@@ -114,7 +106,7 @@ def ingest_document(
                     SET status = 'ready',
                         chunk_count = :chunks,
                         page_count = :pages,
-                        updated_at = GETUTCDATE()
+                        updated_at = SYSUTCDATETIME()
                     WHERE id = :id
                 """),
                 {
@@ -123,22 +115,18 @@ def ingest_document(
                     "id": document_id,
                 }
             )
-
-        # 8. Invalida cache query — nuovi doc cambiano le risposte
         import asyncio
         redis = TenantRedis(tenant_id=tenant_id)
-        loop = asyncio.new_event_loop()
+        loop = asyncio.new_event_loop()   #event loop manuale x chiamare funzione async da sync, in questo caso per invalidare cache query dopo ingestion, altrimenti la cache sarebbe stale (il doc è nuovo ma la cache non lo sa)
         invalidated = loop.run_until_complete(redis.invalidate_query_cache())
         loop.close()
         log.info(f"Cache invalidata: {invalidated} chiavi")
-
         return {
             "status": "done",
             "document_id": document_id,
             "chunk_count": result["chunk_count"],
             "elapsed_ms": elapsed_ms,
         }
-
     except Exception as exc:
         log.error(f"Ingestion fallita: {exc}")
 

@@ -170,6 +170,7 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 -rsplit(): splitta str into a lista, starting from the right.
 🔥🔥-items = [ DocumentSchema.model_validate( dict(r._mapping) ) for r in rows ]  #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in DocumentSchema. quindi il risultato è un array di types DocumentSchema, OTTIMO X CONVERTIRE LE ROWS RESULT DAL DB -> DICT PYTHON CON OBJ VALIDATI  
 -return CollectionSchema.model_validate( dict(row.fetchone()._mapping) )   #fetchone() prende 1 row, _mapping converte row sqlalchemy in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in CollectionSchema
+-import asyncio; loop = asyncio.new_event_loop();
 
 ########
 

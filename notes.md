@@ -128,7 +128,7 @@ rag-enterprise/
 │   │   ├── llm_factory.py         ← costruisce LLM da config (ollama/openai/google)
 │   │   ├── embeddings.py          ← fastembed wrapper, lazy-loaded
 │   │   ├── vectorstore.py         ← qdrant client, collection management per tenant
-│   │   ├── redis_client.py        ← TenantRedis (namespace isolation)
+│   │   ├── redis_client.py        ← ⭐️ TenantRedis (namespace isolation)
 │   │   └── observability.py       ← opentelemetry + langsmith setup
 │   │
 │   ├── db/

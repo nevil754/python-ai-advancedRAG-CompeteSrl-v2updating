@@ -33,14 +33,12 @@ def run_ingestion_pipeline(
 ) -> dict[str, Any]:
     """
     Pipeline completa di ingestion.
-
     Flusso:
     1. Parse → ParsedDocument (testo + pagine + tabelle)
     2. Clean → testo pulito
     3. Chunk → lista di Chunk
     4. Embed → vettori float per ogni chunk
     5. Upsert → inserimento in Qdrant con payload metadata
-
     Returns:
         dict con chunk_count, page_count, collection_name
     """
