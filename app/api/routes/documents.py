@@ -137,24 +137,23 @@ async def delete_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento non trovato")
     from app.core.vectorstore import get_async_qdrant_client, get_collection_name   #ur custom
-    from qdrant_client.http import models as qmodels  #models ti da disponibili PointStruct, Filter, Distance, VectorParams, ...
-    client = get_async_qdrant_client()
-    collection = get_collection_name(tenant.tenant_slug)
+    from qdrant_client.http import models as qmodels  #QDRANT models ti da disponibili PointStruct, Filter, Distance, VectorParams, ...
+    client = get_async_qdrant_client()  #qdrant
+    collection = get_collection_name(tenant.tenant_slug)  
     try:
-        await client.delete(
+        await client.delete(  #🔥QDRANT instruction!!
             collection_name=collection,
             points_selector=qmodels.FilterSelector(
-                filter=qmodels.Filter(
-                    must=[qmodels.FieldCondition(
+                filter=qmodels.Filter(   #corrisponde a WHERE document_id = ?
+                    must=[ qmodels.FieldCondition(
                         key="document_id",
-                        match=qmodels.MatchValue(value=document_id)
-                    )]
+                        match=qmodels.MatchValue(value=document_id)   #deve matchare a questo doc!
+                    ) ]
                 )
             )
         )
     except Exception as e:
         logger.warning(f"Errore cancellazione vettori Qdrant: {e}")
-    # Marca come deleted in SQL Server
     await db.execute(
         text("UPDATE documents SET status = 'deleted', updated_at = GETUTCDATE() WHERE id = :id"),
         {"id": document_id}

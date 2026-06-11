@@ -4,24 +4,21 @@
 # Eseguiti dai celery-worker-default in background.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations  #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 import time
 from uuid import UUID
-
-from celery import shared_task
-from loguru import logger
-from sqlalchemy import text
-
+from celery import shared_task  #create tasks that can be called independently of any class instance
+from loguru import logger   #x logging strutturato
+from sqlalchemy import text   #x query sql manuali
 from app.workers.celery_app import celery_app
 
 
 @celery_app.task(
-    bind=True,                    # bind=True → self = istanza del task (per retry)
-    max_retries=3,
-    default_retry_delay=60,
-    acks_late=True,               # ACK solo dopo completamento
-    reject_on_worker_lost=True,   # se worker crasha, task torna in coda
+    bind=True,          #permette accesso a self (il classico self per l'istanza stessa)
+    max_retries=3,      #massimo 3 tentativi
+    default_retry_delay=60,   #60secs tra i retries
+    acks_late=True,   #🔥il task viene confermato successfully solo DOPO il completamento 
+    reject_on_worker_lost=True,   #se worker crasha il task torna in coda!
     name="app.workers.ingestion_tasks.ingest_document",
 )
 def ingest_document(
@@ -34,7 +31,6 @@ def ingest_document(
 ) -> dict:
     """
     Pipeline completa di ingestion per un singolo documento.
-
     Flusso:
     1. Aggiorna status → 'running' in SQL Server
     2. Parse documento (docling → unstructured fallback)
