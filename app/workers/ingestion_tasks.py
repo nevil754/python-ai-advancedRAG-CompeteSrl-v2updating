@@ -22,7 +22,7 @@ from app.workers.celery_app import celery_app
     name="app.workers.ingestion_tasks.ingest_document",
 )
 def ingest_document(
-    self,
+    self,  #istanza della task Celery
     tenant_id: str,
     tenant_slug: str,
     document_id: str,
@@ -40,7 +40,6 @@ def ingest_document(
     6. Upsert in Qdrant
     7. Aggiorna status → 'done' + chunk_count
     8. Invalida cache query Redis (doc nuovo = cache stale)
-
     Args:
         tenant_id: UUID del tenant
         tenant_slug: slug per schema switching SQL Server
@@ -51,8 +50,8 @@ def ingest_document(
     from app.db.sqlserver import tenant_db
     from app.core.redis_client import TenantRedis
     from app.rag.ingestion.pipeline import run_ingestion_pipeline  #ur custom
-    task_id = self.request.id
-    log = logger.bind(
+    task_id = self.request.id   #con celery il self.request contiene metadata della chiamata del task
+    log = logger.bind(  #.bind permette di aggiungere campi personalizzati al logger, che saranno inclusi in tutti i log successivi fatti con questo logger
         task_id=task_id,
         tenant=tenant_slug,
         document_id=document_id,
@@ -129,12 +128,9 @@ def ingest_document(
         }
     except Exception as exc:
         log.error(f"Ingestion fallita: {exc}")
-
-        # Salva errore su DB prima del retry
         with tenant_db.get_session(tenant_slug) as session:
             retry_count = self.request.retries
             is_final = retry_count >= self.max_retries
-
             session.execute(
                 text("""
                     UPDATE ingestion_jobs
