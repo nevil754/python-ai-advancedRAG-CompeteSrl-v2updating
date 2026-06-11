@@ -4,26 +4,23 @@
 # unstructured come fallback, pypdf per PDF semplici.
 # =============================================================
 
-from __future__ import annotations
-
-import mimetypes
+from __future__ import annotations  #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
+import mimetypes   #x indovinare il MIME type di un file, e.g. file .html -> "text/html", file .jpg -> "image/jpeg"
 from pathlib import Path
 from typing import Any
-
 from loguru import logger
-
 from app.core.settings import get_settings
 
-settings = get_settings()
 
+settings = get_settings()
 
 class ParsedDocument:
     """Risultato del parsing: testo strutturato + metadata estratti."""
     def __init__(
         self,
         text: str,
-        pages: list[str],        # testo diviso per pagina
-        tables: list[dict],      # tabelle estratte come dict
+        pages: list[str],        #testo diviso per pagina
+        tables: list[dict],      #tabelle estratte come dict
         metadata: dict[str, Any],
         page_count: int,
     ):
@@ -37,45 +34,34 @@ class ParsedDocument:
 def parse_document(file_path: str) -> ParsedDocument:
     """
     Parsa un documento scegliendo il parser migliore per il tipo di file.
-
     Strategia:
     - PDF/DOCX → docling (preserva struttura, tabelle, intestazioni)
     - Fallback → unstructured (più robusto ma meno preciso)
     - XLSX → openpyxl diretto
     - TXT/MD → lettura diretta
-
     Args:
         file_path: path assoluto del file
-
     Returns:
         ParsedDocument con testo e metadata estratti
     """
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"File non trovato: {file_path}")
-
-    suffix = path.suffix.lower()
-    mime_type = mimetypes.guess_type(file_path)[0] or ""
-
+    suffix = path.suffix.lower()  #.suffix è property di pathlib.Path che return l'estensione del file e.g. pdf / docx / ect
+    mime_type = mimetypes.guess_type(file_path)[0] or ""  # guess_type() ritorna una tupla (type, encoding), con [0] prendo solo il type
     logger.info(f"Parsing documento: {path.name} ({suffix})")
-
-    # Routing per tipo di file
     if suffix in {".pdf", ".docx", ".pptx"} and settings.ingestion_prefer_docling:
         try:
             return _parse_with_docling(file_path)
         except Exception as e:
             logger.warning(f"Docling fallito ({e}), fallback su unstructured")
             return _parse_with_unstructured(file_path)
-
     elif suffix in {".xlsx", ".xls"}:
         return _parse_excel(file_path)
-
     elif suffix in {".txt", ".md"}:
         return _parse_text(file_path)
-
     else:
         return _parse_with_unstructured(file_path)
-
 
 def _parse_with_docling(file_path: str) -> ParsedDocument:
     """
@@ -85,37 +71,28 @@ def _parse_with_docling(file_path: str) -> ParsedDocument:
     """
     from docling.document_converter import DocumentConverter
     from docling.datamodel.base_models import InputFormat
-    from docling.datamodel.pipeline_options import PdfPipelineOptions
-
+    from docling.datamodel.pipeline_options import PdfPipelineOptions  #obj di config per la pipeline pdf 
     pipeline_options = PdfPipelineOptions()
-    pipeline_options.do_table_structure = settings.ingestion_extract_tables
-    pipeline_options.do_ocr = False  # OCR solo se necessario (lento)
-
+    pipeline_options.do_table_structure = settings.ingestion_extract_tables  #do_table_structure è booleano: True  → estrai tabelle strutturate, False → non farlo (o estrazione semplificata)
+    pipeline_options.do_ocr = False  #False disattivo il riconoscimento del testo dalle immagini (OCR, xk è leento)
     converter = DocumentConverter()
-    result = converter.convert(file_path)
+    result = converter.convert(file_path)   #🔥lo converte in un oggetto docling Document, con testo, pagine, tabelle e metadata estratti
     doc = result.document
-
     # Esporta in markdown — preserva intestazioni, tabelle, liste
-    full_text = doc.export_to_markdown()
-
-    # Estrai testo per pagina
+    full_text = doc.export_to_markdown()  #ora hai ottenuto la versione Markdown!!
     pages = []
     tables = []
-
     for page_num, page in enumerate(doc.pages, 1):
         page_text = ""
         for element in page.get_elements():
             page_text += element.text + "\n"
         pages.append(page_text)
-
-    # Estrai tabelle come dict strutturati
     if settings.ingestion_extract_tables:
         for table in doc.tables:
             tables.append({
                 "page": table.prov[0].page_no if table.prov else None,
                 "markdown": table.export_to_markdown(),
             })
-
     # Metadata estratti dal documento
     metadata = {
         "parser": "docling",

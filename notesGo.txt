@@ -272,10 +272,11 @@ feature/login-google → develop
 //Merge (gestito da maintainer o dev senior)
 //differenze Merge vs Rebase: merge(mantiene storia completa, crea commit “merge”), rebase(riscrive la storia, MOLTO USATO IN AZIENDA). in azienda di solito si usa rebase, in repository opensource di solito si usa merge.
 
--QLoRA (Quantized Low-Rank Adaptation): metodo per fare fine-tuning di LLM enormi usando pochissima memoria, fa quantizzazione a 4bit.
--LoRA adapters: non modifichi il modello intero ma alleni solo piccole matrici low-rank (adapter), quindi qualita quasi identica al full fine-tuning costi molto ridotti e training anche su gpu piccole (e.g.T4).
--Unsloth: framework ottimizzato per fine-tuning LLM, fa 2x–5x training speed  -70% VRAM usage   kernel CUDA ottimizzati, cosi hai training stabile.
--GGUF: serve per il modello finale, dopo traning QLoRA hai base model (quantized 4-bit)++ LoRA adapters dopodiche gli adapters vengono fusi base model+adapters→full model  infine converti per l'export GGUF 16-bit (FP16 weights). quindi il training leggero lo fai 4bit mentre il modello finale sara molto piu stabile a 16-bit GGUF.
--RRF (Reciprocal Rank Fusion): in RAG quando fai Dense search il ranking è e.g.A → B → C, e invece quando fai Sparse search (BM25) il ranking puo essere e.g.C → A → D, dunque combini questi ranking con questa formula score=1/(rank+k) in questo modo i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono).
+-ml manipulation (some techniques that i never heard, TO CHECK if are good) from github.com/pradeesh-ml/legal-ai:
+--QLoRA (Quantized Low-Rank Adaptation): metodo per fare fine-tuning di LLM enormi usando pochissima memoria, fa quantizzazione a 4bit.
+--LoRA adapters: non modifichi il modello intero ma alleni solo piccole matrici low-rank (adapter), quindi qualita quasi identica al full fine-tuning costi molto ridotti e training anche su gpu piccole (e.g.T4).
+--Unsloth: framework ottimizzato per fine-tuning LLM, fa 2x–5x training speed  -70% VRAM usage   kernel CUDA ottimizzati, cosi hai training stabile.
+--GGUF: serve per il modello finale, dopo traning QLoRA hai base model (quantized 4-bit)++ LoRA adapters dopodiche gli adapters vengono fusi base model+adapters→full model  infine converti per l'export GGUF 16-bit (FP16 weights). quindi il training leggero lo fai 4bit mentre il modello finale sara molto piu stabile a 16-bit GGUF.
+--RRF (Reciprocal Rank Fusion): in RAG quando fai Dense search il ranking è e.g.A → B → C, e invece quando fai Sparse search (BM25) il ranking puo essere e.g.C → A → D, dunque combini questi ranking con questa formula score=1/(rank+k) in questo modo i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono).
 
 
