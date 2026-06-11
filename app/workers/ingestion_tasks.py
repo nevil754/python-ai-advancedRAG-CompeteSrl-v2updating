@@ -174,13 +174,10 @@ def reprocess_document(
     Usato quando cambiano i parametri di chunking o il modello di embedding.
     Prima cancella i vecchi vettori da Qdrant, poi reingestisce.
     """
-    from app.core.vectorstore import get_qdrant_client, get_collection_name
-    from qdrant_client.http import models as qmodels
-
-    # Cancella vecchi vettori del documento da Qdrant
+    from app.core.vectorstore import get_qdrant_client, get_collection_name  #ur custom
+    from qdrant_client.http import models as qmodels  #QDRANT models ti da disponibili PointStruct, Filter, Distance, VectorParams, ...
     client = get_qdrant_client()
     collection = get_collection_name(tenant_slug)
-
     client.delete(
         collection_name=collection,
         points_selector=qmodels.FilterSelector(
