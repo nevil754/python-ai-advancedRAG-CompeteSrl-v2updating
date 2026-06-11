@@ -136,7 +136,7 @@ def retrieve(
     logger.debug(f"Retrieval completato: {len(chunks)} chunk")
     return chunks
 
-def _rrf_fusion(  #🔥🔥RRF technique!!
+def _rrf_fusion(  #🔥🔥RRF technique!! formula score=1/(rank+k)
     dense: list,
     sparse: list,
     k: int = 60,
@@ -159,7 +159,7 @@ def _rrf_fusion(  #🔥🔥RRF technique!!
         scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo e fai update
     return sorted( scores.values(), key=lambda x: x["score"], reverse=True )    #
 
-def _mmr_rerank(
+def _mmr_rerank(      #Re-RAnking technique, formual  λ*relevance-(1-λ)*similarity
     query_vector: list[float],
     results: list[dict],
     lambda_param: float = 0.5,
@@ -170,13 +170,13 @@ def _mmr_rerank(
     Bilancia rilevanza (similarity con query) e diversità (dissimilarity tra chunk).
     lambda_param: 0=massima diversità, 1=massima rilevanza
     """
-    import numpy as np
+    import numpy as np   #serve INSTALLARE LIB numpy !!
     if not results:
         return results
     k = top_k or len(results)
     selected = []
     remaining = list(results)
-    # Vettori dei chunk (usiamo lo score come proxy della similarity)
+    #Vettori dei chunk (usiamo lo score come proxy della similarity)
     while len(selected) < k and remaining:
         if not selected:
             # Prima iterazione: prendi il più rilevante
@@ -195,7 +195,6 @@ def _mmr_rerank(
                 if mmr_score > best_score:
                     best_score = mmr_score
                     best = candidate
-
         selected.append(best)
         remaining.remove(best)
     return selected
