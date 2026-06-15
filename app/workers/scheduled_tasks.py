@@ -71,11 +71,11 @@ def rollup_usage() -> dict:
         stats = loop.run_until_complete( _get_tenant_stats(str(tenant.id)) )   #function annidata here qua sopra 
         if stats["queries_count"] == 0 and stats["docs_ingested"] == 0:   #skip tenants inattivi! (di oggi)
             continue
-        with tenant_db.get_session("shared") as session:
+        with tenant_db.get_session("shared") as session:  
             session.execute(
                 text("""
                     MERGE shared.usage_stats AS target
-                    USING (VALUES (:tenant_id, CAST(GETUTCDATE() AS DATE),
+                    USING (VALUES (:tenant_id, CAST(SYSUTCDATETIME() AS DATE),
                            :tokens_in, :tokens_out, :queries, :docs))
                     AS source (tenant_id, stat_date, tokens_in, tokens_out,
                                queries_count, docs_ingested)
@@ -91,7 +91,7 @@ def rollup_usage() -> dict:
                          queries_count, docs_ingested)
                     VALUES (source.tenant_id, source.stat_date, source.tokens_in,
                             source.tokens_out, source.queries_count, source.docs_ingested);
-                """),
+                """),  #questo sql fa un UPSERT: se esiste già la riga per quel tenant e quella data allora aggiorna i contatori, altrimenti inserisce una nuova riga
                 {
                     "tenant_id": str(tenant.id),
                     **stats,

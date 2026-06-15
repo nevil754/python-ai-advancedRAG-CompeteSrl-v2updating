@@ -152,7 +152,6 @@ memoria temporale nella tua app (lo farai in v2): nelle tabelle del tenant, dovr
 --sql server: managed DB (consigliato), StatefulSet+AlwaysOn
 --qdrant: cloud(consigliato), cluster con shard
 
-
 ########
 
 -config.yaml contiene parametri funzionali dell'app e nessun segreto, .env contiene SOLO segreti che non vanno su .git.
@@ -172,7 +171,6 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 -return CollectionSchema.model_validate( dict(row.fetchone()._mapping) )   #fetchone() prende 1 row, _mapping converte row sqlalchemy in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in CollectionSchema
 -import asyncio; loop = asyncio.new_event_loop();
 !-zip: itera su piu liste (o sequenze) in parallelo, mettendo insieme gli elementi che sono nella stessa posizione index, e ottieni qualcosa come [(Xelems),(Xelems),(Xelems)].
-
 
 ########
 

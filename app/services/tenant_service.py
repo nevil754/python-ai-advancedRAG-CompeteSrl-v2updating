@@ -4,10 +4,8 @@
 # Coordina SQL Server + Qdrant + Redis in un'unica operazione.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from loguru import logger
-
 from app.core.security import hash_password
 from app.core.vectorstore import ensure_collection
 from app.db.sqlserver import tenant_db
@@ -27,31 +25,23 @@ async def provision_tenant(
     1. Crea schema SQL Server con sp_provision_tenant
     2. Crea collection Qdrant dedicata
     3. Crea utente admin iniziale (opzionale)
-
     Returns:
         dict con tenant_id, slug, admin_user_id
     """
     logger.info(f"Provisioning tenant: {slug}")
-
-    # 1. Schema SQL Server
-    await tenant_db.provision_tenant(slug=slug, display_name=display_name, plan=plan)
-
-    # Leggi tenant_id appena creato
+    await tenant_db.provision_tenant( slug=slug, display_name=display_name, plan=plan )
     async with tenant_db._async_factory() as session:
         from sqlalchemy import text
         row = await session.execute(
-            text("SELECT id FROM shared.tenants WHERE slug = :slug"),
+            text("SELECT id FROM shared.tenants WHERE slug = :slug"),  #get target id
             {"slug": slug}
         )
-        tenant_id = str(row.fetchone().id)
+        tenant_id = str( row.fetchone().id )
 
-    # 2. Collection Qdrant
     import asyncio
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, ensure_collection, slug)
-    logger.info(f"Collection Qdrant creata per tenant: {slug}")
-
-    # 3. Admin user
+    loop = asyncio.get_event_loop()   #return the running event loop
+    await loop.run_in_executor( None, ensure_collection, slug )  #esegue funct sync da code async, in questo caso per creare la collection Qdrant per il tenant. Se la collection esiste già, ensure_collection() è idempotente e non fa nulla.
+    logger.info(f"Collection Qdrant creata per tenant: {slug}")  
     admin_user_id = None
     if admin_email and admin_password:
         from uuid import uuid4
@@ -69,12 +59,12 @@ async def provision_tenant(
                 }
             )
         logger.info(f"Admin creato per tenant {slug}: {admin_email}")
-
     logger.info(f"Provisioning completato: {slug} (tenant_id={tenant_id})")
-
     return {
         "tenant_id": tenant_id,
         "slug": slug,
         "plan": plan,
         "admin_user_id": admin_user_id,
     }
+
+

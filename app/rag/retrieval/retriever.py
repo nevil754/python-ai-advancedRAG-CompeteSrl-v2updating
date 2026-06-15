@@ -65,7 +65,7 @@ def retrieve(
     must_conditions = [  #costruisci filtro qdrant
         qmodels.FieldCondition(   #FieldCondition è di qdrant
             key="tenant_id",
-            match=qmodels.MatchValue(value=tenant_id)  #🔥🔥SEMPRE TENENT ISOLATION!!
+            match=qmodels.MatchValue( value=tenant_id )  #🔥🔥SEMPRE TENENT ISOLATION!!
         )
     ]
     if collection_id:
@@ -78,17 +78,20 @@ def retrieve(
     if filters:
         for key, value in filters.items():
             must_conditions.append(
-                qmodels.FieldCondition(key=key, match=qmodels.MatchValue(value=value))
+                qmodels.FieldCondition(
+                    key=key, 
+                    match=qmodels.MatchValue(value=value)
+                )
             )
     qdrant_filter = qmodels.Filter( must=must_conditions )   #define il filtro finale da passare a qdrant search
     #🔥🔥Dense Search (semantic similarity)
     dense_results = client.search(
         collection_name=collection_name,
-        query_vector=qmodels.NamedVector(name="dense", vector=query_vector),
+        query_vector=qmodels.NamedVector(name="dense", vector=query_vector),  #NamedVector è di qdrant, serve per specificare quale campo vettoriale usare per la ricerca, in questo caso "dense" che è quello che usiamo per i chunk embedding.
         query_filter=qdrant_filter,  #apply the filter
-        limit=k,
-        with_payload=True,
-        score_threshold=0.3,
+        limit=k,  #prende top k results
+        with_payload=True,  
+        score_threshold=0.3,   #scarta risultati con score < 0.3 (puoi regolare questo valore in base alla qualità dei risultati, ma 0.3 è un buon punto di partenza per cosine similarity)
     )
     #🔥🔥Sparse Search (BM25 keyword) se abilitato
     sparse_results = []
@@ -230,8 +233,8 @@ def _build_sparse_vector(query: str) -> Any:
     """Costruisce vettore sparso BM25 per la query."""
     from fastembed import SparseTextEmbedding
     # Usa SPLADE o BM25 per il vettore sparso
-    model = SparseTextEmbedding(model_name="prithivida/Splade_PP_en_v1")
-    vectors = list(model.embed([query]))
+    model = SparseTextEmbedding( model_name="prithivida/Splade_PP_en_v1" )  #model used!
+    vectors = list( model.embed([query]) )
     v = vectors[0]
     return {"indices": v.indices.tolist(), "values": v.values.tolist()}
 

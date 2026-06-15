@@ -64,8 +64,8 @@ def ensure_collection(
     Returns:
         Nome della collection creata/esistente
     """
-    from app.core.settings import get_settings   #ur custom settings
-    from app.core.embeddings import get_embedding_dimension  #ur custom
+    from app.core.settings import get_settings    #ur custom settings
+    from app.core.embeddings import get_embedding_dimension    #ur custom
     settings = get_settings()
     client = get_qdrant_client()
     collection_name = get_collection_name(tenant_slug)
