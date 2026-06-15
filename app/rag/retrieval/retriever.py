@@ -212,14 +212,15 @@ def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*simil
                 # Similarità con i già selezionati (approssimazione tramite score overlap)
                 max_sim = max(
                     _score_similarity(candidate, sel) for sel in selected  #run function here qua sotto
-                )
-                mmr_score = lambda_param * relevance - (1 - lambda_param) * max_sim
+                )  #max() prende solo il valore max calcolato tra tutti quelli calcolati
+                mmr_score = lambda_param * relevance - (1 - lambda_param) * max_sim   #formula mmr, prima parte → qualità del chunk seconda parte → penalità se è troppo simile
                 if mmr_score > best_score:
                     best_score = mmr_score
                     best = candidate
         selected.append(best)
         remaining.remove(best)
-    return selected
+        #sposti il best nei risultati finali e lo rimuovi da quelli rimanenti
+    return selected  #return the bests
 
 def _score_similarity(a: dict, b: dict) -> float:
     """Similarità approssimata tra due chunk basata sul filename e chunk_index."""
