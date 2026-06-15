@@ -107,14 +107,14 @@ def retrieve(
             )
         except Exception as e:
             logger.warning(f"Sparse search fallita: {e}")
+
     #ora che hai entrambi i results, applichi RRF!! i risulati forti in entrambi i ranking salgono mentre quelli deboli scendono!
     fused = _rrf_fusion(dense_results, sparse_results, k=k)  #una volta che hai dense e sparse results, non ti rimane che fonderli con fusion 🔥🔥RRF (Reciprocal Rank Fusion) technique!! formula score=1/(rank+k)
 
-    if settings.retriever_strategy == "mmr" and len(fused) > 1:   #MMR technique
+    if settings.retriever_strategy == "mmr" and len(fused) > 1:   #MMR technique!!
         fused = _mmr_rerank( query_vector, fused, lambda_param=settings.retriever_mmr_lambda )  #applichi il Re-Ranking (MRR) technique !!
-    if settings.reranker_enabled and len(fused) > 1:    #🔥🔥ReRanking technique w Cross-Encoder(BEST!)
+    if settings.reranker_enabled and len(fused) > 1:    #🔥🔥ReRanking technique w Cross-Encoder(BEST!)!!
         fused = _cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
-
 
     #principalmente faccio questo 
     #1. Hybrid Search (dense + sparse BM25) → Top 20 risultati
@@ -166,7 +166,7 @@ def _rrf_fusion(  #🔥🔥RRF fusion technique!! formula score=1/(rank+k). k=60
         scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo e fai update
     return sorted( scores.values(), key=lambda x: x["score"], reverse=True )    #
 
-def _mmr_rerank(      #Re-RAnking technique, formual  λ*relevance-(1-λ)*similarity
+def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*similarity
     query_vector: list[float],
     results: list[dict],
     lambda_param: float = 0.5,
