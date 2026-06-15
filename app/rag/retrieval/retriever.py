@@ -10,7 +10,6 @@ from typing import Any
 from loguru import logger
 from app.core.settings import get_settings   #ur custom
 
-
 settings = get_settings()
 
 @dataclass
@@ -109,7 +108,7 @@ def retrieve(
             logger.warning(f"Sparse search fallita: {e}")
 
     #ora che hai entrambi i results, applichi RRF!! i risulati forti in entrambi i ranking salgono mentre quelli deboli scendono!
-    fused = _rrf_fusion(dense_results, sparse_results, k=k)  #una volta che hai dense e sparse results, non ti rimane che fonderli con fusion 🔥🔥RRF (Reciprocal Rank Fusion) technique!! formula score=1/(rank+k)
+    fused = _rrf_fusion( dense_results, sparse_results, k=k )  #una volta che hai dense e sparse results, non ti rimane che fonderli con fusion 🔥🔥RRF (Reciprocal Rank Fusion) technique!! formula score=1/(rank+k)
 
     if settings.retriever_strategy == "mmr" and len(fused) > 1:   #MMR technique!!
         fused = _mmr_rerank( query_vector, fused, lambda_param=settings.retriever_mmr_lambda )  #applichi il Re-Ranking (MRR) technique !!
@@ -142,6 +141,13 @@ def retrieve(
     return chunks
 
 
+def _build_sparse_vector(query: str) -> Any:
+    """Costruisce vettore sparso SPLADE per la query."""
+    from fastembed import SparseTextEmbedding  #fastembed supporta BM25, SPLADE e altri modelli di spare retrieval
+    model = SparseTextEmbedding( model_name="prithivida/Splade_PP_en_v1" )  #STO UTILIZZANDO SPLADE type!! non BM25 type (che non è neurale)!
+    vectors = list( model.embed([query]) )
+    v = vectors[0]
+    return {"indices": v.indices.tolist(), "values": v.values.tolist()}
 
 def _rrf_fusion(  #🔥🔥RRF fusion technique!! formula score=1/(rank+k). k=60 stabilizza la curva, rank è la posizione nel risultato.
     dense: list,  #risultati semantic search Qdrant
@@ -157,14 +163,22 @@ def _rrf_fusion(  #🔥🔥RRF fusion technique!! formula score=1/(rank+k). k=60
     for rank, result in enumerate(dense):  #enumerate() iteri e ti da anche l'index 
         rid = str(result.id)
         if rid not in scores:
-            scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}   #pk ricorda scores dict[str, dict], e lo inizializzi
-        scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo e fai update 
+            scores[rid] = {
+                "id": rid, 
+                "payload": result.payload, 
+                "score": 0.0
+            }   #pk ricorda scores dict[str, dict], e lo inizializzi
+        scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo target e fai update. rank+1 perché enumerate parte da 0, quindi formula è 1/(k + rank) quindi e.g. per il primo risultato rank=0 quindi 1/(60+0+1)=1/61, per il secondo rank=1 quindi 1/(60+1+1)=1/62, ecc. in questo modo i primi risultati sono piu bassi e hanno un boost maggiore
     for rank, result in enumerate(sparse):
         rid = str(result.id)
         if rid not in scores:
-            scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}
-        scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo e fai update
-    return sorted( scores.values(), key=lambda x: x["score"], reverse=True )    #
+            scores[rid] = {
+                "id": rid, 
+                "payload": result.payload, 
+                "score": 0.0
+            }
+        scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo target e fai update
+    return sorted( scores.values(), key=lambda x: x["score"], reverse=True )    #prende tutti i chunks, e li ordin per score decrescente.
 
 def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*similarity
     query_vector: list[float],
@@ -177,19 +191,19 @@ def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*simil
     Bilancia rilevanza (similarity con query) e diversità (dissimilarity tra chunk).
     lambda_param: 0=massima diversità, 1=massima rilevanza
     """
-    import numpy as np   #serve INSTALLARE LIB numpy !!
+    import numpy as np   #serve INSTALLARE LIB numpy !! ma inttanto non viene utilizzato 
     if not results:
         return results
     k = top_k or len(results)
     selected = []
-    remaining = list(results)
+    remaining = list( results )
     #Vettori dei chunk (usiamo lo score come proxy della similarity)
     while len(selected) < k and remaining:
         if not selected:
-            # Prima iterazione: prendi il più rilevante
+            #prima iterazione: prendi il più rilevante
             best = remaining[0]
         else:
-            # MMR: massimizza λ*relevance - (1-λ)*max_similarity_to_selected
+            #MMR: massimizza λ*relevance - (1-λ)*max_similarity_to_selected
             best_score = float("-inf")
             best = remaining[0]
             for candidate in remaining:
@@ -236,14 +250,5 @@ def _cross_encoder_rerank(
     reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)
     logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
     return reranked[:top_k]
-
-def _build_sparse_vector(query: str) -> Any:
-    """Costruisce vettore sparso BM25 per la query."""
-    from fastembed import SparseTextEmbedding
-    # Usa SPLADE o BM25 per il vettore sparso
-    model = SparseTextEmbedding( model_name="prithivida/Splade_PP_en_v1" )  #model used!
-    vectors = list( model.embed([query]) )
-    v = vectors[0]
-    return {"indices": v.indices.tolist(), "values": v.values.tolist()}
 
 
