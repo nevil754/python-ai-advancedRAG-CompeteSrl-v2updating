@@ -180,7 +180,7 @@ def _rrf_fusion(  #🔥🔥RRF fusion technique!! formula score=1/(rank+k). k=60
         scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo target e fai update
     return sorted( scores.values(), key=lambda x: x["score"], reverse=True )    #prende tutti i chunks, e li ordin per score decrescente.
 
-def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*similarity
+def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*similarity. QUESTA MIA VERSIONE è meno potente della vera versione di mmr!!
     query_vector: list[float],
     results: list[dict],
     lambda_param: float = 0.5,
@@ -205,13 +205,13 @@ def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*simil
             best = remaining[0]
         else:
             #MMR: massimizza λ*relevance - (1-λ)*max_similarity_to_selected
-            best_score = float("-inf")
+            best_score = float("-inf")   #equivale a -∞
             best = remaining[0]
             for candidate in remaining:
                 relevance = candidate["score"]
                 # Similarità con i già selezionati (approssimazione tramite score overlap)
                 max_sim = max(
-                    _score_similarity(candidate, sel) for sel in selected
+                    _score_similarity(candidate, sel) for sel in selected  #run function here qua sotto
                 )
                 mmr_score = lambda_param * relevance - (1 - lambda_param) * max_sim
                 if mmr_score > best_score:
@@ -224,13 +224,14 @@ def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*simil
 def _score_similarity(a: dict, b: dict) -> float:
     """Similarità approssimata tra due chunk basata sul filename e chunk_index."""
     pa, pb = a["payload"], b["payload"]
-    if pa.get("document_id") == pb.get("document_id"):
-        # Stessa fonte — alta similarità se chunk adiacenti
-        diff = abs(pa.get("chunk_index", 0) - pb.get("chunk_index", 0))
-        return max(0, 1.0 - diff * 0.1)
+    if pa.get("document_id") == pb.get("document_id"):  #verifica se provengono dalla stessa fonte (se è cosi alta similarità se chunk adiacenti )
+        diff = abs( pa.get("chunk_index", 0) - pb.get("chunk_index", 0) )
+        #prende l'indice dei chunks e.g. pa["chunk_index"]=5  pb["chunk_index"]=6  e 
+        #calcola la distanza tra i chunk (), più sono vicini più sono simili, quindi similarity è 1 quando diff=0, e decresce linearmente fino a 0 quando diff>=10 (puoi regolare questo valore in base alla lunghezza media dei tuoi chunk, ma 10 è un buon punto di partenza)
+        return max(0, 1.0 - diff * 0.1)   #questa è la formula equivale a similarity = 1 - 0.1 * diff. e.g. diff=0  1-0*0.1 -> 1  result similarity = 1.0 (massima similarita),  se è invece diff=1 (chunks adiacenti) ... result similarity = 0.9
     return 0.0
 
-def _cross_encoder_rerank(
+def _cross_encoder_rerank(  #ReRanking technique usando Cross-Encoder (NON Bi-Encoder)
     query: str,
     results: list[dict],
     top_k: int,
@@ -242,14 +243,14 @@ def _cross_encoder_rerank(
     """
     from app.core.embeddings import get_reranker_model
     reranker = get_reranker_model()
-    if not reranker:
-        return results[:top_k]
-    pairs = [(query, r["payload"].get("text", "")) for r in results]
-    scores = reranker.predict(pairs)
-    for result, score in zip(results, scores):
-        result["rerank_score"] = float(score)
-    reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)
+    if not reranker:  #se download fallito or altri problemi
+        return results[:top_k]  #return solo i primi top_k senza aver fatto reranking technique
+    pairs = [ (query, r["payload"].get("text", "")) for r in results ]   #per ogni item in results, couple {myquery, r["payload"].get("text")}
+    scores = reranker.predict(pairs)  #il modello valuta ogni coppia, e assegna un punteggio di rilevanza. più alto è il punteggio, più rilevante è il chunk rispetto alla query.
+    for result, score in zip(results, scores):  #zip accoppia gli elementi che sono nello stesso index (xk sono in 2 liste separate) 
+        result["rerank_score"] = float(score)   #update
+    reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)  #ordina per il nuovo campo "rerank_score" in ordine decrescente, quindi i chunk più rilevanti secondo il reranker saranno in cima alla lista.
     logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
-    return reranked[:top_k]
+    return reranked[:top_k]  #return solo i primi top_k dalla cima!!
 
 
