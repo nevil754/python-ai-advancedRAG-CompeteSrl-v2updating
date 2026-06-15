@@ -159,7 +159,7 @@ def ingest_document(
 @celery_app.task(
     bind=True,      #permette accesso a self (il classico self per l'istanza stessa)
     max_retries=2,
-    acks_late=True, #🔥il task viene confermato successfully solo DOPO il completamento
+    acks_late=True,   #🔥il task viene confermato successfully solo DOPO il completamento
     name="app.workers.ingestion_tasks.reprocess_document",
 )
 def reprocess_document(

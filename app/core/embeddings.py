@@ -66,9 +66,9 @@ def embed_query(text: str) -> list[float]:
         Vettore float della query
     """
     model = get_embedding_model()
-    vectors = list(model.query_embed([text]))  #🔥🔥here accada l'embedding docs!!
+    vectors = list( model.query_embed([text]) )  #🔥🔥here accada l'embedding docs!!
     #🔥🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
-    return vectors[0].tolist()  #return il primo elem xk hai passato [query] una lista con 1 solo elem
+    return vectors[0].tolist()  #return il primo elem [0] xk hai passato [query] una lista con 1 solo elem
 
 async def aembed_texts(texts: list[str]) -> list[list[float]]:  #async
     """

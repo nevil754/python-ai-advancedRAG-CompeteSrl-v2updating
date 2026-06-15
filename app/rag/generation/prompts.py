@@ -38,7 +38,7 @@ def get_no_context_message() -> str:
 @lru_cache(maxsize=1)  #decoratore che trasforma la funzione in un singleton, quindi _load_prompts() ritorna sempre la stessa istanza del dict dei prompts, evitando overhead di lettura file multiple
 def _load_prompts() -> dict:
     """Carica prompts.yaml una sola volta."""
-    prompt_file = Path("/app/config/prompts.yaml")
+    prompt_file = Path("/app/config/prompts.yaml")  #è un file diverso da questo rag/generation/prompts.py
     if not prompt_file.exists():
         logger.warning("prompts.yaml non trovato, uso prompt hardcodati")
         return {}

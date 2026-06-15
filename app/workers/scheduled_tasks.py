@@ -4,86 +4,73 @@
 # Registrati all'avvio del celery-beat container.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations   #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from datetime import timedelta
-
-from celery.schedules import crontab
+from celery.schedules import crontab   #x linux cron e.g. crontab(hour=0, minute=0) vuol dire ogni giorno a mezzanotte
 from loguru import logger
 from sqlalchemy import text
+from app.workers.celery_app import celery_app   #istanza celery globale
 
-from app.workers.celery_app import celery_app
 
-
-# ─── Registrazione schedule periodici ────────────────────────
 # Questi vengono letti da celery-beat all'avvio
-
+#registrazione tasks periodici
 celery_app.conf.beat_schedule = {
-    # Ogni giorno a mezzanotte: rollup usage stats per billing
-    "rollup-usage-daily": {
+    "rollup-usage-daily": {   #x rollup usage stats per billling
         "task": "app.workers.scheduled_tasks.rollup_usage",
-        "schedule": crontab(hour=0, minute=0),
+        "schedule": crontab(hour=0, minute=0),  #ogni giorno a mezzanotte
     },
-    # Ogni ora: pulizia sessioni orfane
-    "expire-sessions-hourly": {
+    "expire-sessions-hourly": {    #x pulizia sessioni orfane
         "task": "app.workers.cleanup_tasks.expire_sessions",
-        "schedule": timedelta(hours=1),
+        "schedule": timedelta(hours=1),   #ogni ora
     },
 }
 
 
 @celery_app.task(
     name="app.workers.scheduled_tasks.rollup_usage",
-    acks_late=True,
+    acks_late=True,   #🔥il task viene confermato successfully solo DOPO il completamento
 )
 def rollup_usage() -> dict:
     """
     Aggrega e salva usage stats giornaliero per tutti i tenant.
     Legge i contatori Redis accumulati durante il giorno
     e li persiste in shared.usage_stats su SQL Server.
-    Chiamato ogni notte da celery-beat.
+    Chiamato ogni notte da celery-beat.  MA UTILIZZO REDBEAT per persistere vero??
     """
-    import asyncio
-    from app.db.sqlserver import tenant_db
+    import asyncio   #x async funct
+    from app.db.sqlserver import tenant_db   #ur custom
     from app.core.redis_client import get_redis
 
-    async def _get_all_tenants():
+    async def _get_all_tenants():   #legge tutti i tentants attivi
         async with tenant_db._async_factory() as session:
             result = await session.execute(
                 text("SELECT id, slug FROM shared.tenants WHERE is_active = 1")
             )
-            return result.fetchall()
-
-    async def _get_tenant_stats(tenant_id: str):
+            return result.fetchall()  #fetches all (or all remaining) rows of a query result, return list of tuples
+    async def _get_tenant_stats( tenant_id: str ):
         """Legge contatori Redis per il tenant."""
         client = get_redis()
-        today = __import__("datetime").date.today().isoformat()
-        base = f"tenant:{tenant_id}:stats:{today}"
-
-        pipe = client.pipeline()
-        pipe.get(f"{base}:tokens_in")
+        today = __import__("datetime").date.today().isoformat()   #e.g. 2026-06-15
+        base = f"tenant:{tenant_id}:stats:{today}"  #e.g. tenant:123:stats:2026-06-15
+        pipe = client.pipeline()    #crea pipeline= batch di operazioni (piu veloce)
+        pipe.get(f"{base}:tokens_in")   #lettura e.g. tenant:123:stats:2026-06-15:tokens_in
         pipe.get(f"{base}:tokens_out")
         pipe.get(f"{base}:queries")
         pipe.get(f"{base}:docs_ingested")
-        results = await pipe.execute()
-
+        results = await pipe.execute()   #esecuzione
         return {
-            "tokens_in": int(results[0] or 0),
+            "tokens_in": int(results[0] or 0),   #è il valore di pipe.get(f"{base}:tokens_in")
             "tokens_out": int(results[1] or 0),
             "queries_count": int(results[2] or 0),
             "docs_ingested": int(results[3] or 0),
         }
-
-    loop = asyncio.new_event_loop()
-    tenants = loop.run_until_complete(_get_all_tenants())
-
+    loop = asyncio.new_event_loop()    #event loop manuale x chiamare funzione async da sync, in questo caso per invalidare cache query dopo ingestion, altrimenti la cache sarebbe stale (il doc è nuovo ma la cache non lo sa)
+    tenants = loop.run_until_complete( _get_all_tenants() )  #function annidata here qua sopra 
     saved = 0
     for tenant in tenants:
-        stats = loop.run_until_complete(_get_tenant_stats(str(tenant.id)))
-
-        if stats["queries_count"] == 0 and stats["docs_ingested"] == 0:
-            continue  # skip tenant inattivi oggi
-
+        stats = loop.run_until_complete( _get_tenant_stats(str(tenant.id)) )   #function annidata here qua sopra 
+        if stats["queries_count"] == 0 and stats["docs_ingested"] == 0:   #skip tenants inattivi! (di oggi)
+            continue
         with tenant_db.get_session("shared") as session:
             session.execute(
                 text("""
@@ -111,7 +98,8 @@ def rollup_usage() -> dict:
                 }
             )
         saved += 1
-
     loop.close()
     logger.info(f"Usage rollup completato: {saved} tenant salvati")
     return {"tenants_saved": saved}
+
+

@@ -56,7 +56,6 @@ def retrieve(
     """
     k = top_k or settings.retriever_top_k
     logger.debug(f"Retrieval: query='{query[:50]}...', top_k={k}")
-    # 1. Embedding query
     from app.core.embeddings import embed_query  #ur custom
     query_vector = embed_query(query)
     from app.core.vectorstore import get_qdrant_client, get_collection_name
@@ -64,13 +63,13 @@ def retrieve(
     client = get_qdrant_client()
     collection_name = get_collection_name(tenant_slug)
     must_conditions = [  #costruisci filtro qdrant
-        qmodels.FieldCondition(
+        qmodels.FieldCondition(   #FieldCondition è di qdrant
             key="tenant_id",
             match=qmodels.MatchValue(value=tenant_id)  #🔥🔥SEMPRE TENENT ISOLATION!!
         )
     ]
     if collection_id:
-        must_conditions.append(
+        must_conditions.append(   #ne aggiungi un'altro a must_conditions
             qmodels.FieldCondition(
                 key="collection_id",
                 match=qmodels.MatchValue(value=collection_id)
@@ -81,17 +80,17 @@ def retrieve(
             must_conditions.append(
                 qmodels.FieldCondition(key=key, match=qmodels.MatchValue(value=value))
             )
-    qdrant_filter = qmodels.Filter(must=must_conditions)
-    #🔥🔥 Dense Search (semantic similarity)
+    qdrant_filter = qmodels.Filter( must=must_conditions )   #define il filtro finale da passare a qdrant search
+    #🔥🔥Dense Search (semantic similarity)
     dense_results = client.search(
         collection_name=collection_name,
         query_vector=qmodels.NamedVector(name="dense", vector=query_vector),
-        query_filter=qdrant_filter,
+        query_filter=qdrant_filter,  #apply the filter
         limit=k,
         with_payload=True,
         score_threshold=0.3,
     )
-    #🔥🔥 Sparse Search (BM25 keyword) se abilitato
+    #🔥🔥Sparse Search (BM25 keyword) se abilitato
     sparse_results = []
     if settings.qdrant_use_sparse:
         try:
@@ -112,16 +111,14 @@ def retrieve(
     # 5. MMR diversification
     if settings.retriever_strategy == "mmr" and len(fused) > 1:
         fused = _mmr_rerank(query_vector, fused, lambda_param=settings.retriever_mmr_lambda)
-
     # 6. Reranking cross-encoder
     if settings.reranker_enabled and len(fused) > 1:
         fused = _cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
-
     # Converti in RetrievedChunk
     chunks = []
     for item in fused:
         payload = item["payload"]
-        chunks.append(RetrievedChunk(
+        chunks.append( RetrievedChunk(
             text=payload.get("text", ""),
             score=item["score"],
             chunk_id=item["id"],
@@ -132,7 +129,6 @@ def retrieve(
             doc_type=payload.get("doc_type", "generic"),
             metadata=payload,
         ))
-
     logger.debug(f"Retrieval completato: {len(chunks)} chunk")
     return chunks
 

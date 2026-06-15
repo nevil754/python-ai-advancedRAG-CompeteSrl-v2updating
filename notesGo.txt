@@ -180,10 +180,10 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 //from fastapi.responses import StreamingResponse  #🔥x streaming response, fastapi apre connessione http lunga
 //return StreamingResponse(  #FASTAPI APRE CONNESSIONE HTTP LUNGA
 //      event_generator(),  #ogni yield viene inviato immediatamente 
-//      media_type="text/event-stream",  #🔥 fondamentale il browser DEVE sapere che questo è SSE
+//      media_type="text/event-stream",  #🔥fondamentale il browser DEVE sapere che questo è SSE
 //      headers={
 //          "Cache-Control": "no-cache",   #no cache
-//          "X-Accel-Buffering": "no",    #🔥disabilita buffering nginx, altrimenti nginx potrebbe accumulare tutto e restituire tutto solo alla fine!!
+//          "X-Accel-Buffering": "no",     #🔥disabilita buffering nginx, altrimenti nginx potrebbe accumulare tutto e restituire tutto solo alla fine!!
 //      },
 //  )
 -@property   #trasforma function -> proprieta leggibile come attributo (quindi ora fai settings.sqlserver_url come se fosse una var normale)

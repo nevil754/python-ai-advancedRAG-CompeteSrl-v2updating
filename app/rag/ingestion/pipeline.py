@@ -58,12 +58,12 @@ def run_ingestion_pipeline(
         "filename": filename,
     }
     chunks = chunk_document( clean, pages=parsed.pages, base_metadata=base_metadata )   #🔥🔥🔥 HERE FAI IL CHUNCKING!! passi il text pulito - le pagine ok - i metadata ok
-    logger.debug(f"Chunking: {len(chunks)} chunk")
+    logger.debug( f"Chunking: {len(chunks)} chunk" )
     if not chunks:
         raise ValueError(f"Nessun chunk estratto dal documento {filename}")
-    texts = [ c.text for c in chunks ]
+    texts = [ c.text for c in chunks ]  #estrai solo il test e crei array
     vectors = embed_texts(texts)   #🔥🔥🔥HERE ACCADE EMBEDDING DEI DOCS!!
-    logger.debug(f"Embedding: {len(vectors)} vettori generati")
+    logger.debug( f"Embedding: {len(vectors)} vettori generati" )
     collection_name = ensure_collection( tenant_slug )
     client = get_qdrant_client()
     from qdrant_client.http import models as qmodels  #models serve per ottenere PointStruct Filter FieldCondition MatchValue FilterSelector
@@ -80,12 +80,12 @@ def run_ingestion_pipeline(
             document_text_sample=clean[:500], 
         )  #payload che viene aggiunto per ogni vettore, serve per ogni vettore per eseguire i filtri!! molto importante 
         payload["text"] = chunk.text  #aggiungi nel payload anche il testo del chunk
-        points.append( qmodels.PointStruct(
+        points.append( qmodels.PointStruct(  #obj che rappresenta un singolo punto vettoriale dentro qdrant 
             id=str(uuid.uuid4()),
-            vector={"dense": vector},
+            vector={"dense": vector},   #visto che vectro puo essere e.g. [23, 45, 67] allora otteniamo e.g. {"dense": [23, 45, 67]}
             payload=payload,
         ) )
-            #ogni chunk diventa 
+            #ogni chunk diventa e.g.
             # {
             #   "id": "uuid",
             #   "vector": [0.1, 0.2, ...],
@@ -96,11 +96,10 @@ def run_ingestion_pipeline(
             #     ...
             #   }
             # }
-    # Inserimento a batch da 100 per non sovraccaricare Qdrant
-    batch_size = 100   #Qdrant supporta inserimenti a batch, quindi invece di fare 1 upsert per ogni punto, facciamo 1 upsert ogni 100 punti
+    batch_size = 100   #qdrant supporta inserimenti a batch, quindi invece di fare 1 upsert per ogni punto, facciamo 1 upsert ogni 100 punti
     for i in range( 0, len(points), batch_size ):   #slices 0-99, 100-199, ect
         batch = points[i:i + batch_size]   #prendi il blocco di 100 elems
-        client.upsert(collection_name=collection_name, points=batch)  #upsert fa update+insert command, quindi crei una nuova riga se non esisteva altrimenti la aggiorni
+        client.upsert(collection_name=collection_name, points=batch)  #🔥upsert fa update+insert command, quindi crei una nuova riga se non esisteva altrimenti la aggiorni
         logger.debug(f"Upserted batch {i // batch_size + 1}: { len(batch) } punti")
     logger.info(
         "Pipeline ingestion completata",
