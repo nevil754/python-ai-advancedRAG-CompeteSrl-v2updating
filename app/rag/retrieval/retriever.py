@@ -141,13 +141,13 @@ def retrieve(
     return chunks
 
 
-def _build_sparse_vector(query: str) -> Any:
+def _build_sparse_vector(query: str) -> Any:  #🔥utilizzo Sparse Search w SPLADE type (better than BM25 type base)
     """Costruisce vettore sparso SPLADE per la query."""
     from fastembed import SparseTextEmbedding  #fastembed supporta BM25, SPLADE e altri modelli di spare retrieval
     model = SparseTextEmbedding( model_name="prithivida/Splade_PP_en_v1" )  #STO UTILIZZANDO SPLADE type!! non BM25 type (che non è neurale)!
     vectors = list( model.embed([query]) )
-    v = vectors[0]
-    return {"indices": v.indices.tolist(), "values": v.values.tolist()}
+    v = vectors[0]  #[0] hai passato 1 sola query, quindi è l'unica, prendi la query convertita in sparse vector.
+    return {"indices": v.indices.tolist(), "values": v.values.tolist()}   #.indices() NON sono le parole ma sono posizioni nel vocabolario del modello! .values() sono i pesi associati a quelle parole. quindi stai costruendo un vettore sparso in formato {indices: [...], values: [...]}, che è quello che qdrant si aspetta per la ricerca sparse.
 
 def _rrf_fusion(  #🔥🔥RRF fusion technique!! formula score=1/(rank+k). k=60 stabilizza la curva, rank è la posizione nel risultato.
     dense: list,  #risultati semantic search Qdrant
@@ -188,6 +188,7 @@ def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*simil
 ) -> list[dict]:
     """
     Maximal Marginal Relevance — diversifica i risultati.
+    formula: MMR = λ*relevance - (1-λ)*max_similarity_to_selected
     Bilancia rilevanza (similarity con query) e diversità (dissimilarity tra chunk).
     lambda_param: 0=massima diversità, 1=massima rilevanza
     """
@@ -196,11 +197,11 @@ def _mmr_rerank(      #Re-Ranking technique, formuala  λ*relevance-(1-λ)*simil
         return results
     k = top_k or len(results)
     selected = []
-    remaining = list( results )
+    remaining = list( results )  #clone
     #Vettori dei chunk (usiamo lo score come proxy della similarity)
-    while len(selected) < k and remaining:
+    while len(selected) < k and remaining:   #continue finche lista selected non supera k(number) e che ci sono sempre ancora elementi dentro list 'remaining'
         if not selected:
-            #prima iterazione: prendi il più rilevante
+            #prima iterazione: prendi il più rilevante cioe il primo della lista(quello che ha il massimo score) !
             best = remaining[0]
         else:
             #MMR: massimizza λ*relevance - (1-λ)*max_similarity_to_selected
