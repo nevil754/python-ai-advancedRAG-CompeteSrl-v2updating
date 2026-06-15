@@ -224,6 +224,9 @@ offset = (page - 1) * page_size   #offset è il jump da dove deve iniziare, e.g.
 model = get_embedding_model()
 vectors = list(model.query_embed([text]))  #🔥🔥here accada l'embedding docs!!
 #🔥🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
+-Cross-Encoder vs Bi-Encoder: 
+🔥--Cross-Encoder: prende 2 frasi insieme dallo stesso input, le frasi intereagiscono direttamente dentro il modello. cattura relazioni piu sottili tra le frasi, ma è lento(deve ricalcolare ogni coppia) e non scala a milioni di confronti. PERFETTO X RE-RANKING TECHNIQUE quando hai gia poche coppie da valutare e vuoi massima precision!!
+--Bi-Encoder: elabora 2 frasi separatamente, Frase A → embedding u   Frase B → embedding v   e poi confronta u e v con una misura tipo cosine similarity. è meno preciso, ma puoi pre-calcolare gli embeddings perfetto per milioni di confronti. ok x tanti documenti e ricerca veloce.
 -reranking
 from sentence_transformers import CrossEncoder  #🔥CrossEncoder è il wrapper
 reranker = CrossEncoder(settings.reranker_model, max_length=512,  #max token per chunk)

@@ -98,24 +98,19 @@ def retrieve(
     if settings.qdrant_use_sparse:
         try:
             sparse_vector = _build_sparse_vector(query)
-            sparse_results = client.search(
+            sparse_results = client.search(  #esegui ricerca!
                 collection_name=collection_name,
-                query_vector=qmodels.NamedSparseVector(
-                    name="sparse", vector=sparse_vector
-                ),
+                query_vector=qmodels.NamedSparseVector( name="sparse", vector=sparse_vector ),
                 query_filter=qdrant_filter,
                 limit=k,
                 with_payload=True,
             )
         except Exception as e:
             logger.warning(f"Sparse search fallita: {e}")
-    # 4. RRF fusion
     fused = _rrf_fusion(dense_results, sparse_results, k=k)
-    # 5. MMR diversification
-    if settings.retriever_strategy == "mmr" and len(fused) > 1:
-        fused = _mmr_rerank(query_vector, fused, lambda_param=settings.retriever_mmr_lambda)
-    # 6. Reranking cross-encoder
-    if settings.reranker_enabled and len(fused) > 1:
+    if settings.retriever_strategy == "mmr" and len(fused) > 1:   #MMR technique
+        fused = _mmr_rerank( query_vector, fused, lambda_param=settings.retriever_mmr_lambda )
+    if settings.reranker_enabled and len(fused) > 1:    #ReRanking technique Cross-Encoder
         fused = _cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
     # Converti in RetrievedChunk
     chunks = []
@@ -134,6 +129,8 @@ def retrieve(
         ))
     logger.debug(f"Retrieval completato: {len(chunks)} chunk")
     return chunks
+
+
 
 def _rrf_fusion(  #🔥🔥RRF technique!! formula score=1/(rank+k)
     dense: list,
