@@ -171,6 +171,10 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 -return CollectionSchema.model_validate( dict(row.fetchone()._mapping) )   #fetchone() prende 1 row, _mapping converte row sqlalchemy in dict-like, dict() converte in dict normale, model_validate() valida e trasforma in CollectionSchema
 -import asyncio; loop = asyncio.new_event_loop();
 !-zip: itera su piu liste (o sequenze) in parallelo, mettendo insieme gli elementi che sono nella stessa posizione index, e ottieni qualcosa come [(Xelems),(Xelems),(Xelems)].
+🔥- #!/usr/bin/env python3  in cima a file python è un shebang ASSOLUTAMENTE DA AGGIUNGERE SE QUESTO FILE .PY E' DIRETTAMENTE ESEGUIBILE DAL SYSTEM e serve nei system linux/unix/macos e dice al system e.g. here che deve runnare python. #! indica che ora segue un interprete, /usr/bin/env python chiede al system di trovare python nel PATH, serve se vuoi eseguire file con 
+chmod +x script.py
+./script.py
+
 
 ########
 
@@ -250,7 +254,7 @@ reranker = CrossEncoder(settings.reranker_model, max_length=512,  #max token per
     #2. RRF (Reciprocal Rank Fusion) → in input 2 ranking separati (1 di dense e 1 di sparse) i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono) come output 1 ranking unico.
     #2. MMR (Maximal Marginal Relevance) → Top 10 diversificati. penalizza i chunk troppo simili tra loro, in questo modo hai solo risultati diversi (no clones) i piu importanti.
     #3. ReRanker (Cross-Encoder technique w model BAAI/bge-reranker-base) → Top 5 precisi. prende in input i risultati e con model BAAI/bge-reranker-base assegna un ranking a ciascuno, quindi poi return solo i X bests.
-    //🔥model x dense BM25 il model 'prithivida/Splade_PP_en_v1' è uno SPLADE type dei piu usati today excellent qualita-speed.
+    //🔥model x dense BM25 il model 'prithivida/Splade_PP_en_v1' è uno type SPLADE dei piu usati today excellent qualita-speed.
 
 -agent AI: un agent è di solito è llm+prompt specializzato+tool+obbiettivo.
 quindi in realta il famoso che tutti amano 'alverare di agenti' in realta è 1 modello llm -> 23 prompt specializzati -> pipeline coordinata.
@@ -298,7 +302,7 @@ feature/login-google → develop
 --GGUF: serve per il modello finale, dopo traning QLoRA hai base model (quantized 4-bit)++ LoRA adapters dopodiche gli adapters vengono fusi base model+adapters→full model  infine converti per l'export GGUF 16-bit (FP16 weights). quindi il training leggero lo fai 4bit mentre il modello finale sara molto piu stabile a 16-bit GGUF.
 
 
-#####################################################CHATBOT LONGMEMORY ADAPTABILITY personalization engine
+#####################################################⭐️⭐️⭐️CHATBOT LONGMEMORY ADAPTABILITY personalization engine
 //questo è agentic memory (dal 2026 gli agents stanno usando il web piu degli umani, e gli servono strumenti!)
 
 Long-term Memory + User Profile + Retrieval + Reflection loop:

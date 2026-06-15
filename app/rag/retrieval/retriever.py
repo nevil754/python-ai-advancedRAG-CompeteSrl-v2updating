@@ -250,7 +250,7 @@ def _cross_encoder_rerank(  #ReRanking technique usando Cross-Encoder (NON Bi-En
     scores = reranker.predict(pairs)  #il modello valuta ogni coppia, e assegna un punteggio di rilevanza. più alto è il punteggio, più rilevante è il chunk rispetto alla query.
     for result, score in zip(results, scores):  #zip accoppia gli elementi che sono nello stesso index (xk sono in 2 liste separate) 
         result["rerank_score"] = float(score)   #update
-    reranked = sorted(results, key=lambda x: x.get("rerank_score", 0), reverse=True)  #ordina per il nuovo campo "rerank_score" in ordine decrescente, quindi i chunk più rilevanti secondo il reranker saranno in cima alla lista.
+    reranked = sorted( results, key=lambda x: x.get("rerank_score", 0), reverse=True )  #ordina per il nuovo campo "rerank_score" in ordine decrescente, quindi i chunk più rilevanti secondo il reranker saranno in cima alla lista.
     logger.debug(f"Reranking: {len(results)} → {top_k} chunk")
     return reranked[:top_k]  #return solo i primi top_k dalla cima!!
 

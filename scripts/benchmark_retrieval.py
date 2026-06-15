@@ -1,22 +1,22 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 # =============================================================
 # scripts/benchmark_retrieval.py
 # Misura qualità RAG con ragas: faithfulness, context relevance.
 # Utile per confrontare diverse configurazioni di retrieval.
-#
 # Uso: python scripts/benchmark_retrieval.py --tenant demo-corp
 # =============================================================
 
-import argparse
-import asyncio
+import argparse  #x CLI args 
+import asyncio  #x async functs
 import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))  #__file__ è il path di questo script, poi sali su con parent e ancora con parent ed arrivi a root prj. aggiunge il path all'inizio del PYTHONPATH così quando importi moduli python cerca prima qui
 
-# Dataset di domande + risposte attese per il tenant demo
-BENCHMARK_DATASET = [
+#dataset di domande + risposte attese per il tenant demo
+BENCHMARK_DATASET = [   #mini dataset di test per benchmark retrieval
     {
         "question": "Quando scade il contratto di fornitura software?",
         "expected_keywords": ["31/12/2024", "dicembre 2024", "annuale"],
@@ -37,16 +37,15 @@ BENCHMARK_DATASET = [
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Benchmark qualità RAG")
-    parser.add_argument("--tenant", default="demo-corp")
+    parser = argparse.ArgumentParser(description="Benchmark qualità RAG")  #crea parser CLI. ora se da cli runni 'python create_tenant.py --help' vedrai result "Crea un nuovo tenant RAG"
+    parser.add_argument("--tenant", default="demo-corp")  #e.g. runni '--slug acme-corp' allora return args.slug
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--output", default="benchmark_results.json")
-    args = parser.parse_args()
+    args = parser.parse_args()   #🔥qui argparse LEGGE i parametri reali!!
 
     from app.db.sqlserver import tenant_db
     from sqlalchemy import text
 
-    # Ottieni tenant_id
     async with tenant_db._async_factory() as session:
         row = await session.execute(
             text("SELECT id FROM shared.tenants WHERE slug = :slug"),

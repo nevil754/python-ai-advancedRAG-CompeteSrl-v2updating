@@ -109,7 +109,7 @@ async def login(request: LoginRequest) -> TokenResponse:
     #4.aggiorna last_login
     async with tenant_db.aget_session(request.tenant_slug) as session:
         await session.execute(
-            text("UPDATE users SET last_login = GETUTCDATE() WHERE id = :id"),  #update ora ultimo login
+            text("UPDATE users SET last_login = SYSUTCDATETIME() WHERE id = :id"),  #update ora ultimo login
             {"id": user.id}   #paramenter binding x evitare sql injection
         )
     #5.genera JWT
