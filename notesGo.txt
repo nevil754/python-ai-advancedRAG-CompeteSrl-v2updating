@@ -250,9 +250,7 @@ reranker = CrossEncoder(settings.reranker_model, max_length=512,  #max token per
     #2. RRF (Reciprocal Rank Fusion) → in input 2 ranking separati (1 di dense e 1 di sparse) i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono) come output 1 ranking unico.
     #2. MMR (Maximal Marginal Relevance) → Top 10 diversificati. penalizza i chunk troppo simili tra loro, in questo modo hai solo risultati diversi (no clones) i piu importanti.
     #3. ReRanker (Cross-Encoder technique w model BAAI/bge-reranker-base) → Top 5 precisi. prende in input i risultati e con model BAAI/bge-reranker-base assegna un ranking a ciascuno, quindi poi return solo i X bests.
-    //model x dense BM25 il model prithivida/Splade_PP_en_v1 è uno SPLADE type dei piu usati today 
-
-
+    //🔥model x dense BM25 il model 'prithivida/Splade_PP_en_v1' è uno SPLADE type dei piu usati today excellent qualita-speed.
 
 -agent AI: un agent è di solito è llm+prompt specializzato+tool+obbiettivo.
 quindi in realta il famoso che tutti amano 'alverare di agenti' in realta è 1 modello llm -> 23 prompt specializzati -> pipeline coordinata.
@@ -300,4 +298,45 @@ feature/login-google → develop
 --GGUF: serve per il modello finale, dopo traning QLoRA hai base model (quantized 4-bit)++ LoRA adapters dopodiche gli adapters vengono fusi base model+adapters→full model  infine converti per l'export GGUF 16-bit (FP16 weights). quindi il training leggero lo fai 4bit mentre il modello finale sara molto piu stabile a 16-bit GGUF.
 
 
+#####################################################CHATBOT LONGMEMORY ADAPTABILITY personalization engine
+//questo è agentic memory (dal 2026 gli agents stanno usando il web piu degli umani, e gli servono strumenti!)
+
+Long-term Memory + User Profile + Retrieval + Reflection loop:
+ricordi cose sull’utente nel lungo periodo, aggiorni queste info nel tempo, le usi per cambiare comportamento!, non "inventa memoria" ma la costruisce incrementalmente, sia multi-sessione + persistente.
+-3 memory layers: 
+--Short-term memory (sessione corrente): chat history recente, buffer (ultimi N mexs). tools langchain+langgraph.
+--Long-term memory (episodica): eventi importanti (e.g."utente lavora in fintech","gli piace React","sta costruendo agentic tool"), salvati in Qdrant.
+--User profile memory (strutturata): json aggiornato nel tempo, questo è il vero 'cervello dell'utente', salvata su db PostgreSQL🔥.
+e.g.
+{
+  "name": "Nevil",
+  "job": "agentic layer engineer",
+  "interests": ["AI", "robots"],
+  "goals": ["build robot"],
+  "preferences": {
+    "tone": "direct",
+    "detail_level": "high"
+  }
+}
+- redis, embeddings, reranking, llm orchestration.
+-FLOW: 
+user mex
+˅
+Vector search (episodic memory)(cerca simili conversazioni passate) + Profile fetch (carica user profile JSON)
+˅
+context building 
+e.g.
+`
+User profile:
+- job: backend engineer
+- interests: AI, SaaS
+Relevant memories:
+- previously said: building SaaS tools for devs
+`
+˅
+llm response
+˅
+memory write update: utilizzi un agent 'memory extractor', langgraph node prende user_message + assistent_response e si chiede 'Questo è un fatto da salvare?' se si allora update il json dell'user & episodic memory su qdrant.
+
+OGGI GLI AGENTS NON HANNO MEMORIA con questo voglio che ce la abbiano ora.
 

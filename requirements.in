@@ -66,7 +66,7 @@ redis==5.2.1  #🔥cache, VISTO CHE TU USI ANCHE celery(eseguire lavori async/ba
 aiohttp==3.11.9  #async http client
 httpx==0.28.0  #alternative moderna a requests, serve per async + sync HTTP calls
 celery==5.4.0   #🔥x eseguire lavori async/background, x async ingestion, e job scheduling
-celery-redbeat==2.3.2  #(ex plugin 'redbeat') scheduler Celery persistito su Redis
+celery-redbeat==2.3.2  #(ex plugin 'redbeat') scheduler Celery persistito su Redis FORSE ORA NON LO STO FACENDO!??INFO
 #redbeat==2.2.0   
 
 aiosqlite==0.20.0  #sqlite async, x piccoli storage
