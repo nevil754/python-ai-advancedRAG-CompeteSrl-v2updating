@@ -115,7 +115,7 @@ def retrieve(
     if settings.reranker_enabled and len(fused) > 1:    #🔥🔥ReRanking technique w Cross-Encoder(BEST!)!!
         fused = _cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
 
-    #principalmente faccio questo 
+    #⭐️⭐️principalmente faccio questo 
     #1. Hybrid Search (dense + sparse BM25) → Top 20 risultati
     #2. RRF (Reciprocal Rank Fusion) → in input 2 ranking separati (1 di dense e 1 di sparse) i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono) come output 1 ranking unico.
     #2. MMR (Maximal Marginal Relevance) → Top 10 diversificati. penalizza i chunk troppo simili tra loro, in questo modo hai solo risultati diversi (no clones) i piu importanti.
