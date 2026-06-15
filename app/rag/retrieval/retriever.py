@@ -87,9 +87,9 @@ def retrieve(
     #🔥🔥Dense Search (semantic similarity)
     dense_results = client.search(
         collection_name=collection_name,
-        query_vector=qmodels.NamedVector(name="dense", vector=query_vector),  #NamedVector è di qdrant, serve per specificare quale campo vettoriale usare per la ricerca, in questo caso "dense" che è quello che usiamo per i chunk embedding.
-        query_filter=qdrant_filter,  #apply the filter
-        limit=k,  #prende top k results
+        query_vector=qmodels.NamedVector( name="dense", vector=query_vector ),  #NamedVector è di qdrant, serve per specificare quale campo vettoriale usare per la ricerca, in questo caso "dense" che è quello che usiamo per i chunk embedding.
+        query_filter=qdrant_filter,   #apply the filter
+        limit=k,   #prende top k results
         with_payload=True,  
         score_threshold=0.3,   #scarta risultati con score < 0.3 (puoi regolare questo valore in base alla qualità dei risultati, ma 0.3 è un buon punto di partenza per cosine similarity)
     )
@@ -107,46 +107,57 @@ def retrieve(
             )
         except Exception as e:
             logger.warning(f"Sparse search fallita: {e}")
-    fused = _rrf_fusion(dense_results, sparse_results, k=k)
+    #ora che hai entrambi i results, applichi RRF!! i risulati forti in entrambi i ranking salgono mentre quelli deboli scendono!
+    fused = _rrf_fusion(dense_results, sparse_results, k=k)  #una volta che hai dense e sparse results, non ti rimane che fonderli con fusion 🔥🔥RRF (Reciprocal Rank Fusion) technique!! formula score=1/(rank+k)
+
     if settings.retriever_strategy == "mmr" and len(fused) > 1:   #MMR technique
-        fused = _mmr_rerank( query_vector, fused, lambda_param=settings.retriever_mmr_lambda )
-    if settings.reranker_enabled and len(fused) > 1:    #ReRanking technique Cross-Encoder
+        fused = _mmr_rerank( query_vector, fused, lambda_param=settings.retriever_mmr_lambda )  #applichi il Re-Ranking (MRR) technique !!
+    if settings.reranker_enabled and len(fused) > 1:    #🔥🔥ReRanking technique w Cross-Encoder(BEST!)
         fused = _cross_encoder_rerank(query, fused, top_k=settings.reranker_top_k)
+
+
+    #principalmente faccio questo 
+    #1. Hybrid Search (dense + sparse BM25) → Top 20 risultati
+    #2. RRF (Reciprocal Rank Fusion) → in input 2 ranking separati (1 di dense e 1 di sparse) i risulati forti in entrambi i ranking salgono (mentre quelli deboli scendono) come output 1 ranking unico.
+    #2. MMR (Maximal Marginal Relevance) → Top 10 diversificati. penalizza i chunk troppo simili tra loro, in questo modo hai solo risultati diversi (no clones) i piu importanti.
+    #3. ReRanker (Cross-Encoder technique w model BAAI/bge-reranker-base) → Top 5 precisi. prende in input i risultati e con model BAAI/bge-reranker-base assegna un ranking a ciascuno, quindi poi return solo i X bests.
+
+
     # Converti in RetrievedChunk
     chunks = []
     for item in fused:
         payload = item["payload"]
         chunks.append( RetrievedChunk(
-            text=payload.get("text", ""),
-            score=item["score"],
-            chunk_id=item["id"],
-            document_id=payload.get("document_id", ""),
-            filename=payload.get("filename", ""),
-            page_number=payload.get("page_number"),
-            chunk_index=payload.get("chunk_index", 0),
-            doc_type=payload.get("doc_type", "generic"),
-            metadata=payload,
+            text= payload.get("text", ""),
+            score= item["score"],
+            chunk_id= item["id"],
+            document_id= payload.get("document_id", ""),
+            filename= payload.get("filename", ""),
+            page_number= payload.get("page_number"),
+            chunk_index= payload.get("chunk_index", 0),
+            doc_type= payload.get("doc_type", "generic"),
+            metadata= payload,
         ))
     logger.debug(f"Retrieval completato: {len(chunks)} chunk")
     return chunks
 
 
 
-def _rrf_fusion(  #🔥🔥RRF technique!! formula score=1/(rank+k)
-    dense: list,
-    sparse: list,
-    k: int = 60,
+def _rrf_fusion(  #🔥🔥RRF fusion technique!! formula score=1/(rank+k). k=60 stabilizza la curva, rank è la posizione nel risultato.
+    dense: list,  #risultati semantic search Qdrant
+    sparse: list,  #risultati keyword search
+    k: int = 60,  #k=60 stabilizza la curva
 ) -> list[dict]:
     """
     Reciprocal Rank Fusion — combina risultati dense e sparse.
     RRF score = Σ 1/(k + rank_i) per ogni lista.
-    k=60 è il valore standard dalla letteratura.
+    k = 60 è il valore standard dalla letteratura.
     """
     scores: dict[str, dict] = {}
-    for rank, result in enumerate(dense):  #enumarate() iteri e ti da anche l'index 
+    for rank, result in enumerate(dense):  #enumerate() iteri e ti da anche l'index 
         rid = str(result.id)
         if rid not in scores:
-            scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}  #pk ricorda scores dict[str, dict], e lo inizializzi
+            scores[rid] = {"id": rid, "payload": result.payload, "score": 0.0}   #pk ricorda scores dict[str, dict], e lo inizializzi
         scores[rid]["score"] += 1.0 / (60 + rank + 1)   #accedi all campo e fai update 
     for rank, result in enumerate(sparse):
         rid = str(result.id)
