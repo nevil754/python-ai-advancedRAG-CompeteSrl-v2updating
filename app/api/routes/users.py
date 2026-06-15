@@ -54,22 +54,22 @@ async def create_user(
             "email": body.email,
             "name": body.full_name,
             "role": body.role,
-            "pwd_hash": hash_password(body.password),
+            "pwd_hash": hash_password( body.password ),
         }
     )
     row = await db.execute(
         text("SELECT id, email, full_name, role, is_active FROM users WHERE id = :id"),
         {"id": user_id}
     )
-    return UserSchema.model_validate(dict(row.fetchone()._mapping))
+    return UserSchema.model_validate( dict( row.fetchone()._mapping ) ) #_mapping converte row sqlalchemy in dict-like, dict() converte in dict normale, model_validate() converte dict in pydantic model
 
 @router.get("", response_model=list[UserSchema])
 async def list_users( tenant: AdminOnly, db: CurrentDB ) -> list[UserSchema]:
     """Lista tutti gli utenti del tenant. Solo admin."""
     rows = await db.execute(
-        text("SELECT id, email, full_name, role, is_active FROM users ORDER BY created_at DESC")
+        text( "SELECT id, email, full_name, role, is_active FROM users ORDER BY created_at DESC" )
     )
-    return [UserSchema.model_validate(dict(r._mapping)) for r in rows]
+    return [ UserSchema.model_validate(dict(r._mapping)) for r in rows ]
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def deactivate_user(user_id: str, tenant: AdminOnly, db: CurrentDB) -> None:
@@ -78,5 +78,5 @@ async def deactivate_user(user_id: str, tenant: AdminOnly, db: CurrentDB) -> Non
         text("UPDATE users SET is_active = 0 WHERE id = :id"),
         {"id": user_id}
     )
- #disattiva solo l'utente. poi hai gia una funzione che cancella completamente all about target user
+    #disattiva solo l'utente. poi hai gia una funzione che cancella completamente all about target user
 
