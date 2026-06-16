@@ -175,7 +175,6 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 chmod +x script.py
 ./script.py
 
-
 ########
 
 -from typing import AsyncGenerator  & yield, utilizzati x streaming SSE (token by token): turns a regular function into a generator, which produces a sequence of values on demand instead of computing them all at once, and 🔥Generator funct per return data non usano 'return' ma usano 'yield'.
