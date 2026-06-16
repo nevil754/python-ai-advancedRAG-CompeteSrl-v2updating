@@ -79,7 +79,7 @@ class IngestionJobRepository(BaseRepository):
             "SELECT * FROM ingestion_jobs WHERE document_id = :id",
             {"id": document_id}
         )
-        return dict(row._mapping) if row else None
+        return dict(row._mapping) if row else None   #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale
 
     async def update_status(
         self,

@@ -121,7 +121,7 @@ per eseguire jobs in background, si attiva automaticamente e.g.caricamente di pd
 -prefetch_multiplier=1  1 WORKER PUO PRENDERE SOLO 1 TASK ALLA VOLTA, questo evita e.g. che un worker si carica di piu tasks in memoria e va in oom!!
 -hai 2 code separate: 'high' e 'default',  🔥questo evita che un tenant che carica 200pdf insieme non blocchi negli altri tenat le risposte chat in real-time
 -celery ha un componente che si chiama 'Celery Beat' che fa da scheduler('from celery.schedules import crontab', azioni che succedono auto ogni X time), il problema è che CeleryBeat mantiene tutto in RAM!!
-quindi al posto utilizzi 🔥RedBeat (plugin celery-redbeat) che salva i task periodoci in modo persistente su redis, quindi ora il flow diventa: redbeat legge redis -> capisce quali tasks devono partire -> invia task a celery -> update stato.
+quindi al posto utilizzi 🔥🔥RedBeat (plugin celery-redbeat) che salva i task periodoci in modo persistente su redis, quindi ora il flow diventa: redbeat legge redis -> capisce quali tasks devono partire -> invia task a celery -> update stato.
 //quindi ora redis diventa anche un db per schedulers! 
 
 flow:
