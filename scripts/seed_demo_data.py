@@ -58,12 +58,11 @@ async def main():
     from uuid import uuid4
 
     async with tenant_db.aget_session(DEMO_TENANT_SLUG) as session:
-        # Controlla se utente esiste
-        existing = await session.execute(
+        existing = await session.execute(   #check se utente esiste 
             text("SELECT id FROM users WHERE email = :email"),
             {"email": DEMO_USER_EMAIL}
         )
-        if not existing.fetchone():
+        if not existing.fetchone():  #se non riesce a fetcharne neanche 1, allora ...
             await session.execute(
                 text("""
                     INSERT INTO users (id, email, role, password_hash, full_name)
@@ -84,14 +83,12 @@ async def main():
     import os
     from app.rag.ingestion.pipeline import run_ingestion_pipeline
 
-    # Ottieni tenant_id
     async with tenant_db._async_factory() as session:
         row = await session.execute(
             text("SELECT id FROM shared.tenants WHERE slug = :slug"),
             {"slug": DEMO_TENANT_SLUG}
         )
-        tenant_id = str(row.fetchone().id)
-
+        tenant_id = str( row.fetchone().id )  #prendi solo l'id dalla row fetchata
     for doc in DEMO_DOCUMENTS:
         # Salva come file temporaneo
         with tempfile.NamedTemporaryFile(
@@ -102,7 +99,6 @@ async def main():
         ) as f:
             f.write(doc["content"])
             tmp_path = f.name
-
         try:
             # Crea record in DB
             doc_id = str(uuid4())
@@ -122,7 +118,6 @@ async def main():
                         "size": len(doc["content"].encode()),
                     }
                 )
-
             # Ingestion
             result = run_ingestion_pipeline(
                 tenant_id=tenant_id,
@@ -131,15 +126,12 @@ async def main():
                 file_path=tmp_path,
             )
             print(f"✓ Documento ingestito: {doc['filename']} ({result['chunk_count']} chunk)")
-
         finally:
             os.unlink(tmp_path)
-
     print("\nSeeding completato! Puoi fare login con:")
     print(f"  Email: {DEMO_USER_EMAIL}")
     print(f"  Password: {DEMO_USER_PASSWORD}")
     print(f"  Tenant: {DEMO_TENANT_SLUG}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
