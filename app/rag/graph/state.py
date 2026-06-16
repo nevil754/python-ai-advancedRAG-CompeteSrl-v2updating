@@ -4,10 +4,8 @@
 # Ogni nodo legge e scrive su questo stato condiviso.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations   #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from typing import Any, TypedDict
-
 from app.rag.retrieval.retriever import RetrievedChunk
 
 
@@ -24,13 +22,11 @@ class RAGState(TypedDict):
     user_id: str
     collection_id: str | None
     mode: str                          # rag | web | sql | general
-
     # Risultati intermedi
     route: str | None                  # decisione del router
     retrieved_chunks: list[RetrievedChunk]
     session_messages: list[dict]
     web_results: dict | None
-
     # Output finale
     answer: str
     sources: list[dict]
@@ -39,3 +35,5 @@ class RAGState(TypedDict):
     latency_ms: int
     hallucination_score: float | None
     error: str | None
+
+

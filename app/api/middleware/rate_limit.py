@@ -4,19 +4,17 @@
 # Blocca richieste eccessive prima che raggiungano le route.
 # =============================================================
 
-from __future__ import annotations
-
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import JSONResponse, Response
-
+from __future__ import annotations    #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
+from starlette.middleware.base import BaseHTTPMiddleware    #fastapi usa Starlette sotto, questo è il middleware base
+from starlette.requests import Request     #obj req http
+from starlette.responses import Response, JSONResponse   #obj res http
 from app.core.settings import get_settings
+
 
 settings = get_settings()
 
 # Route escluse dal rate limiting
 EXCLUDED_PATHS = {"/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"}
-
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
@@ -24,18 +22,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     Limite: requests_per_minute da config.yaml.
     Ritorna 429 Too Many Requests se superato.
     """
-
     async def dispatch(self, request: Request, call_next) -> Response:
         if request.url.path in EXCLUDED_PATHS:
             return await call_next(request)
-
         tenant_id = getattr(request.state, "tenant_id", None)
         user_id = getattr(request.state, "user_id", None)
-
         if not tenant_id or not user_id:
             # Request non autenticata — lascia passare, gestita dall'auth
             return await call_next(request)
-
         try:
             from app.core.redis_client import TenantRedis
             redis = TenantRedis(tenant_id=tenant_id)
@@ -43,7 +37,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 user_id=user_id,
                 limit=settings.rate_limit_requests_per_minute,
             )
-
             if not allowed:
                 return JSONResponse(
                     status_code=429,
@@ -59,3 +52,4 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             pass
 
         return await call_next(request)
+
