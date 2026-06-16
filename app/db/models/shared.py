@@ -11,6 +11,8 @@ from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer
 from sqlalchemy.dialects.mssql import UNIQUEIDENTIFIER      #visto che stai utilizzando sqlserver UNIQUEIDENTIFIER = UUID SQL Server
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship       #DeclarativeBase → base class per i modelli SQLAlchemy, Mapped → tipo generico per i campi del modello, mapped_column → funzione per definire le colonne del DB, relationship → definisce relazioni tra tabelle (es. uno a molti, molti a molti)
 
+#🔥questi modelli rappresentano le tabelle nel database SQL Server.
+
 class Base(DeclarativeBase):
     pass
 
@@ -65,3 +67,4 @@ class ApiKey(Base):
     last_used: Mapped[datetime | None] = mapped_column(DateTime)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime)
+

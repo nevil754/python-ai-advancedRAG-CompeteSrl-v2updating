@@ -4,18 +4,15 @@
 # TTL configurabile, scade automaticamente dopo inattività.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations     #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 import json
 from dataclasses import dataclass
-
 from loguru import logger
-
 from app.core.redis_client import TenantRedis
 from app.core.settings import get_settings
 
-settings = get_settings()
 
+settings = get_settings()
 
 @dataclass
 class ChatMessage:
