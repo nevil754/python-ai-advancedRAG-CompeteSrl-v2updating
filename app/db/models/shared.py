@@ -15,8 +15,8 @@ class Base(DeclarativeBase):
     pass
 
 class Tenant(Base):
-    __tablename__ = "tenants"
-    __table_args__ = {"schema": "shared"}
+    __tablename__ = "tenants"   #nome tabella nel db
+    __table_args__ = {"schema": "shared"}    #schema del db, in questo caso "shared", quindi la tabella completa sarà "shared.tenants"
     id: Mapped[str] = mapped_column(UNIQUEIDENTIFIER, primary_key=True)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
