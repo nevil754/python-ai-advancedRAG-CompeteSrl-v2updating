@@ -85,7 +85,7 @@ cosi anche per compliance legale (GDPR / GDPR-like), puoi rispondere alle domand
 -IDENTITY(1,1)
 -NEWSEQUENTIALID(): UUID/GUID univoco MA sequenziale
 🔥-DATETIME2(3)  datetime2 è piu preciso del legacy DATETIME, e con 3 arrivi fino ai millisencondi, quindi in production DATETIME2(3) è quasi lo standart odierno
-🔥-GETUTCDATE()  return DATETIME legacy cioe data e ora corrente del server SQL in formato UTC, MA OGGI E' CONSIGLIATO INVECE 🔥SYSUTCDATETIME() che return DATETIME2!!
+🔥-GETUTCDATE()  return DATETIME legacy cioe data e ora corrente del server SQL in formato UTC, MA OGGI E' CONSIGLIATO INVECE 🔥SYSUTCDATETIME() che return type DATETIME2  (precisione ~100 nanosecondi)!!
 -i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto sempre!
 -i [] wrappano i nomi particolari delle tue tabelle, cosi che anche i caratteri speciali sono letti ok
 -DECLARE crea var locale
