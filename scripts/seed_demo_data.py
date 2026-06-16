@@ -51,7 +51,6 @@ DEMO_DOCUMENTS = [
 
 async def main():
     print(f"Seeding dati demo per tenant: {DEMO_TENANT_SLUG}")
-    # Crea utente demo se non esiste
     from app.db.sqlserver import tenant_db
     from app.core.security import hash_password
     from sqlalchemy import text
@@ -89,27 +88,24 @@ async def main():
             {"slug": DEMO_TENANT_SLUG}
         )
         tenant_id = str( row.fetchone().id )  #prendi solo l'id dalla row fetchata
-    for doc in DEMO_DOCUMENTS:
+    for doc in DEMO_DOCUMENTS:   #sono solo 2
         # Salva come file temporaneo
-        with tempfile.NamedTemporaryFile(
+        with tempfile.NamedTemporaryFile(  #CREA UN FILE FISICO temp
             suffix=".txt",
             delete=False,
             mode="w",
             encoding="utf-8",
         ) as f:
-            f.write(doc["content"])
-            tmp_path = f.name
+            f.write(doc["content"])  #scrive sul documento
+            tmp_path = f.name  #e.g. C:\Temp\tmp123.txt
         try:
-            # Crea record in DB
             doc_id = str(uuid4())
             async with tenant_db.aget_session(DEMO_TENANT_SLUG) as session:
                 await session.execute(
                     text("""
                         INSERT INTO documents
-                            (id, filename, original_name, file_hash, file_size,
-                             mime_type, status, uploaded_by)
-                        VALUES (:id, :fname, :orig, NEWID(), :size,
-                                'text/plain', 'pending', NULL)
+                            (id, filename, original_name, file_hash, file_size, mime_type, status, uploaded_by)
+                        VALUES (:id, :fname, :orig, NEWID(), :size, 'text/plain', 'pending', NULL)
                     """),
                     {
                         "id": doc_id,
@@ -127,7 +123,7 @@ async def main():
             )
             print(f"✓ Documento ingestito: {doc['filename']} ({result['chunk_count']} chunk)")
         finally:
-            os.unlink(tmp_path)
+            os.unlink(tmp_path)  #target path viene cancellato da filesystem. quindi (se non ci sono altri riferimenti) immediatamente viene automaticamente liberato spazio su disco.  
     print("\nSeeding completato! Puoi fare login con:")
     print(f"  Email: {DEMO_USER_EMAIL}")
     print(f"  Password: {DEMO_USER_PASSWORD}")

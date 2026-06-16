@@ -11,8 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import Session, sessionmaker  #Session è la classe base per le sessioni sincrone, sessionmaker è una factory per creare sessioni
 
 
-
-
 class TenantDB:
     """
     Gestisce sessioni SQL Server con schema switching per tenant.
