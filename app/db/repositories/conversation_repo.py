@@ -3,15 +3,11 @@
 # Query DB per conversazioni e messaggi.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations   #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 import json
-
 from app.db.repositories.base import BaseRepository
 
-
 class ConversationRepository(BaseRepository):
-
     async def get_or_create(
         self,
         conversation_id: str,
@@ -27,11 +23,11 @@ class ConversationRepository(BaseRepository):
             """,
             {"id": conversation_id, "user_id": user_id, "mode": mode}
         )
-        row = await self.fetchone(
+        row = await self.fetchone(  #fetchone() prende 1 row
             "SELECT * FROM conversations WHERE id = :id",
             {"id": conversation_id}
         )
-        return dict(row._mapping) if row else {}
+        return dict(row._mapping) if row else {}   #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale
 
     async def save_message(
         self,
@@ -48,17 +44,15 @@ class ConversationRepository(BaseRepository):
         result = await self.execute(
             """
             INSERT INTO messages
-                (conversation_id, role, content, sources,
-                 tokens_in, tokens_out, latency_ms, hallucination_score)
+                (conversation_id, role, content, sources, tokens_in, tokens_out, latency_ms, hallucination_score)
             OUTPUT INSERTED.id
-            VALUES (:conv_id, :role, :content, :sources,
-                    :tokens_in, :tokens_out, :latency_ms, :hall_score)
+            VALUES (:conv_id, :role, :content, :sources, :tokens_in, :tokens_out, :latency_ms, :hall_score)
             """,
             {
                 "conv_id": conversation_id,
                 "role": role,
                 "content": content,
-                "sources": json.dumps(sources or []),
+                "sources": json.dumps(sources or []),   #converts python obj in corrisponding json formatted string
                 "tokens_in": tokens_in,
                 "tokens_out": tokens_out,
                 "latency_ms": latency_ms,
@@ -66,7 +60,7 @@ class ConversationRepository(BaseRepository):
             }
         )
         row = result.fetchone()
-        return row[0] if row else 0
+        return row[0] if row else 0   #ritorna id del mex appena inserito 
 
     async def get_messages(
         self,
@@ -82,29 +76,29 @@ class ConversationRepository(BaseRepository):
             """,
             {"conv_id": conversation_id, "limit": limit}
         )
-        return [dict(r._mapping) for r in rows]
+        return [dict(r._mapping) for r in rows]  #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale
 
     async def list_conversations(
         self,
         user_id: str,
         page: int = 1,
         page_size: int = 20,
-    ) -> tuple[list[dict], int]:
-        offset = (page - 1) * page_size
+    ) -> tuple[list[dict], int]:  #tuple si data structure è come una list ma ordinata (mantiene l'ordine) ed è immutabile (non modificabile)
+        offset = (page-1) * page_size   
         total = await self.scalar(
             "SELECT COUNT(*) FROM conversations WHERE user_id = :uid AND is_archived = 0",
             {"uid": user_id}
-        )
-        rows = await self.fetchall(
+        )  #scalar() ritorna il primo valore della prima riga del result set, in questo caso il count totale di conversazioni per l'utente
+        rows = await self.fetchall(  #.fetchall() ritorna tutte le righe del result set come lista di row, in questo caso tutte le conversazioni per l'utente con paginazione
             """
             SELECT * FROM conversations
             WHERE user_id = :uid AND is_archived = 0
             ORDER BY updated_at DESC
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
             """,
-            {"uid": user_id, "offset": offset, "limit": page_size}
+            {"uid": user_id, "offset": offset, "limit": page_size}  #'OFFSET :offset ROWS' number skipped rows, 'FETCH NEXT :limit ROWS ONLY' number of rows to return after offset
         )
-        return [dict(r._mapping) for r in rows], total or 0
+        return [dict(r._mapping) for r in rows], total or 0    #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale
 
     async def save_summary(
         self,

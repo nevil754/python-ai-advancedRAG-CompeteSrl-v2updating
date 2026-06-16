@@ -239,5 +239,5 @@ rag-enterprise/
 
 //in futuro fovrai pensare anche al GDPR per la privacy, quindi anonimizzare i dati sensibili!
 
-//⚠️⚠️ mancano ancora i files 'test_...' !!
+//⚠️⚠️ mancano ancora i files 'test_...' & conftest.py !!
 
