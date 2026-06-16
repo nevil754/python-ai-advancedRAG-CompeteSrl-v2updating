@@ -132,4 +132,5 @@ class ConversationRepository(BaseRepository):
             """,
             {"uid": user_id, "limit": limit}
         )
-        return [r.summary_text for r in rows]
+        return [ r.summary_text for r in rows ]
+

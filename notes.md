@@ -239,5 +239,10 @@ rag-enterprise/
 
 //in futuro fovrai pensare anche al GDPR per la privacy, quindi anonimizzare i dati sensibili!
 
-//⚠️⚠️ mancano ancora i files 'test_...' & conftest.py !!
+//⚠️⚠️ TODO FUTURE/ATTENTIONS!!!
+-mancano ancora i files 'test_...' & conftest.py !!
+-mi manca tabella tsql 'conversation_summaries' chiamata in conversation_repo.py !!
+-
+
+
 
