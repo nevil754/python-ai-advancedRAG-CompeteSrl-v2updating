@@ -41,7 +41,7 @@ async def arun_rag_chain(   #version no streaming, visto che non utilizzi Asyncg
     ctx = build_rag_context(chunks, session_messages)
     # Costruisci messaggi
     system_msg = SystemMessage( content= get_rag_system_prompt(tenant_name) )   #systemmessage è x istruzioni/context da dire all'llm prima di iniziare la conversazione
-    user_msg = HumanMessage( content=get_rag_user_prompt(   #humamessage rappresenta il mex dell'utente (fonrito anche di context /history ect) che passi all'llm
+    user_msg = HumanMessage( content=get_rag_user_prompt(   #humamessage rappresenta il mex dell'utente (fornito anche di context /history ect) che passi all'llm
         context=ctx["context"],
         history=ctx["history"],
         question=question,

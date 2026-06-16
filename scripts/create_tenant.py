@@ -28,7 +28,7 @@ sys.path.insert(
 
 async def main():
     parser = argparse.ArgumentParser(description="Crea un nuovo tenant RAG")  #crea parser CLI. ora se da cli runni 'python create_tenant.py --help' vedrai result "Crea un nuovo tenant RAG"
-    parser.add_argument("--slug", required=True, help="Slug univoco (es. acme-corp)")   #obbligatorio, e.g. runni '--slug acme-corp' allora return args.slug
+    parser.add_argument("--slug", required=True, help="Slug univoco (e.g. acme-corp)")   #obbligatorio, e.g. runni '--slug acme-corp' allora return args.slug
     parser.add_argument("--name", required=True, help="Nome visualizzato")
     parser.add_argument("--plan", default="starter", choices=["starter", "pro", "enterprise"])    #se non specificato diventa args.plan == "starter". ammessi solo starter,pro,enterprise
     parser.add_argument("--admin-email", help="Email admin (opzionale)")
