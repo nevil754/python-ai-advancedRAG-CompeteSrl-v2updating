@@ -4,9 +4,9 @@
 # Usa ragas faithfulness check: la risposta è supportata dal contesto?
 # =============================================================
 
-from __future__ import annotations
+from __future__ import annotations    #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from loguru import logger
-from app.rag.retrieval.retriever import RetrievedChunk
+from app.rag.retrieval.retriever import RetrievedChunk   #ur custom
 
 async def check_faithfulness(
     question: str,
