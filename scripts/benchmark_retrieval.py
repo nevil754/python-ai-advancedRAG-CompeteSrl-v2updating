@@ -35,7 +35,6 @@ BENCHMARK_DATASET = [   #mini dataset di test per benchmark retrieval
     },
 ]
 
-
 async def main():
     parser = argparse.ArgumentParser(description="Benchmark qualità RAG")  #crea parser CLI. ora se da cli runni 'python create_tenant.py --help' vedrai result "Crea un nuovo tenant RAG"
     parser.add_argument("--tenant", default="demo-corp")  #e.g. runni '--slug acme-corp' allora return args.slug
@@ -62,16 +61,12 @@ async def main():
 
     results = []
     total_score = 0.0
-
     print(f"\nBenchmark RAG — Tenant: {args.tenant}")
     print("=" * 60)
-
     for item in BENCHMARK_DATASET:
         question = item["question"]
         expected = item["expected_keywords"]
-
         print(f"\nQ: {question}")
-
         # Retrieval
         chunks = retrieve(
             query=question,
@@ -79,34 +74,27 @@ async def main():
             tenant_id=tenant_id,
             top_k=args.top_k,
         )
-
         # Generation
         result = await arun_rag_chain(
             question=question,
             chunks=chunks,
             session_messages=[],
         )
-
         answer = result["answer"]
         print(f"A: {answer[:150]}...")
-
         # Valutazione keyword matching (semplice, senza LLM)
         answer_lower = answer.lower()
         matches = sum(1 for kw in expected if kw.lower() in answer_lower)
         keyword_score = matches / len(expected) if expected else 0.0
-
         # Hallucination check
         from app.rag.generation.hallucination import check_faithfulness
         faith_score = await check_faithfulness(question, answer, chunks)
-
         combined_score = (keyword_score + faith_score) / 2
         total_score += combined_score
-
         print(f"   Keyword score: {keyword_score:.2f}")
         print(f"   Faithfulness:  {faith_score:.2f}")
         print(f"   Combined:      {combined_score:.2f}")
         print(f"   Chunks:        {len(chunks)}")
-
         results.append({
             "question": question,
             "answer": answer,
@@ -116,11 +104,9 @@ async def main():
             "combined_score": combined_score,
             "top_sources": [c.filename for c in chunks[:3]],
         })
-
     avg_score = total_score / len(BENCHMARK_DATASET)
     print(f"\n{'='*60}")
     print(f"SCORE MEDIO: {avg_score:.2f}/1.00")
-
     # Salva risultati
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump({
@@ -128,9 +114,7 @@ async def main():
             "avg_score": avg_score,
             "results": results,
         }, f, ensure_ascii=False, indent=2)
-
     print(f"Risultati salvati in: {args.output}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())
