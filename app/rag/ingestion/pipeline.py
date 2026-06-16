@@ -51,7 +51,7 @@ def run_ingestion_pipeline(
     parsed = parse_document(file_path)
     logger.debug( f"Parsing: {parsed.page_count} pagine, {len(parsed.text)} chars" )
     clean = clean_text(parsed.text)
-    logger.debug( f"Pulizia: {len(parsed.text)} → {len(clean)} chars" )
+    logger.debug( f"Pulizia: { len(parsed.text) } → { len(clean) } chars" )
     base_metadata = {
         "tenant_id": tenant_id,
         "document_id": document_id,

@@ -114,7 +114,6 @@ async def main():
                         "size": len(doc["content"].encode()),
                     }
                 )
-            # Ingestion
             result = run_ingestion_pipeline(
                 tenant_id=tenant_id,
                 tenant_slug=DEMO_TENANT_SLUG,
@@ -131,3 +130,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
