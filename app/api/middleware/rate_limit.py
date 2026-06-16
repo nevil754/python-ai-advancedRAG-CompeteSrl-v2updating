@@ -14,7 +14,7 @@ from app.core.settings import get_settings
 settings = get_settings()
 
 # Route escluse dal rate limiting
-EXCLUDED_PATHS = {"/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"}
+EXCLUDED_PATHS = { "/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json" }
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
@@ -24,22 +24,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     async def dispatch(self, request: Request, call_next) -> Response:
         if request.url.path in EXCLUDED_PATHS:
-            return await call_next(request)
-        tenant_id = getattr(request.state, "tenant_id", None)
+            return await call_next(request)   #salta il rate limit per queste rotte (health check, docs, ecc)
+        tenant_id = getattr(request.state, "tenant_id", None)  #from request.state, get "tanant_id" (None is fallback)
         user_id = getattr(request.state, "user_id", None)
         if not tenant_id or not user_id:
-            # Request non autenticata — lascia passare, gestita dall'auth
-            return await call_next(request)
+            return await call_next(request)  #request non autenticata — lascia passare, gestita dall'auth
         try:
             from app.core.redis_client import TenantRedis
             redis = TenantRedis(tenant_id=tenant_id)
             allowed, count = await redis.check_rate_limit(
                 user_id=user_id,
                 limit=settings.rate_limit_requests_per_minute,
-            )
+            )   #esegue il controllo del rate limit, ritorna (allowed: bool, count: int)
             if not allowed:
                 return JSONResponse(
-                    status_code=429,
+                    status_code=429,   #HTTP 429 Too Many Requests
                     content={
                         "error": "Rate limit superato",
                         "detail": f"Max {settings.rate_limit_requests_per_minute} richieste/minuto",
@@ -48,8 +47,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     headers={"Retry-After": "60"},
                 )
         except Exception:
-            # Se Redis non risponde, lascia passare (fail open)
+            #se Redis non risponde, lascia passare (fail open)
             pass
-
         return await call_next(request)
+
 

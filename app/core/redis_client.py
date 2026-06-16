@@ -128,7 +128,7 @@ class TenantRedis:
         user_id: str,
         limit: int | None = None,
         window_seconds: int = 60,   #finestra di tempo in secondi per il rate limit, default 60s (1 minuto)
-    ) -> tuple[bool, int]:
+    ) -> tuple[bool, int]:   #tuple è come una list, ma mantiene l'ordine e non è mutabile 
         """
         Verifica e incrementa il rate limit per un utente.
         Returns:

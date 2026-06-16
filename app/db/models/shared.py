@@ -5,23 +5,18 @@
 # =============================================================
 
 from __future__ import annotations
-
 from datetime import datetime
 from uuid import UUID
-
 from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.mssql import UNIQUEIDENTIFIER
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-
 class Base(DeclarativeBase):
     pass
-
 
 class Tenant(Base):
     __tablename__ = "tenants"
     __table_args__ = {"schema": "shared"}
-
     id: Mapped[str] = mapped_column(UNIQUEIDENTIFIER, primary_key=True)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -34,11 +29,9 @@ class Tenant(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
     updated_at: Mapped[datetime] = mapped_column(DateTime)
 
-
 class AuditLog(Base):
     __tablename__ = "audit_log"
     __table_args__ = {"schema": "shared"}
-
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     tenant_id: Mapped[str] = mapped_column(UNIQUEIDENTIFIER, nullable=False)
     user_id: Mapped[str | None] = mapped_column(UNIQUEIDENTIFIER)
@@ -49,11 +42,9 @@ class AuditLog(Base):
     metadata: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime)
 
-
 class UsageStat(Base):
     __tablename__ = "usage_stats"
     __table_args__ = {"schema": "shared"}
-
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     tenant_id: Mapped[str] = mapped_column(UNIQUEIDENTIFIER, nullable=False)
     stat_date: Mapped[datetime] = mapped_column(DateTime)
@@ -62,11 +53,9 @@ class UsageStat(Base):
     queries_count: Mapped[int] = mapped_column(Integer, default=0)
     docs_ingested: Mapped[int] = mapped_column(Integer, default=0)
 
-
 class ApiKey(Base):
     __tablename__ = "api_keys"
     __table_args__ = {"schema": "shared"}
-
     id: Mapped[str] = mapped_column(UNIQUEIDENTIFIER, primary_key=True)
     tenant_id: Mapped[str] = mapped_column(UNIQUEIDENTIFIER, nullable=False)
     key_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)

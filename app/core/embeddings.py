@@ -7,6 +7,7 @@ from functools import lru_cache
 from typing import Any
 from loguru import logger
 
+
 @lru_cache(maxsize=1)   #decoratore che trasforma la funzione in un singleton, quindi get_qdrant_client() ritorna sempre la stessa istanza di QdrantClient, evitando overhead di connessioni multiple
 def get_embedding_model() -> Any:
     """

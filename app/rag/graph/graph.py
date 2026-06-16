@@ -4,6 +4,7 @@
 # Il grafo è il motore che orchestra tutti i nodi RAG.
 # =============================================================
 
+
 from __future__ import annotations    #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from functools import lru_cache
 from langgraph.graph import END, StateGraph
