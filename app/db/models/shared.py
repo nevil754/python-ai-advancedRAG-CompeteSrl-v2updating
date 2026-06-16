@@ -4,12 +4,12 @@
 # Separati dai modelli Pydantic (schemas/) — questi sono per il DB.
 # =============================================================
 
-from __future__ import annotations
+from __future__ import annotations   #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from datetime import datetime
 from uuid import UUID
-from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.mssql import UNIQUEIDENTIFIER
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Integer, String, Text    #BigInteger → numeri grandi (usage, stats), Boolean → true/false, DateTime → data e ora, Float → numeri decimali (es. latenza), ForeignKey → chiave esterna per relazioni tra tabelle, Integer → numeri interi (es. count), String → stringhe di testo con lunghezza massima, Text → stringhe di testo lunghe (es. settings json) 
+from sqlalchemy.dialects.mssql import UNIQUEIDENTIFIER      #visto che stai utilizzando sqlserver UNIQUEIDENTIFIER = UUID SQL Server
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship       #DeclarativeBase → base class per i modelli SQLAlchemy, Mapped → tipo generico per i campi del modello, mapped_column → funzione per definire le colonne del DB, relationship → definisce relazioni tra tabelle (es. uno a molti, molti a molti)
 
 class Base(DeclarativeBase):
     pass
