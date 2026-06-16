@@ -5,32 +5,26 @@
 # Replica funzionalità simili a Zep usando il tuo stack esistente.
 # =============================================================
 
-from __future__ import annotations
-
+from __future__ import annotations   #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 import json
 from typing import Any
-
 from loguru import logger
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession   
+from app.core.settings import get_settings   #ur custom
 
-from app.core.settings import get_settings
 
 settings = get_settings()
-
 
 class LongTermMemory:
     """
     Gestisce la memoria a lungo termine per un utente.
-
     Funzionalità:
     - Summary automatico delle conversazioni passate (SQL Server)
     - Estrazione fatti strutturati sull'utente via LLM (SQL Server + Qdrant)
     - Ricerca semantica nei ricordi (Qdrant collection memory)
-
     Attivato solo se memory.long_term_enabled = true in config.yaml.
     """
-
     def __init__(
         self,
         db: AsyncSession,
@@ -51,39 +45,32 @@ class LongTermMemory:
         """
         Genera un summary della conversazione e lo salva in SQL Server.
         Chiamato da Celery dopo che la conversazione supera short_term_turns.
-
         Args:
             conversation_id: UUID conversazione
             messages: lista di {"role": ..., "content": ...}
-
         Returns:
             Testo del summary generato
         """
         if not settings.memory_long_term_enabled:
             return ""
-
         from app.core.llm_factory import get_llm
         from langchain_core.messages import HumanMessage, SystemMessage
-
         history = "\n".join(
-            f"{'Utente' if m['role'] == 'user' else 'Assistente'}: {m['content']}"
+            f"{'Utente' if m['role'] == 'user' else 'Assistente'}: { m['content'] }"
             for m in messages
         )
-
         llm = get_llm()
         response = await llm.ainvoke([
             SystemMessage(content="Sei un assistente che riassume conversazioni legali in modo conciso e strutturato."),
             HumanMessage(content=f"""Riassumi questa conversazione legale in 3-5 frasi.
-Mantieni: decisioni prese, documenti citati, questioni aperte.
+                Mantieni: decisioni prese, documenti citati, questioni aperte.
 
-CONVERSAZIONE:
-{history}
+                CONVERSAZIONE:
+                {history}
 
-RIASSUNTO:""")
+                RIASSUNTO:""")
         ])
         summary = response.content
-
-        # Salva in SQL Server
         await self.db.execute(
             text("""
                 INSERT INTO conversation_summaries
@@ -97,7 +84,6 @@ RIASSUNTO:""")
                 "turns": len(messages),
             }
         )
-
         logger.info(
             "Summary conversazione salvato",
             conversation_id=conversation_id,
@@ -113,56 +99,47 @@ RIASSUNTO:""")
         """
         Estrae fatti strutturati sull'utente dalla conversazione.
         Usa il LLM per identificare preferenze, expertise, contesto, istruzioni.
-
         Returns:
             Lista di fatti estratti nel formato:
             [{"type": "preference", "key": "lingua", "value": "italiano", "confidence": 0.9}]
         """
         if not settings.memory_long_term_enabled:
             return []
-
         from app.core.llm_factory import get_llm
         from langchain_core.messages import HumanMessage
 
         history = "\n".join(
-            f"{m['role']}: {m['content']}" for m in messages[-20:]  # ultimi 20 messaggi
+            f"{m['role']}: {m['content']}" for m in messages[-20:]   #ultimi 20 messaggi
         )
-
         llm = get_llm()
         response = await llm.ainvoke([
             HumanMessage(content=f"""Analizza questa conversazione ed estrai fatti permanenti sull'utente.
-Rispondi SOLO con un JSON array. Nessun testo aggiuntivo.
+                Rispondi SOLO con un JSON array. Nessun testo aggiuntivo.
+                Tipi di fatti:
+                - preference: preferenze esplicite o implicite
+                - expertise: aree di competenza dimostrate
+                - context: ruolo/contesto lavorativo
+                - entity: clienti, aziende, persone menzionate frequentemente
+                - instruction: istruzioni su come l'assistente deve comportarsi
+                CONVERSAZIONE:
+                {history}
 
-Tipi di fatti:
-- preference: preferenze esplicite o implicite
-- expertise: aree di competenza dimostrate
-- context: ruolo/contesto lavorativo
-- entity: clienti, aziende, persone menzionate frequentemente
-- instruction: istruzioni su come l'assistente deve comportarsi
-
-CONVERSAZIONE:
-{history}
-
-JSON:
-[{{"type": "...", "key": "...", "value": "...", "confidence": 0.0}}]""")
+                JSON:
+                [{{"type": "...", "key": "...", "value": "...", "confidence": 0.0}}]""")
         ])
-
         try:
             raw = response.content.strip()
-            # Pulisci eventuali markdown
-            if "```" in raw:
+            if "```" in raw:   #pulisci eventuali markdown
                 raw = raw.split("```")[1]
                 if raw.startswith("json"):
                     raw = raw[4:]
-            facts = json.loads(raw)
+            facts = json.loads(raw)   #converts json strutturato in corrisponfing python obj
         except Exception as e:
             logger.warning(f"Parsing fatti fallito: {e}")
             return []
-
         # Salva fatti in SQL Server
         for fact in facts:
-            await self._upsert_fact(conversation_id, fact)
-
+            await self._upsert_fact(conversation_id, fact)   #function here qua sotto
         logger.info(f"Estratti {len(facts)} fatti per utente {self.user_id}")
         return facts
 
@@ -181,15 +158,15 @@ JSON:
                 WHEN MATCHED THEN UPDATE SET
                     fact_value = source.fact_value,
                     confidence = source.confidence,
-                    updated_at = GETUTCDATE()
+                    updated_at = SYSUTCDATETIME()
                 WHEN NOT MATCHED THEN INSERT
                     (user_id, fact_type, fact_key, fact_value, confidence, source_conv_id)
                 VALUES (source.user_id, source.fact_type, source.fact_key,
                         source.fact_value, source.confidence, source.source_conv_id);
-            """),
+            """),   #MERGE fai in un'unica istruzione cioe che richiederebbe select+update+insert, target è la tabella che verra mdificata, source è riga "virtuale" con i parametri passati dall'applicazione, match su user_id+fact_key+is_active se matcha aggiorna se non matcha inserisce nuovo record
             {
                 "user_id": self.user_id,
-                "fact_type": fact.get("type", "generic"),
+                "fact_type": fact.get("type", "generic"),  #'generic' è fallback
                 "fact_key": fact.get("key", ""),
                 "fact_value": fact.get("value", ""),
                 "confidence": fact.get("confidence", 1.0),
@@ -204,7 +181,6 @@ JSON:
         """
         if not settings.memory_long_term_enabled:
             return []
-
         rows = await self.db.execute(
             text("""
                 SELECT fact_type, fact_key, fact_value, confidence
@@ -212,10 +188,10 @@ JSON:
                 WHERE user_id = :user_id AND is_active = 1
                 ORDER BY confidence DESC, updated_at DESC
                 OFFSET 0 ROWS FETCH NEXT :limit ROWS ONLY
-            """),
+            """),  #OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY significa "salta :offset rows e prendi le prossime :limit rows"
             {"user_id": self.user_id, "limit": limit}
         )
-        return [dict(r._mapping) for r in rows]
+        return [dict(r._mapping) for r in rows]   #_mapping converte row sqlalchemy in dict-like, dict() converte in dict normale
 
     async def get_recent_summaries(self, limit: int = 3) -> str:
         """
@@ -224,7 +200,6 @@ JSON:
         """
         if not settings.memory_long_term_enabled:
             return ""
-
         rows = await self.db.execute(
             text("""
                 SELECT summary_text, created_at
@@ -235,7 +210,10 @@ JSON:
             """),
             {"user_id": self.user_id, "limit": limit}
         )
-        summaries = [r.summary_text for r in rows]
+        summaries = [ r.summary_text for r in rows ]
         if not summaries:
             return ""
-        return "CONVERSAZIONI PRECEDENTI:\n" + "\n---\n".join(summaries)
+        return "CONVERSAZIONI PRECEDENTI:\n" + "\n---\n".join(summaries)   #"\n---\n".join(summaries)  concatena i summaries con separatore '\n---\n'
+
+
+

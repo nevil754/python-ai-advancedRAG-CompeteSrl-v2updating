@@ -91,6 +91,9 @@ cosi anche per compliance legale (GDPR / GDPR-like), puoi rispondere alle domand
 -DECLARE crea var locale
 -EXEC sp_executesql @sql;  esegue sql dentro quella var locale 
 -scalar():  e.g.se runni SELECT COUNT(*) FROM documents allora ti ritorna 1tabella(con dentro 1 sola colonna e 1 sola riga), pero se usi sqlalchemy allora ti return un obj result Result. scalar() prende il primo valore della prima riga, quindi fa  Result->(42,) quindi ottieni finalmente 42 pulito!!
+-MERGE : fai in un'unica istruzione cioe che richiederebbe select+update+insert
+-'OFFSET 0 ROWS FETCH NEXT :limit ROWS ONLY'  OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY significa "salta :offset rows e prendi le prossime :limit rows", e.g. per page 2 con page_size 20 -> OFFSET 20 ROWS FETCH NEXT 20 ROWS ONLY, quindi salta i primi 20 e prendi i successivi 20
+
 
 🔥📈MULTI-TENANT ARCHITECTURE
 techniques multi-tenant: 

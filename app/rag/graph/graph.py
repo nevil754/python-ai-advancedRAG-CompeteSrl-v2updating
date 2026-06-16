@@ -7,7 +7,6 @@
 from __future__ import annotations    #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from functools import lru_cache
 from langgraph.graph import END, StateGraph
-
 from app.rag.graph.state import RAGState
 from app.rag.graph.nodes import (
     node_route,
@@ -22,12 +21,11 @@ from app.rag.graph.nodes import (
 from app.rag.graph.edges import edge_route_decision   #ur custom
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=1)    #decoratore che trasforma la funzione in un singleton, quindi get_rag_graph() ritorna sempre la stessa istanza di StateGraph, evitando overhead di connessioni multiple (sfrutta la cache)
 def get_rag_graph():
     """
     Costruisce e compila il grafo LangGraph.
     Singleton — compilato una sola volta all'avvio.
-
     Grafo:
         START
           ↓
@@ -43,8 +41,7 @@ def get_rag_graph():
                                                END
     """
     graph = StateGraph(RAGState)
-
-    # Aggiungi nodi
+    #add nodes
     graph.add_node("route",               node_route)
     graph.add_node("load_session",        node_load_session)
     graph.add_node("retrieve",            node_retrieve)
@@ -53,14 +50,11 @@ def get_rag_graph():
     graph.add_node("generate_web",        node_generate_web)
     graph.add_node("check_hallucination", node_check_hallucination)
     graph.add_node("save_to_memory",      node_save_to_memory)
-
-    # Entry point
+    #entry point
     graph.set_entry_point("load_session")
-
-    # Edges
+    #edges
     graph.add_edge("load_session", "route")
-
-    # Edge condizionale dopo il routing
+    #conditiona edge after node 'route'
     graph.add_conditional_edges(
         "route",
         edge_route_decision,
@@ -69,16 +63,13 @@ def get_rag_graph():
             "web_search": "web_search",
         }
     )
-
     graph.add_edge("retrieve",    "generate")
     graph.add_edge("web_search",  "generate_web")
     graph.add_edge("generate",    "check_hallucination")
     graph.add_edge("generate_web","check_hallucination")
     graph.add_edge("check_hallucination", "save_to_memory")
     graph.add_edge("save_to_memory", END)
-
-    return graph.compile()
-
+    return graph.compile()  #compila il grafo
 
 async def run_rag_graph(
     question: str,
@@ -91,7 +82,6 @@ async def run_rag_graph(
 ) -> RAGState:
     """
     Esegue il grafo LangGraph completo per una query.
-
     Args:
         question: domanda utente
         conversation_id: UUID conversazione
@@ -100,12 +90,10 @@ async def run_rag_graph(
         user_id: UUID utente
         collection_id: filtra per collection (opzionale)
         mode: rag | web | sql | general
-
     Returns:
         RAGState finale con answer, sources, scores, ecc.
     """
-    graph = get_rag_graph()
-
+    graph = get_rag_graph()   #here funct qua sopra, save in var
     initial_state: RAGState = {
         "question": question,
         "conversation_id": conversation_id,
@@ -126,6 +114,6 @@ async def run_rag_graph(
         "hallucination_score": None,
         "error": None,
     }
-
-    final_state = await graph.ainvoke(initial_state)
+    final_state = await graph.ainvoke(initial_state)  #execute
     return final_state
+

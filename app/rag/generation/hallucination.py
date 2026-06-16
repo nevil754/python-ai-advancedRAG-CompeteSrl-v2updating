@@ -28,8 +28,7 @@ async def check_faithfulness(
     """
     if not chunks or not answer:
         return 1.0
-    context = "\n\n".join(c.text for c in chunks[:5])  # usa solo i top 5
-
+    context = "\n\n".join(c.text for c in chunks[:5])  #prende solo i top 5 chunks, concatena il testo con separatore '\n\n'
     try:
         from app.core.llm_factory import get_llm
         from langchain_core.messages import HumanMessage
@@ -39,24 +38,23 @@ async def check_faithfulness(
             HumanMessage(content=f"""Valuta se la RISPOSTA è completamente supportata dal CONTESTO.
                 Rispondi SOLO con un numero tra 0.0 e 1.0.
                 1.0 = completamente supportata, 0.0 = per niente supportata.
-
                 CONTESTO:
                 {context}
-
                 RISPOSTA:
                 {answer}
-
                 SCORE (solo il numero):""")
-        ])
-        score_text = response.content.strip()
-        score = float(score_text)
-        score = max(0.0, min(1.0, score))  # clamp tra 0 e 1
-        logger.debug(f"Hallucination score: {score:.2f}")
+        ])   #crea mex da inviato all'llm (con interpolati i values), chiedi all'llm di risponder con un numero 0-1
+        score_text = response.content.strip()  
+        score = float(score_text)  #converti 
+        score = max(0.0, min(1.0, score))  #forza range valido clamp tra 0 e 1
+        logger.debug(f"Hallucination score: {score:.2f}")   #x logging strutturato
         return score
     except Exception as e:
         logger.warning(f"Hallucination check fallito: {e}")
-        return 1.0  # assume faithfulness se il check fallisce
+        return 1.0    #assume faithfulness se il check fallisce, return 1.0
 
 def is_hallucination(score: float, threshold: float = 0.5) -> bool:
     """Ritorna True se lo score è sotto la soglia di faithfulness."""
-    return score < threshold
+    return score < threshold   #return True/False
+
+
