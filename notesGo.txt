@@ -177,6 +177,9 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 🔥- #!/usr/bin/env python3  in cima a file python è un shebang ASSOLUTAMENTE DA AGGIUNGERE SE QUESTO FILE .PY E' DIRETTAMENTE ESEGUIBILE DAL SYSTEM e serve nei system linux/unix/macos e dice al system e.g. here che deve runnare python. #! indica che ora segue un interprete, /usr/bin/env python chiede al system di trovare python nel PATH, serve se vuoi eseguire file con 
 chmod +x script.py
 ./script.py
+- loop = asyncio.get_event_loop(); 
+loop.run_in_executor() (prende una funzione no async e la manda in process pool e non blocca il processo main)  loop.run_until_complete() ("esegui questa async function fino alla fine", blocca tutto finche finisce.) 
+
 
 ########
 
