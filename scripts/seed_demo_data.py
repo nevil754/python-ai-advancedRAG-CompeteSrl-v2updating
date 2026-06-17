@@ -8,7 +8,7 @@
 # Uso: python scripts/seed_demo_data.py
 # =============================================================
 
-import asyncio
+import asyncio   #x async funct, gia incluso w python
 import sys
 from pathlib import Path
 
@@ -80,7 +80,7 @@ async def main():
     # Salva documenti demo su disco e ingestionali
     import tempfile
     import os
-    from app.rag.ingestion.pipeline import run_ingestion_pipeline
+    from app.rag.ingestion.pipeline import run_ingestion_pipeline    #ur custom
 
     async with tenant_db._async_factory() as session:
         row = await session.execute(
@@ -96,7 +96,7 @@ async def main():
             mode="w",
             encoding="utf-8",
         ) as f:
-            f.write(doc["content"])  #scrive sul documento
+            f.write( doc["content"] )  #scrive sul documento
             tmp_path = f.name  #e.g. C:\Temp\tmp123.txt
         try:
             doc_id = str(uuid4())

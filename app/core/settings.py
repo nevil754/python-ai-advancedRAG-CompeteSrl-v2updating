@@ -18,7 +18,7 @@ def _load_yaml() -> dict:
     """Carica config.yaml come dizionario piatto per i default."""
     if not CONFIG_FILE.exists():
         return {}  #se file non esiste return {}
-    with open(CONFIG_FILE, encoding="utf-8") as f:
+    with open( CONFIG_FILE, encoding="utf-8" ) as f:
         return yaml.safe_load(f) or {}   #safe_load evita esecuzione codice malevolo YAML.
     #trasforma file config.yaml ->dict python, altrimenti {} se il file è vuoto
 
@@ -29,10 +29,10 @@ class LLMSettings:
 
 class AppSettings(BaseSettings):
     """
-    Ogni campo può essere sovrascritto uso case-insesitive
+    Ogni campo può essere sovrascritto uso case-insensitive
     """
     model_config = SettingsConfigDict(   #config pydantic settings
-        env_file=str(BASE_DIR / ".env"),
+        env_file= str(BASE_DIR / ".env"),
         env_file_encoding="utf-8",  #encoding file
         case_sensitive=False,
         extra="ignore",          #🔥🔥ignora variabili env sconosciute, ALTRIMENTI CRASHA!!
@@ -140,15 +140,15 @@ class AppSettings(BaseSettings):
     web_search_provider: str = "tavily"
     tavily_api_key: str = ""
 
-    celery_broker_url: str = "redis://redis:6379/0"   #uso datbase logico 0 (sempre all'interno sempre della stessa istanza Redis)
-    celery_result_backend: str = "redis://redis:6379/0"  #uso datbase logico 0 (sempre all'interno sempre della stessa istanza Redis)
+    celery_broker_url: str = "redis://redis:6379/0"   #uso database logico 0 (sempre all'interno sempre della stessa istanza Redis)
+    celery_result_backend: str = "redis://redis:6379/0"  #uso database logico 0 (sempre all'interno sempre della stessa istanza Redis)
 
     openai_api_key: str = ""
     google_api_key: str = ""
     ollama_api_key: str = ""
 
     #quando fai settings = AppSettings(), 🔥pydantic fa legge .env -> legge env var -> crea obj settings -> valida tutti i campi -> ESEGUE I VALIDATORS -> solo ora run the app
-    @field_validator("jwt_secret_key")   #custom validator, check il filed jwt_secret_key
+    @field_validator("jwt_secret_key")   #custom validator, check il field jwt_secret_key
     @classmethod  #dice a python che questa funzione appartiene alla classe e NON all'istanza. per validator pydantic è lo standart.
     def validate_jwt_secret(cls, v: str) -> str:   #cls è la classe corrente, v è il valore del campo jwt_secret_key
         if v == "change-me-in-production-min-32-chars":   #chiave fake di development 
@@ -170,7 +170,7 @@ def _apply_yaml_overrides() -> None:
     cfg = _load_yaml()   #legge file config.yaml 
     if not cfg:
         return
-    mappings: list[tuple[str, str]] = [  #crea lista di coppie(cioe tuple)
+    mappings: list[tuple[str, str]] = [    #crea lista di coppie(cioe tuple)
         #mapping file config.yaml path -> nome env var (create here qua sopra)
         #ricordati che il '.' indica nested
         ("llm.provider",            "LLM_PROVIDER"),

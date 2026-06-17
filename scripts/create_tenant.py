@@ -20,7 +20,6 @@ import asyncio  #x async funct
 import sys  #x os
 from pathlib import Path   #x manipolare paths
 
-# Aggiungi root al PYTHONPATH
 sys.path.insert(
     0, 
     str(Path(__file__).parent.parent)  #__file__ è il path di questo script, poi sali su con parent e ancora con parent ed arrivi a root prj

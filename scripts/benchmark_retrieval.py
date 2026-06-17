@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))  #__file__ è il path di questo script, poi sali su con parent e ancora con parent ed arrivi a root prj. aggiunge il path all'inizio del PYTHONPATH così quando importi moduli python cerca prima qui
 
-BENCHMARK_DATASET = [   #mini dataset di test per benchmark retrieval, con domande + risposte attese per il demo tenant 
+BENCHMARK_DATASET = [   #mini dataset di test fake per benchmark retrieval, con domande + risposte attese per il demo tenant 
     {
         "question": "Quando scade il contratto di fornitura software?",
         "expected_keywords": ["31/12/2024", "dicembre 2024", "annuale"],
@@ -67,14 +67,12 @@ async def main():
         question = item["question"]
         expected = item["expected_keywords"]
         print(f"\nQ: {question}")
-        # Retrieval
         chunks = retrieve(   #qui parte pipeline retrieval: query -> dense & sparse search -> rrf -> mrr -> reranker.
             query=question,
             tenant_slug=args.tenant,
             tenant_id=tenant_id,
             top_k=args.top_k,
         )
-        # Generation
         result = await arun_rag_chain(   #qui parte generazione LLM (riceve in input anche i chunks recuperati dal retrieve()) in modalita no streaming (cmnq ho fatto anche versione x SSE streaming)
             question=question,
             chunks=chunks,
@@ -84,7 +82,7 @@ async def main():
         print(f"A: {answer[:150]}...")   #prendi solo i primi 150chars
         # Valutazione keyword matching (semplice, senza LLM)
         answer_lower = answer.lower()
-        matches = sum(1 for kw in expected if kw.lower() in answer_lower)  #conta keyword trovate!
+        matches = sum( 1 for kw in expected if kw.lower() in answer_lower )  #conta keyword trovate!
         keyword_score = matches / len(expected) if expected else 0.0   #score keyword 
         from app.rag.generation.hallucination import check_faithfulness
         faith_score = await check_faithfulness(question, answer, chunks)   #calcola score di faithfulness (0.0-1.0) con approccio LLM-based, chiede al modello se ogni affermazione nella risposta è supportata dal contesto fornito dai chunks

@@ -336,3 +336,4 @@ GO
 
 PRINT 'init.sql completato.';  --mex log su console
 GO
+
