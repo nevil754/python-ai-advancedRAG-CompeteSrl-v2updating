@@ -177,7 +177,8 @@ Field serve x aggiungere metadati e regole ai fields e.g.name: str = Field(..., 
 🔥- #!/usr/bin/env python3  in cima a file python è un shebang ASSOLUTAMENTE DA AGGIUNGERE SE QUESTO FILE .PY E' DIRETTAMENTE ESEGUIBILE DAL SYSTEM e serve nei system linux/unix/macos e dice al system e.g. here che deve runnare python. #! indica che ora segue un interprete, /usr/bin/env python chiede al system di trovare python nel PATH, serve se vuoi eseguire file con 
 chmod +x script.py
 ./script.py
-- loop = asyncio.get_event_loop(); 
+🔥-python di default non gestisce bene async, quindi:
+loop = asyncio.get_event_loop(); 
 loop.run_in_executor() (prende una funzione no async e la manda in process pool e non blocca il processo main)  loop.run_until_complete() ("esegui questa async function fino alla fine", blocca tutto finche finisce.) 
 
 
@@ -307,8 +308,12 @@ feature/login-google → develop
 --GGUF: serve per il modello finale, dopo traning QLoRA hai base model (quantized 4-bit)++ LoRA adapters dopodiche gli adapters vengono fusi base model+adapters→full model  infine converti per l'export GGUF 16-bit (FP16 weights). quindi il training leggero lo fai 4bit mentre il modello finale sara molto piu stabile a 16-bit GGUF.
 
 
-#####################################################⭐️⭐️⭐️CHATBOT LONGMEMORY ADAPTABILITY personalization engine
+#####################################################
+
+#######
+⭐️⭐️⭐️CHATBOT LONGMEMORY ADAPTABILITY personalization engine
 //questo è agentic memory (dal 2026 gli agents stanno usando il web piu degli umani, e gli servono strumenti!)
+//🔥pensa che l'applicazione deve essere un wrapper, cioe e.g. booking.com ha wrappato le stanze/localibed e gli ha dato tutti gli strumenti, stessa per altri casi simili.!
 
 Long-term Memory + User Profile + Retrieval + Reflection loop:
 ricordi cose sull’utente nel lungo periodo, aggiorni queste info nel tempo, le usi per cambiare comportamento!, non "inventa memoria" ma la costruisce incrementalmente, sia multi-sessione + persistente.
@@ -348,4 +353,7 @@ llm response
 memory write update: utilizzi un agent 'memory extractor', langgraph node prende user_message + assistent_response e si chiede 'Questo è un fatto da salvare?' se si allora update il json dell'user & episodic memory su qdrant.
 
 OGGI GLI AGENTS NON HANNO MEMORIA con questo voglio che ce la abbiano ora.
+
+#######
+-fare un tavility x scraping web (come https://www.tavily.com/) apposta per agents! perche devono poter andare sul web! e ci sono poche opzioni attualmente.
 

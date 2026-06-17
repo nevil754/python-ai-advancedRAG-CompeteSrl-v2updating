@@ -134,7 +134,7 @@ async def aensure_collection(tenant_slug: str, force_recreate: bool = False) -> 
     """Versione async di ensure_collection."""
     import asyncio
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, ensure_collection, tenant_slug, force_recreate)
+    return await loop.run_in_executor( None, ensure_collection, tenant_slug, force_recreate )
 
 async def adelete_tenant_collections(tenant_slug: str) -> None:  #cancella tutte le collections di un target tenant
     """
@@ -142,7 +142,7 @@ async def adelete_tenant_collections(tenant_slug: str) -> None:  #cancella tutte
     Chiamato durante l'offboarding del tenant (quando un cliente è cancellato dalla piattaforma).
     """
     client = get_async_qdrant_client()
-    for get_name in [get_collection_name, get_memory_collection_name]:  #è come dire functions = [function1, function2], quindi ora iteri e nel first cycle get_name = get_collection_name, nel secondo ciclo get_name = get_memory_collection_name
+    for get_name in [ get_collection_name, get_memory_collection_name ]:  #è come dire functions = [function1, function2], quindi ora iteri e nel first cycle get_name = get_collection_name, nel secondo ciclo get_name = get_memory_collection_name
         name = get_name(tenant_slug)
         try:
             await client.delete_collection(name)  #in questo modo nel FIRST cycle eseguo un delete su tenant_{safe_slug}_documents, mentre nel SECOND cycle eseguo un delete su tenant_{safe_slug}_memory

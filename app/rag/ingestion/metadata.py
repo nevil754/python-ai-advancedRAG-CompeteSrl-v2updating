@@ -17,7 +17,6 @@ from app.core.settings import get_settings   #ur custom
 settings = get_settings()
 _metadata_config: dict | None = None
 
-
 def build_chunk_metadata(
     tenant_id: str,
     collection_id: str,
