@@ -7,10 +7,10 @@
 import pytest
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio   #dice a pytest che questo test è async -> usa event loop
 async def test_health_returns_ok(client):
     response = await client.get("/health")
-    assert response.status_code == 200
+    assert response.status_code == 200   #assert equivale a  'if not condition: raise AssertionError()'. quindi endpoint deve funzionare altrimenti raise the error
     data = response.json()
     assert data["status"] == "ok"
     assert "version" in data
@@ -35,3 +35,4 @@ async def test_ready_has_checks(client):
     assert "redis" in data["checks"]
     assert "sqlserver" in data["checks"]
     assert "qdrant" in data["checks"]
+

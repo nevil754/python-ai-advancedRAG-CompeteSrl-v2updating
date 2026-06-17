@@ -4,12 +4,11 @@
 # =============================================================
 
 import pytest
-from app.rag.ingestion.chunker import chunk_document
+from app.rag.ingestion.chunker import chunk_document   #ur custom
 from app.rag.ingestion.cleaner import clean_text
 
 
 class TestCleaner:
-
     def test_removes_null_bytes(self):
         dirty = "testo\x00pulito"
         assert "\x00" not in clean_text(dirty)
@@ -33,7 +32,6 @@ class TestCleaner:
 
 
 class TestChunker:
-
     def test_basic_chunking(self):
         text = "A" * 3000  # testo da 3000 chars
         chunks = chunk_document(text)
@@ -59,9 +57,7 @@ class TestChunker:
         for chunk in chunks:
             assert chunk.metadata.get("document_id") == "test-123"
 
-
 class TestContextBuilder:
-
     def test_format_sources(self, sample_chunks):
         from app.rag.memory.context_builder import format_sources_for_response
         sources = format_sources_for_response(sample_chunks)
@@ -94,3 +90,5 @@ class TestContextBuilder:
         ctx = build_rag_context(chunks=sample_chunks, session_messages=messages)
         assert "Utente: Ciao" in ctx["history"]
         assert "Assistente: Salve" in ctx["history"]
+
+

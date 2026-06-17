@@ -15,7 +15,6 @@ from app.core.security import (
 
 
 class TestPasswordHashing:
-
     def test_hash_is_different_from_plain(self):
         plain = "MySecurePass123!"
         hashed = hash_password(plain)
@@ -38,9 +37,8 @@ class TestPasswordHashing:
 
 
 class TestJWT:
-
     def test_create_and_decode_token(self):
-        data = {
+        data = {  #fake payload
             "sub": "user-123",
             "tenant_id": "tenant-456",
             "tenant_slug": "acme",
@@ -60,14 +58,12 @@ class TestJWT:
     def test_expired_token(self):
         from datetime import timedelta
         data = {"sub": "user-123", "tenant_id": "t", "tenant_slug": "s", "role": "user"}
-        # Token scaduto 1 secondo fa
+        #token scaduto 1 secondo fa
         token = create_access_token(data, expires_delta=timedelta(seconds=-1))
         result = decode_access_token(token)
         assert result is None
 
-
 class TestAPIKey:
-
     def test_generate_and_verify(self):
         plain, key_hash = generate_api_key()
         assert plain.startswith("rag_")
@@ -82,3 +78,4 @@ class TestAPIKey:
         key1, _ = generate_api_key()
         key2, _ = generate_api_key()
         assert key1 != key2
+
