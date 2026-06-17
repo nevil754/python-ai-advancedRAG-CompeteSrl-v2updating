@@ -65,7 +65,7 @@ class TenantRedis:
         """
         key = self._key("session", session_id)  #builds e.g. tenant:abc123:session:123 la parte di 'session' e '123'(che sarebbe il session_id)
         raw = await self._redis.lrange(key, 0, -1)  #ur redis self (che è a sua volta un get_redis()), e prende la lista di messaggi (che sono stringhe JSON) con lrange (0,-1 prende tutta la lista!) utilizzando la key (ur custom)
-        return [json.loads(m) for m in raw]   #la lista di mex in json (cioe raw), per ciascun mex lo converto in python e lo metto nella lista ('[]')
+        return [ json.loads(m) for m in raw ]   #la lista di mex in json (cioe raw), per ciascun mex lo converto in python e lo metto nella lista ('[]')
           #return a list of python dict
 
     async def append_message(
@@ -146,6 +146,7 @@ class TenantRedis:
         count = results[0]  #results è un array cioè  [ 1 (è il risultato di INCR), True (è il risultato di EXPIRE) ]
         return (count <= max_requests, count)   #return tupla (True/False, numero attuale di richieste fatte)
 
+
     async def set_job_status(
         self,
         job_id: str,
@@ -162,7 +163,7 @@ class TenantRedis:
         raw = await self._redis.get(self._key("job", job_id))  #ur redis self (che è a sua volta un get_redis()), e prende prende quello con key target
         return json.loads(raw) if raw else None   #json.loads converte la stringa JSON in dict python, se raw è None ritorna None
 
-    async def flush_tenant(self) -> int:
+    async def flush_tenant(self) -> int:   #delete completo utente
         """
         Cancella TUTTE le chiavi di questo tenant da Redis.
         Chiamato durante l'offboarding (🔦 QUANDO IL CLIENT CANCELLA IL SUO ACCOUNT).
@@ -195,7 +196,7 @@ class TenantRedis:
         return deleted
 
     @staticmethod
-    async def ping() -> bool:
+    async def ping() -> bool:   #test if ok
         """Verifica che Redis sia raggiungibile. Usato in /health endpoint."""
         try:
             client = get_redis()

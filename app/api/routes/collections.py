@@ -4,7 +4,7 @@
 # =============================================================
 
 from __future__ import annotations   #abilita forward references e typing moderno python, nelle new versions python non serve piu, ma io sto usando python 3.11.19, evita errori che non runni def test() -> MyClass: prima che MyClass sia definita
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status  #apirouter x le routes, status x codici http
 from sqlalchemy import text   #x query sql manuali
 from app.api.deps import AdminOnly, CurrentDB, CurrentTenant
 from app.core.vectorstore import ensure_collection, get_collection_name

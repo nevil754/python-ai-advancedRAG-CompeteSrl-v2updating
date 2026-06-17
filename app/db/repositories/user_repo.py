@@ -4,26 +4,24 @@
 # =============================================================
 
 from __future__ import annotations
-
 from app.core.security import hash_password
 from app.db.repositories.base import BaseRepository
 
 
 class UserRepository(BaseRepository):
-
     async def get_by_email(self, email: str) -> dict | None:
         row = await self.fetchone(
             "SELECT * FROM users WHERE email = :email",
             {"email": email}
         )
-        return dict(row._mapping) if row else None
+        return dict(row._mapping) if row else None   #mapping converte row sqlalchemy in dict-like, dict() converte in dict normale
 
     async def get_by_id(self, user_id: str) -> dict | None:
         row = await self.fetchone(
             "SELECT * FROM users WHERE id = :id",
             {"id": user_id}
         )
-        return dict(row._mapping) if row else None
+        return dict(row._mapping) if row else None    #mapping converte row sqlalchemy in dict-like, dict() converte in dict normale
 
     async def create(
         self,
@@ -50,7 +48,7 @@ class UserRepository(BaseRepository):
 
     async def update_last_login(self, user_id: str) -> None:
         await self.execute(
-            "UPDATE users SET last_login = GETUTCDATE() WHERE id = :id",
+            "UPDATE users SET last_login = SYSUTCDATETIME() WHERE id = :id",
             {"id": user_id}
         )
 
@@ -62,6 +60,10 @@ class UserRepository(BaseRepository):
 
     async def list_all(self) -> list[dict]:
         rows = await self.fetchall(
-            "SELECT id, email, full_name, role, is_active, created_at FROM users ORDER BY created_at DESC"
+            """
+            SELECT id, email, full_name, role, is_active, created_at 
+            FROM users ORDER BY created_at DESC
+            """
         )
-        return [dict(r._mapping) for r in rows]
+        return [ dict(r._mapping) for r in rows ]   #_mapping converte row sqlalchemy in dict-like, dict() converte in dict normale
+

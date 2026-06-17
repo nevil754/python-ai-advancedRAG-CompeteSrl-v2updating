@@ -5,13 +5,11 @@
 # =============================================================
 
 from __future__ import annotations
-
 from loguru import logger
-
 from app.core.settings import get_settings
 
-settings = get_settings()
 
+settings = get_settings()
 
 async def web_search_and_answer(
     question: str,
@@ -19,11 +17,9 @@ async def web_search_and_answer(
 ) -> dict:
     """
     Cerca su web e genera una risposta con le fonti trovate.
-
     Args:
         question: domanda da cercare
         max_results: numero max risultati (default da config)
-
     Returns:
         dict con answer, sources, provider_used
     """
@@ -33,29 +29,23 @@ async def web_search_and_answer(
             "sources": [],
             "provider": None,
         }
-
     k = max_results or settings.web_search_max_results if hasattr(settings, 'web_search_max_results') else 5
     provider = settings.web_search_provider.lower()
-
     if provider == "tavily" and settings.tavily_api_key:
         return await _search_tavily(question, k)
     else:
         return await _search_ddgs(question, k)
 
-
 async def _search_tavily(question: str, k: int) -> dict:
     """Ricerca con Tavily — risultati già pronti per LLM."""
     import asyncio
     from tavily import TavilyClient
-
     client = TavilyClient(api_key=settings.tavily_api_key)
-
     loop = asyncio.get_event_loop()
     results = await loop.run_in_executor(
         None,
         lambda: client.search(question, max_results=k, include_answer=True)
     )
-
     # Tavily ritorna già un answer summary
     answer = results.get("answer", "")
     sources = [
@@ -67,21 +57,16 @@ async def _search_tavily(question: str, k: int) -> dict:
         }
         for r in results.get("results", [])
     ]
-
     if not answer and sources:
         # Genera risposta con LLM se Tavily non la fornisce
         answer = await _generate_from_web_results(question, sources)
-
     return {"answer": answer, "sources": sources, "provider": "tavily"}
-
 
 async def _search_ddgs(question: str, k: int) -> dict:
     """Ricerca con DuckDuckGo — solo links, poi scraping + LLM."""
     from ddgs import DDGS
-
     with DDGS() as ddgs:
         raw = list(ddgs.text(question, max_results=k))
-
     sources = [
         {
             "title": r.get("title", ""),
@@ -91,30 +76,25 @@ async def _search_ddgs(question: str, k: int) -> dict:
         }
         for r in raw
     ]
-
     answer = await _generate_from_web_results(question, sources)
     return {"answer": answer, "sources": sources, "provider": "ddgs"}
-
 
 async def _generate_from_web_results(question: str, sources: list[dict]) -> str:
     """Genera risposta con LLM dai risultati web."""
     from app.core.llm_factory import get_llm
     from langchain_core.messages import HumanMessage, SystemMessage
-
     context = "\n\n".join(
         f"[{s['title']}] ({s['url']})\n{s['snippet']}"
         for s in sources
     )
-
     llm = get_llm()
     response = await llm.ainvoke([
         SystemMessage(content="Sei un assistente che risponde usando risultati di ricerca web. Cita sempre le fonti con URL."),
         HumanMessage(content=f"""RISULTATI WEB:
-{context}
+            {context}
 
-DOMANDA: {question}
+            DOMANDA: {question}
 
-RISPOSTA (cita le fonti con URL):""")
+            RISPOSTA (cita le fonti con URL):""")
     ])
-
     return response.content

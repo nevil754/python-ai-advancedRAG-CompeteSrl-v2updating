@@ -28,7 +28,7 @@ class Tenant(Base):
     max_users: Mapped[int] = mapped_column(Integer, default=10)
     max_tokens_day: Mapped[int] = mapped_column(BigInteger, default=100_000)
     settings: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime)   #ok intanto il tipo lo definisci nel db (nel mio caso default is SYSUTCDATETIME() )
     updated_at: Mapped[datetime] = mapped_column(DateTime)
 
 class AuditLog(Base):

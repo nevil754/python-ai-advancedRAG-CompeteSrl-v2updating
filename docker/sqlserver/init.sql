@@ -30,7 +30,7 @@ CREATE TABLE shared.tenants (
     slug            NVARCHAR(100)       NOT NULL,   -- "acme-corp" diventa → schema tenant_acme_corp
     display_name    NVARCHAR(255)       NOT NULL,
     plan            NVARCHAR(50)        NOT NULL DEFAULT 'starter',  -- starter | pro | enterprise
-    is_active       BIT                 NOT NULL DEFAULT 1,
+    is_active       BIT                 NOT NULL DEFAULT 1,   -- 1=attivo, 0=disabilitato (es. per scadenza abbonamento)
     max_docs        INT                 NOT NULL DEFAULT 500,
     max_users       INT                 NOT NULL DEFAULT 10,
     max_tokens_day  BIGINT              NOT NULL DEFAULT 100000,  --🔥RATE LIMIT TOKEN X DAY!!

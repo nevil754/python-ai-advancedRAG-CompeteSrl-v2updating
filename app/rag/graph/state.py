@@ -6,7 +6,7 @@
 
 from __future__ import annotations   #x python legacy in prj big soprattutto, trasforma 'def get_user()->User:' in 'def get_user() -> "User":' quindi tutte le annotazioni vengono conservate come str
 from typing import Any, TypedDict
-from app.rag.retrieval.retriever import RetrievedChunk
+from app.rag.retrieval.retriever import RetrievedChunk  #ur custom
 
 
 class RAGState(TypedDict):
@@ -14,7 +14,7 @@ class RAGState(TypedDict):
     Stato condiviso tra tutti i nodi del grafo LangGraph.
     Ogni nodo riceve questo dict e ritorna un dict con le chiavi aggiornate.
     """
-    # Input
+    #Input
     question: str
     conversation_id: str
     tenant_id: str
