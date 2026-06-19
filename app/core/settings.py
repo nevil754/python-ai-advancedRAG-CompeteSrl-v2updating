@@ -17,10 +17,10 @@ CONFIG_FILE = BASE_DIR / "config" / "config.yaml"  #str '/project/config/config.
 def _load_yaml() -> dict:
     """Carica config.yaml come dizionario piatto per i default."""
     if not CONFIG_FILE.exists():
-        return {}  #se file non esiste return {}
+        return {}    #se file non esiste return {}
     with open( CONFIG_FILE, encoding="utf-8" ) as f:
         return yaml.safe_load(f) or {}   #safe_load evita esecuzione codice malevolo YAML.
-    #trasforma file config.yaml ->dict python, altrimenti {} se il file è vuoto
+    #trasforma file config.yaml -> dict python, altrimenti {} se il file è vuoto
 
 #classes x the yaml sections del tuo file originale config.yaml
 
@@ -39,7 +39,7 @@ class AppSettings(BaseSettings):
         populate_by_name=True,   #permette di popolare i campi anche usando il nome del campo invece del nome della variabile d'ambiente e.g. llm_provider invece di LLM_PROVIDER, utile se vuoi usare nomi più leggibili nel codice (non vuoi che siano tutti sempre in maiuscolo)
     )
 
-    app_name: str = "RAG Enterprise Legal"  #here il value è quello di default, se in .env esiste allora vince quello di .env !!
+    app_name: str = "RAG Enterprise Compet-e Legal"  #here il value è quello di default, se in .env esiste allora vince quello di .env !!
     app_version: str = "0.1.0"
     app_debug: bool = False
     app_environment: Literal["development", "staging", "production"] = "development"
@@ -84,10 +84,10 @@ class AppSettings(BaseSettings):
             f"?driver={self.sqlserver_driver.replace(' ', '+')}"   #sostituisce spazi con +, necessario per pyodbc
             f"&TrustServerCertificate=yes"
             f"&Encrypt=yes"
-        )  #crea e.g. "mssql+pyodbc://SA:password@sqlserver:1433/RAGChat?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes&Encrypt=yes"
+        )   #crea e.g. "mssql+pyodbc://SA:password@sqlserver:1433/RAGChat?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes&Encrypt=yes"
 
-    redis_url: str = "redis://redis:6379/0"         #x broker celery + sessioni + rate limit
-    redis_cache_url: str = "redis://redis:6379/1"   #x cache RAG separata
+    redis_url: str = "redis://redis:6379/0"         #db 0, x broker celery + sessioni + rate limit
+    redis_cache_url: str = "redis://redis:6379/1"   #db 1, x cache RAG separata
     redis_password: str = ""
 
     retriever_search_type: str = "hybrid"
@@ -149,7 +149,7 @@ class AppSettings(BaseSettings):
 
     #quando fai settings = AppSettings(), 🔥pydantic fa legge .env -> legge env var -> crea obj settings -> valida tutti i campi -> ESEGUE I VALIDATORS -> solo ora run the app
     @field_validator("jwt_secret_key")   #custom validator, check il field jwt_secret_key
-    @classmethod  #dice a python che questa funzione appartiene alla classe e NON all'istanza. per validator pydantic è lo standart.
+    @classmethod  #dice a python che questa funzione appartiene alla classe e NON all'istanza. per validator pydantic è lo standart
     def validate_jwt_secret(cls, v: str) -> str:   #cls è la classe corrente, v è il valore del campo jwt_secret_key
         if v == "change-me-in-production-min-32-chars":   #chiave fake di development 
             return v  #ok in dev
@@ -201,22 +201,22 @@ def _apply_yaml_overrides() -> None:
         ("cache.query_ttl_seconds", "CACHE_QUERY_TTL_SECONDS"),
     ]
 
-    def _get_nested(d: dict, path: str):
+    def _get_nested(d: dict, path: str):  #path -> una stringa con i livelli separati da .
         keys = path.split(".")
         for k in keys:
-            if not isinstance(d, dict) or k not in d:
+            if not isinstance(d, dict) or k not in d:   #check se non è un dict, e che k non è in d(il dict)
                 return None
             d = d[k]
         return d
 
-    for yaml_path, env_key in mappings:   #🔥da priorita alle var in .env se trova trova match
+    for yaml_path, env_key in mappings:       #🔥da priorita alle var in .env se trova trova match
         if os.environ.get(env_key) is None:   #non sovrascrive se gia impostato come variabile d'ambiente
             value = _get_nested(cfg, yaml_path)
             if value is not None:
                 os.environ[env_key] = str(value)
 
-@lru_cache(maxsize=1)  #garantisce che venga creata 1 SOLA VOLTA (singleton), e.g. la prima volta settings = get_settings() viene eseguito compeltamente, mentre la seconda volte che viene chiamato settings = get_settings() allora sfrutta la cache e return l'obj gia esistente
-def get_settings() -> AppSettings:  #return type of AppSettings!
+@lru_cache(maxsize=1)  #garantisce che venga creata 1 SOLA VOLTA (singleton), e.g. la prima volta settings = get_settings() viene eseguito completamente, mentre la seconda volte che viene chiamato settings = get_settings() allora sfrutta la cache e return l'obj gia esistente
+def get_settings() -> AppSettings:    #return type of AppSettings!
     """
     🔥Usare sempre questa funzione, MAI AppSettings() direttamente!
     e.g. uso:

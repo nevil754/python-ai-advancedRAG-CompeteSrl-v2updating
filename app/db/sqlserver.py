@@ -28,9 +28,9 @@ class TenantDB:
     """
     def __init__(self):
         self._sync_factory = sessionmaker(   #set machine che creerà sessioni pronte sincrone per il db 
-            bind=get_sync_engine(),   #function here qua sotto
-            autocommit=False,   #x non salvare auto le modifiche fino a quando non chiami session.commit()
-            autoflush=False,  #x non mandare auto la query al db fino a quando non chiami session.commit()
+            bind= get_sync_engine(),   #function here qua sotto
+            autocommit= False,   #x non salvare auto le modifiche fino a quando non chiami session.commit()
+            autoflush= False,  #x non mandare auto la query al db fino a quando non chiami session.commit()
         )
         self._async_factory = async_sessionmaker(   #version ASYNC 
             bind=get_async_engine(),   #function here qua sotto
@@ -39,7 +39,7 @@ class TenantDB:
             expire_on_commit=False,  #dopo ogni commit, gli objs restano validi in memoria 
         )
 
-    @contextmanager
+    @contextmanager  
     def get_session(self, tenant_slug: str) -> Generator[Session, None, None]:
         """
         Context manager sincrono per sessioni tenant.
@@ -47,7 +47,7 @@ class TenantDB:
         """
         session = self._sync_factory()  #prendi factory sincrona
         try:
-            self._set_schema_sync(session, tenant_slug)
+            self._set_schema_sync( session, tenant_slug )  #prova versione sincrona
             yield session
             session.commit()
         except Exception:
@@ -66,7 +66,7 @@ class TenantDB:
         """
         async with self._async_factory() as session:
             try:
-                await self._set_schema_async(session, tenant_slug)
+                await self._set_schema_async(session, tenant_slug)   #prova versione async
                 yield session
                 await session.commit()
             except Exception:
@@ -90,9 +90,9 @@ class TenantDB:
                 f"Schema tenant '{schema_name}' non trovato. "
                 f"Eseguire sp_provision_tenant prima."
             )
-        # Imposta schema di default per questa connessione
+        #Imposta schema di default per questa connessione
         session.execute(
-            text(f"ALTER USER SA WITH DEFAULT_SCHEMA = [{schema_name}]")
+            text(f"ALTER USER SA WITH DEFAULT_SCHEMA = [{schema_name}]")  #SA è System Admin
         )
         session.execute(text("COMMIT"))
 
@@ -101,7 +101,7 @@ class TenantDB:
     ) -> None:
         """Versione async di _set_schema_sync."""
         schema_name = _slug_to_schema(tenant_slug)
-        result = await session.execute(   #AWAIT! quindi è async 
+        result = await session.execute(   #usi await, xk la funct è async
             text("SELECT 1 FROM sys.schemas WHERE name = :schema"),
             {"schema": schema_name}
         )
@@ -126,7 +126,7 @@ class TenantDB:
         """
         async with self._async_factory() as session:
             try:
-                await session.execute(
+                await session.execute(  #eseguiamo la store procedure (creata in init.sql)
                     text("""
                         EXEC shared.sp_provision_tenant
                             @slug = :slug,
@@ -135,7 +135,7 @@ class TenantDB:
                     """),  #🔥🔥EXECUTE stored procedure target (shared.sp_provision_tenant) con params!!
                     {"slug": slug, "display_name": display_name, "plan": plan}
                 )
-                await session.commit()  #async
+                await session.commit()   #async
                 logger.info(
                     "Tenant provisionato",
                     slug=slug,
@@ -174,7 +174,7 @@ def get_sync_engine():
     """Engine SQLAlchemy sincrono, usato nei worker Celery."""
     from app.core.settings import get_settings
     settings = get_settings()
-    engine = create_engine(  #crea connection sqlalchemy
+    engine = create_engine(    #crea connection sqlalchemy
         settings.sqlserver_url,
         pool_size=5,  #5 connessioni aperte
         max_overflow=10,  #fino a 10 connessioni extra temp
@@ -207,3 +207,4 @@ def get_async_engine():
     )
     logger.info("Engine SQL Server asincrono creato")
     return engine
+
