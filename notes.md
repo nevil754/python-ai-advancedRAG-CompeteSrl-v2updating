@@ -100,9 +100,9 @@ rag-enterprise/
 │   ├── metadata.yaml              ← mapping metadati documenti
 │   └──logging.yaml
 |  
+├── main.py   ← FastAPI app factory, lifespan, router include. X PRO SEMPRE FUORI DA FOLDER /app ⚡️!!
+|
 ├── app/
-│   │
-│   ├── main.py                    ← FastAPI app factory, lifespan, router include
 │   │
 │   ├── api/
 │   │   ├── deps.py                ← ⭐️ dipendenze condivise (get_tenant, get_db, ecc.)
