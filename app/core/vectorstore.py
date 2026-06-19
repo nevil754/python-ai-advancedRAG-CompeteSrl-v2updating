@@ -71,7 +71,7 @@ def ensure_collection(
     collection_name = get_collection_name(tenant_slug)
     try:
         existing = client.get_collection(collection_name)
-        if not force_recreate:   #ricordi, force_recreate è False di default, pero se è true allora significa che la collection deve essere creata
+        if not force_recreate:   #ricordi, force_recreate è False di default, pero se è True allora significa che la collection deve essere creata
             logger.debug(f"Collection già esistente: {collection_name}")
             return collection_name
         logger.warning(f"force_recreate=True — cancello collection {collection_name}")
@@ -79,20 +79,20 @@ def ensure_collection(
     except UnexpectedResponse:
         pass  #anche se catturi un errore, non è un problema, significa solo che la collection non esiste e quindi here continuiamo
     dimension = get_embedding_dimension()
+
     vectors_config: dict[str, Any] = {  #dizionario python
         #vettori densi per semantic search
-        "dense": qmodels.VectorParams(  #VectorParams serve per definire dimensione/metrica/storage/ect per vettore
+        "dense": qmodels.VectorParams(    #VectorParams serve per definire dimensione/metrica/storage/ect per vettore
             size=dimension,
-            distance=qmodels.Distance[settings.qdrant_distance],
-            on_disk=True,             #🔥🔥vettori su ssd per risparmiare RAM! praticamente obbligatorio in enterprise
+            distance=qmodels.Distance[settings.qdrant_distance],   #🔥configurazione dinamica della distanza (cosine, euclidean, dot_product) per la ricerca semantica, definita in settings
+            on_disk=True,   #🔥🔥vettori su ssd per risparmiare RAM! praticamente obbligatorio in enterprise
         )
     }
     #vettori sparsi per BM25 hybrid search
-    sparse_vectors_config = None
+    sparse_vectors_config = None   #variable
     if settings.qdrant_use_sparse:
         sparse_vectors_config = {
-            "sparse": qmodels.SparseVectorParams(
-                index=qmodels.SparseIndexParams(on_disk=True)  #configurazione dell'indice sparse
+            "sparse": qmodels.SparseVectorParams( index=qmodels.SparseIndexParams(on_disk=True)  #configurazione dell'indice sparse
             )
         }
     client.create_collection(
@@ -100,7 +100,7 @@ def ensure_collection(
         vectors_config=vectors_config,    #ur setted here qua sopra
         sparse_vectors_config=sparse_vectors_config,    #ur setted here qua sopra
         on_disk_payload=settings.qdrant_on_disk_payload,
-        # ottimizza per ricerche frequenti
+        #ottimizza per ricerche frequenti
         optimizers_config=qmodels.OptimizersConfigDiff(   #🔥set gli ottimizzatori interni di Qdrant, DATA LA QUANTITA DI DATAS UTILIZZI TECHNIQUES DI INDEXES DIFFERENTI
             indexing_threshold=20_000,  #quando una segment supera 20.000 punti, crea l'indice HNSW per ricerche più veloci
             memmap_threshold=50_000,   #quando una segment supera 50.000 punti, sposta i dati su disco (memmap) per risparmiare RAM
