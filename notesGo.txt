@@ -70,7 +70,7 @@ server {
 
 -runna i tests: 'pytest -v' (anche con docker spento), pytest tests/integration/test_health.py (visto che lo hai settato in un certo modo, funziona anche con fastapi spento). e poi ovviamente devi fare i tests degli endpoint with e.g. postman
 -checks container attivi:  'docker compose ps'
-- main.py SEMPRE IN ROOT PRJ (quindi fuori da /app) !!:  
+- main.py SEMPRE IN ROOT PRJ (quindi fuori da /app) !!: se fosse dentro /app allora python aggiungerebbe un dir corrente al sys.path quindi tutti gli import dovrebbero essere e.g. 'from app.core.settings import' e dovresti aggiungere anche app/ al pythonpath esplicitamente nel dockerfile.
 
 - trovi img fastapi python ufficiali in https://hub.docker.com/ filtrando x 'Docker Official Image'.
 
