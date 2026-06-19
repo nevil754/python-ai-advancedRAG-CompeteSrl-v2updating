@@ -1,11 +1,11 @@
 # =============================================================
-# RAG Enterprise Legal — mapping metadati documenti
+# RAG Enterprise Legal Compet-e Srl — mapping metadati documenti
 # Usato da app/rag/ingestion/metadata.py
 # Questi campi vengono indicizzati in Qdrant come payload
 # e permettono i filtri nel retrieval
 # =============================================================
 
-# Campi estratti da OGNI documento (indipendente dal tipo)
+#Campi estratti da OGNI documento (indipendente dal tipo)
 common_fields:
   - name: "tenant_id"
     type: "keyword"
@@ -50,8 +50,8 @@ common_fields:
     type: "datetime"
     required: true
 
-# Campi specifici per tipo di documento
-# Estratti automaticamente dal parser quando disponibili
+#Campi specifici per tipo di documento
+#Estratti automaticamente dal parser quando disponibili
 document_types:
   contract:
     description: "Contratti, accordi, convenzioni"
@@ -130,3 +130,5 @@ filterable_fields:
   - "legal_area"
   - "fiscal_year"
   - "ingested_at"
+
+
