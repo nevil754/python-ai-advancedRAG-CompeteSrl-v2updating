@@ -241,8 +241,8 @@ rag-enterprise/
 //in futuro fovrai pensare anche al GDPR per la privacy, quindi anonimizzare i dati sensibili!
 
 //⚠️⚠️ TODO FUTURE/ATTENTIONS!!!
--mi manca tabella tsql 'conversation_summaries' chiamata in conversation_repo.py & long_term.py !!
--TODOfuture:  i files dentro mcp/, rag_agent, sql_agent,  
+-manca tabella tsql 'conversation_summaries' chiamata in conversation_repo.py & long_term.py !!
+-TODOfuture:  i files dentro mcp/.
 
 
 

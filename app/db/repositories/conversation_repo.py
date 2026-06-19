@@ -7,7 +7,9 @@ from __future__ import annotations   #x python legacy in prj big soprattutto, tr
 import json
 from app.db.repositories.base import BaseRepository
 
+
 class ConversationRepository(BaseRepository):
+
     async def get_or_create(
         self,
         conversation_id: str,
@@ -58,7 +60,7 @@ class ConversationRepository(BaseRepository):
                 "latency_ms": latency_ms,
                 "hall_score": hallucination_score,
             }
-        )
+        )  #OUTPUT INSERTED.id ritorna l'id del messaggio appena inserito, che viene catturato in result
         row = result.fetchone()
         return row[0] if row else 0   #ritorna id del mex appena inserito 
 
@@ -76,7 +78,7 @@ class ConversationRepository(BaseRepository):
             """,
             {"conv_id": conversation_id, "limit": limit}
         )
-        return [dict(r._mapping) for r in rows]  #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale
+        return [ dict(r._mapping) for r in rows ]  #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale
 
     async def list_conversations(
         self,
@@ -97,7 +99,7 @@ class ConversationRepository(BaseRepository):
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
             """,
             {"uid": user_id, "offset": offset, "limit": page_size}  #'OFFSET :offset ROWS' number skipped rows, 'FETCH NEXT :limit ROWS ONLY' number of rows to return after offset
-        )
+        )  #offset è quante rows iniziali 'salti'
         return [dict(r._mapping) for r in rows], total or 0    #_mapping converte row sqlalchemy (e.g. rows = await db.execute(....)) in dict-like, dict() converte in dict normale
 
     async def save_summary(
