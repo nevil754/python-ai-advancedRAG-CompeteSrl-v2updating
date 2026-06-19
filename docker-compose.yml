@@ -49,7 +49,7 @@ services:  #here servizi da avviare
       --loglevel=info
       --hostname=worker-high@%h
     #avvia worker (path target), 
-    #--queues=high,shared_cleanup   worker ascolta SOLO queste queue (molto importante architetturalmente), high -> task urgenti(chat realtime, retieval, quick embeddings)  shared_cleanup->task manutenzione(delete cache, cleanup temp cache)
+    #--queues=high,shared_cleanup   worker ascolta SOLO queste queue (molto importante architetturalmente), high -> task urgenti(chat realtime, retrieval, quick embeddings)  shared_cleanup->task manutenzione(delete cache, cleanup temp cache)
     #--concurrency=4  4 processi worker paralleli, molto importante per throughput. 🔥 In prod aumentare in base risorse macchina e carico previsto
     #--prefetch-multiplier=1  disabilita prefetch task, worker prende 1 task alla volta dalla coda, ottimo per task pesanti come embedding o retrieval, evita che worker prenda più task di quelli che può gestire
     #--hostname=worker-high@%h  nome unico worker, utile per monitoraggio e debug, %h è hostname del container, così se hai più worker hai nomi diversi automaticamente
@@ -72,7 +72,7 @@ services:  #here servizi da avviare
       retries: 3
       start_period: 30s
 
-  # CELERY x coda DEFAULT (ingestion bulk)
+  #CELERY x coda DEFAULT (ingestion bulk)
   celery-worker-default:  #Worker per task PESANTI/NON URGENTI
     build:
       context: .
@@ -98,7 +98,7 @@ services:  #here servizi da avviare
       redis:
         condition: service_started
 
-  # CELERY BEAT x scheduler task periodici
+  #CELERY BEAT x scheduler task periodici
   celery-beat:   #Celery scheduler per task PERIODICI
     build:
       context: .
@@ -109,14 +109,14 @@ services:  #here servizi da avviare
       celery -A app.workers.celery_app.celery_app beat
       --loglevel=info
       --scheduler redbeat.RedBeatScheduler
-    #--scheduler redbeat.RedBeatScheduler qui entra celery-redbeat, scheduler persistito su Redis (schedule persistenti, survive restart, centralizzato) MOOOLTO MEGLIO DI SCHEDULER LOCALE file-based!!
+    #--scheduler redbeat.RedBeatScheduler qui entra celery-redbeat🔥, scheduler persistito su Redis (schedule persistenti, survive restart, centralizzato) MOOOLTO MEGLIO DI SCHEDULER LOCALE file-based!!
     env_file: .env
     environment:
       REDIS_URL: "redis://redis:6379/0"
     depends_on:
       - redis
 
-  # FLOWER x monitoring Celery (dev/staging), si collega a Redis e mostra cosa sta succedendo nel sistema Celery tramite un'interfaccia web
+  #FLOWER x monitoring Celery (dev/staging), si collega a Redis e mostra cosa sta succedendo nel sistema Celery tramite un'interfaccia web
   flower:  #📊 dashboard monitoring Celery
     image: mher/flower:2.0  #immagine ufficiale Flower, leggera e pronta all'uso, supporta autenticazione, ottima per monitorare health e performance dei worker Celery in dev e staging (in prod meglio soluzioni più robuste come Prometheus + Grafana)
     container_name: flower
@@ -156,7 +156,7 @@ services:  #here servizi da avviare
       retries: 5
       start_period: 20s
 
-  # REDIS — broker Celery + cache + sessioni
+  #REDIS — broker Celery + cache + sessioni
   redis:
     image: redis:7.0-alpine  #immagine ufficiale Redis, versione 7.0, basata su Alpine Linux (leggera), perfetta per produzione, supporta configurazione personalizzata tramite command e env var
     container_name: redis
@@ -185,7 +185,7 @@ services:  #here servizi da avviare
       timeout: 5s
       retries: 5
 
-  # SQL SERVER — storage relazionale multi-tenant
+  #SQL SERVER — storage relazionale multi-tenant
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest  #immagine ufficiale SQL Server 2022, sempre aggiornata, supporta configurazione tramite env var e script di inizializzazione, ottima per produzione (⚠️ricorda di configurare password forte e persistena dati!!)
     container_name: sqlserver
@@ -197,8 +197,8 @@ services:  #here servizi da avviare
       - ./docker/sqlserver/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./docker/sqlserver/entrypoint.sh:/init/entrypoint.sh:ro
     #sqlserver_data:/var/opt/mssql  persistena dati SQL Server, così i dati restano anche se il container viene ricreato, importante per produzione!!
-    #./docker/sqlserver/init.sql  SCRIPT SQL INIZIALE!!, solo read only
-    #./docker/sqlserver/entrypoint.sh  SCRIPT ENTRYPOINT custom, solo read only
+    #./docker/sqlserver/init.sql   SCRIPT SQL INIZIALE!!, solo read only
+    #./docker/sqlserver/entrypoint.sh   SCRIPT ENTRYPOINT custom, solo read only
     environment:
       SA_PASSWORD: "${SQLSERVER_PASSWORD}"  #🔥psw SqlServer, SA=System Admin. SA_PASSWORD è proprio il nome che Microsoft richiede nell'immagine
       ACCEPT_EULA: "Y"   #accetta licenza Microsoft, accettazione EULA obbligatoria per SQL Server, senza questa variabile SQL Server non parte!!
