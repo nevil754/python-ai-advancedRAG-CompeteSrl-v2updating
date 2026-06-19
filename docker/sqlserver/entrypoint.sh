@@ -1,10 +1,10 @@
 
 #!/bin/bash   
-#QUELLO HERE QUA SOPRA NON E UN COMMENTO! E PROPRIO UN'ISTRUZIONE! dice che tutto questo code deve essere eseguito con Bash!!
+   #QUELLO HERE QUA SOPRA NON E UN COMMENTO! E UN'ISTRUZIONE! dice che tutto questo code deve essere eseguito con Bash!!
 
 #questo entrypoint è runnato nel command di sqlserver dentro docker-compose.yml, QUESTO FILE serve per assicurarsi (grazie a loop) che sql server sia pronto, e poi solo dopo runno (sempre in questo file) il file init.sql 
 
-set -e   #dice a BAsh 'se QUALSIASI comando fallisce → termina immediatamente lo script'. SEMPRE DA FARE!!
+set -e    #dice a BAsh 'se QUALSIASI comando fallisce -> termina immediatamente lo script'. SEMPRE DA FARE!!
 
 echo "Attendo SQL Server..."  #log console
 until /opt/mssql-tools18/bin/sqlcmd \   #loop bash, ripete finche il COMMAND non ha successo, in questo caso il comando /opt/mssql-tools18/bin/sqlcmd (client CLI SQL Server) che verifica se SQL Server è vivo
@@ -21,9 +21,8 @@ echo "SQL Server pronto. Eseguo init.sql..."
     -U SA \
     -P "$SA_PASSWORD" \
     -i /docker-entrypoint-initdb.d/init.sql \    #-i = input file, RUNNA SCRIPT INIT.SQL presente in /docker-entrypoint-initdb.d/init.sql (montato da docker-compose)
-    -b   #esce con errore se il batch fallisce
+    -b    #esce con errore se il batch fallisce
 
-echo "init.sql completato."  #log console
-
+echo "init.sql completato."   #log console
 
 

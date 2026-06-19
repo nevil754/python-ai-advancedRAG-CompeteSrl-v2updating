@@ -27,13 +27,13 @@ IF NOT EXISTS (
 )
 CREATE TABLE shared.tenants (
     id              UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),  --NEWSEQUENTIALID() è UUID/GUID univoco MA sequenziale
-    slug            NVARCHAR(100)       NOT NULL,   -- "acme-corp" diventa → schema tenant_acme_corp
+    slug            NVARCHAR(100)       NOT NULL,   -- "acme-corp" diventa -> schema tenant_acme_corp
     display_name    NVARCHAR(255)       NOT NULL,
     plan            NVARCHAR(50)        NOT NULL DEFAULT 'starter',  -- starter | pro | enterprise
     is_active       BIT                 NOT NULL DEFAULT 1,   -- 1=attivo, 0=disabilitato (es. per scadenza abbonamento)
     max_docs        INT                 NOT NULL DEFAULT 500,
     max_users       INT                 NOT NULL DEFAULT 10,
-    max_tokens_day  BIGINT              NOT NULL DEFAULT 100000,  --🔥RATE LIMIT TOKEN X DAY!!
+    max_tokens_day  BIGINT              NOT NULL DEFAULT 100000,   --🔥RATE LIMIT TOKEN X DAY!!
     settings        NVARCHAR(MAX)       NULL,       -- JSON: feature flags, custom prompts, ecc.
     created_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),  --return data e ora corrente del server SQL in formato UTC
     updated_at      DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),
@@ -94,15 +94,15 @@ IF NOT EXISTS (
     WHERE s.name = 'shared' AND t.name = 'api_keys'
 )
 CREATE TABLE shared.api_keys (
-    id          UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),  --UUID/GUID univoco MA sequenziale
+    id          UNIQUEIDENTIFIER    NOT NULL DEFAULT NEWSEQUENTIALID(),   --UUID/GUID univoco MA sequenziale
     tenant_id   UNIQUEIDENTIFIER    NOT NULL,
-    key_hash    NVARCHAR(64)        NOT NULL,   -- SHA-256 della key, ⚠️ MAI IN CHIARO (puoi hasharla nel backend)
+    key_hash    NVARCHAR(64)        NOT NULL,     -- SHA-256 della key, ⚠️ MAI IN CHIARO (puoi hasharla nel backend)
     [name]        NVARCHAR(255)       NOT NULL,
     scopes      NVARCHAR(500)       NOT NULL DEFAULT 'read,write',
     is_active   BIT                 NOT NULL DEFAULT 1,
     last_used   DATETIME2(3)           NULL,
     expires_at  DATETIME2(3)           NULL,
-    created_at  DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),  --return data e ora corrente del server SQL in formato UTC
+    created_at  DATETIME2(3)           NOT NULL DEFAULT SYSUTCDATETIME(),   --return data e ora corrente del server SQL in formato UTC
     CONSTRAINT PK_api_keys PRIMARY KEY (id),
     CONSTRAINT UQ_api_keys_hash UNIQUE (key_hash),
     CONSTRAINT FK_api_keys_tenants FOREIGN KEY (tenant_id) REFERENCES shared.tenants(id)
@@ -125,17 +125,17 @@ BEGIN  --inizio del corpo
     DECLARE @schema_name NVARCHAR(200) = 'tenant_' + REPLACE(@slug, '-', '_');  --converte e.g. "acme-corp" -> "tenant_acme_corp", perche i '-' non sono validi in sqlserver nei nomi di schema/tabelle! quindi li converto
     DECLARE @sql NVARCHAR(MAX);  --here creerai query sql dinamiche 
 
-    -- 1. Crea schema
+    --1. Crea schema
     IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = @schema_name)
     BEGIN
         SET @sql = 'CREATE SCHEMA [' + @schema_name + ']';
-        EXEC sp_executesql @sql;  --esegue sql dentro quella var locale 
+        EXEC sp_executesql @sql;    --esegue sql dentro quella var locale 
     END
 
-    -- 2. Inserisci record in shared.tenants
+    --2. Inserisci record in shared.tenants
     IF NOT EXISTS (SELECT 1 FROM shared.tenants WHERE slug = @slug)
     BEGIN
-        INSERT INTO shared.tenants (slug, display_name, plan)  --insert in tab condivisa 
+        INSERT INTO shared.tenants (slug, display_name, plan)    --insert in tab condivisa 
         VALUES (@slug, @display_name, @plan);
     END
 
@@ -328,12 +328,12 @@ END
 GO
 
 
-EXEC shared.sp_provision_tenant  --runna creando 1 tenant (1 schema intermente per 1 'AZIENDA') fake, per testare tutto ok
+EXEC shared.sp_provision_tenant    --runna creando 1 tenant (1 schema intermente per 1 'AZIENDA') fake, per testare tutto ok
     @slug         = 'demo-corp',
     @display_name = 'Demo Corporation',
     @plan         = 'pro';
 GO
 
-PRINT 'init.sql completato.';  --mex log su console
+PRINT 'init.sql completato.';    --mex log su console
 GO
 
