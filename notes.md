@@ -88,7 +88,7 @@ rag-enterprise/
 │   ├── fastapi.Dockerfile
 │   ├── celery.Dockerfile          ← separato da fastapi (dipendenze diverse)
 │   └── sqlserver/
-│       ├── init.sql               ← ★ montato come volume, eseguito al primo avvio
+│       ├── init.sql               ← ⭐️ montato come volume, eseguito al primo avvio
 │       └── entrypoint.sh          ← attende SQL Server ready, poi esegue init.sql
 │
 ├── docker-compose.yml
@@ -152,16 +152,16 @@ rag-enterprise/
 │   │   │   ├── chunker.py         ← semantic/markdown chunking
 │   │   │   ├── embedder.py        ← fastembed batch embedding
 │   │   │   ├── metadata.py        ← estrazione + arricchimento metadata
-│   │   │   └── pipeline.py        ← ★ orchestra parser→clean→chunk→embed→upsert
+│   │   │   └── pipeline.py        ← ⭐️ orchestra parser→clean→chunk→embed→upsert
 │   │   │
 │   │   ├── retrieval/
 │   │   │   ├── dense.py           ← vector search su Qdrant
-│   │   │   ├── sparse.py          ← BM25 keyword search
+│   │   │   ├── sparse.py          ← BM25 keyword search (🔥ma SPLADE è meglio!!)
 │   │   │   ├── hybrid.py          ← ★ RRF fusion di dense + sparse
 │   │   │   ├── mmr.py             ← diversificazione risultati
 │   │   │   ├── reranker.py        ← cross-encoder BAAI/bge-reranker
 │   │   │   ├── filters.py         ← filtri metadata (data, autore, collection)
-│   │   │   └── retriever.py       ← ★ facade: espone retrieve(query, tenant_ctx)
+│   │   │   └── retriever.py       ← ★ facade(nascondi tutta la complessita e dai punto di enter easy): espone retrieve(query, tenant_ctx)
 │   │   │
 │   │   ├── generation/
 │   │   │   ├── prompts.py         ← carica da prompts.yaml, formatta con context
@@ -174,7 +174,7 @@ rag-enterprise/
 │   │   ├── memory/
 │   │   │   ├── short_term.py      ← Redis: ultimi N turni chat
 │   │   │   ├── long_term.py       ← SQL: summary conversazione persistito
-│   │   │   └── context_builder.py ← ★ assembla history + retrieved docs → prompt
+│   │   │   └── context_builder.py  ← ★ assembla history + retrieved docs → prompt
 │   │   │
 │   │   ├── agents/
 │   │   │   ├── router_agent.py    ← decide quale agent/tool usare
@@ -242,7 +242,7 @@ rag-enterprise/
 
 //⚠️⚠️ TODO FUTURE/ATTENTIONS!!!
 -mi manca tabella tsql 'conversation_summaries' chiamata in conversation_repo.py & long_term.py !!
--i files dentro mcp/ li faro in fase avanzata
+-TODOfuture:  i files dentro mcp/, rag_agent, sql_agent,  
 
 
 
