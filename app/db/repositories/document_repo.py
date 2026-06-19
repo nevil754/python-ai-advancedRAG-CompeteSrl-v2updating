@@ -8,7 +8,9 @@ from __future__ import annotations   #x python legacy in prj big soprattutto, tr
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.repositories.base import BaseRepository
 
+
 class DocumentRepository(BaseRepository):
+    
     async def get_by_id(self, document_id: str) -> dict | None:
         row = await self.fetchone(
             "SELECT * FROM documents WHERE id = :id",
