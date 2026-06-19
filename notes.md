@@ -97,8 +97,9 @@ rag-enterprise/
 ├── config/
 │   ├── config.yaml                ← configurazione app (embeddings, retriever, ecc.)
 │   ├── prompts.yaml               ← tutti i prompt centralizzati qui
-│   └── metadata.yaml              ← mapping metadati documenti
-│
+│   ├── metadata.yaml              ← mapping metadati documenti
+│   └──logging.yaml
+|  
 ├── app/
 │   │
 │   ├── main.py                    ← FastAPI app factory, lifespan, router include
@@ -240,9 +241,8 @@ rag-enterprise/
 //in futuro fovrai pensare anche al GDPR per la privacy, quindi anonimizzare i dati sensibili!
 
 //⚠️⚠️ TODO FUTURE/ATTENTIONS!!!
--mancano ancora i files 'test_...' & conftest.py !!
--mi manca tabella tsql 'conversation_summaries' chiamata in conversation_repo.py !!
--
+-mi manca tabella tsql 'conversation_summaries' chiamata in conversation_repo.py & long_term.py !!
+-i files dentro mcp/ li faro in fase avanzata
 
 
 
