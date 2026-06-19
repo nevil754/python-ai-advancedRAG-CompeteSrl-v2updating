@@ -70,6 +70,7 @@ server {
 
 -runna i tests: 'pytest -v' (anche con docker spento), pytest tests/integration/test_health.py (visto che lo hai settato in un certo modo, funziona anche con fastapi spento). e poi ovviamente devi fare i tests degli endpoint with e.g. postman
 -checks container attivi:  'docker compose ps'
+- main.py SEMPRE IN ROOT PRJ (quindi fuori da /app) !!:  
 
 ########DB
 tabella audit: cronologia IMMUTABILE di tutto quello che succede nel sistema (chia fatto cosa, quando lo ha fatto, con che dati, da dove, ect)
