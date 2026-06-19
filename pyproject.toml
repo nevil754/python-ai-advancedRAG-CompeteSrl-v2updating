@@ -1,8 +1,9 @@
 # =============================================================
 # RAG Enterprise Legal — configurazione tool di sviluppo
-# Ruff: linter + formatter (sostituisce black + isort + flake8)
-# Mypy: type checking statico
-# Pytest: configurazione test
+
+# quando esegui Ruff → usa queste regole linter + formatter (sostituisce black + isort + flake8)
+# quando esegui Mypy → usa queste regole type checking statico
+# quando esegui Pytest → usa queste regole configurazione test
 # =============================================================
 
 [tool.ruff]
