@@ -72,6 +72,8 @@ server {
 -checks container attivi:  'docker compose ps'
 - main.py SEMPRE IN ROOT PRJ (quindi fuori da /app) !!:  
 
+- trovi img fastapi python ufficiali in https://hub.docker.com/ filtrando x 'Docker Official Image'.
+
 ########DB
 tabella audit: cronologia IMMUTABILE di tutto quello che succede nel sistema (chia fatto cosa, quando lo ha fatto, con che dati, da dove, ect)
 fondamentale in contesti enterprise🔥

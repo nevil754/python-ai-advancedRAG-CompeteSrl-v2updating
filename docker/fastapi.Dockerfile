@@ -1,5 +1,6 @@
-# RAG Enterprise Legal — FastAPI image
-# Multi-stage build: builder installa dipendenze,
+# RAG Enterprise Legal Compet-e Srl — FastAPI image
+# Multi-stage build: 
+# builder installa dipendenze,
 # runtime è l'immagine finale leggera
 
 FROM python:3.11-slim AS builder
@@ -41,7 +42,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONFAULTHANDLER=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1   
+      #PIP_NO_CACHE_DIR=1 disabilita cache pip, riduce dimensione immagine
 
 WORKDIR /app
 

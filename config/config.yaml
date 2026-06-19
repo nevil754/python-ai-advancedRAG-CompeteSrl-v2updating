@@ -1,5 +1,5 @@
 app:
-  name: "CompeteSrl RAG Enterprise Legal"
+  name: "Compet-e Srl RAG Enterprise Legal"
   version: "0.1.0"  #0.x → prototipo/dev, 1.x → beta, 2.x → prod
   debug: false  #se true allora log piu verbosi e stacktrace completi, in production sempre False!
   environment: "development"  #ambiente runtime. development | staging | production dal code puoi leggere here per settare behaviors diversi e.g.CORS
@@ -91,7 +91,7 @@ logging:
 
 observability:
   langsmith_enabled: false      #true in staging/prod, cosi vedi info nella dashboard LangSmith
-  langsmith_project: "competeSrl-RAGenterprise-legal"
+  langsmith_project: "compet-eSrl-RAGenterprise-legal"
   opentelemetry_enabled: false  #telemetry distribuita, usa plugin opentelemetry per tracciare richieste e performance
 
 rate_limit:  #🔥SEMPRE DA FARE protezione abuso e ti protegge anche dai costi alti computazionali eseguiti dai clienti
