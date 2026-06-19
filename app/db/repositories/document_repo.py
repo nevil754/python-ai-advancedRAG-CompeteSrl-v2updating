@@ -10,7 +10,7 @@ from app.db.repositories.base import BaseRepository
 
 
 class DocumentRepository(BaseRepository):
-    
+
     async def get_by_id(self, document_id: str) -> dict | None:
         row = await self.fetchone(
             "SELECT * FROM documents WHERE id = :id",
@@ -42,7 +42,7 @@ class DocumentRepository(BaseRepository):
             WHERE id = :id
             """,
             {"status": status, "chunks": chunk_count, "pages": page_count, "id": document_id}
-        )
+        )  #COALESCE return il primo valore not null (da sx a dx) tra quelli passati
 
     async def soft_delete(self, document_id: str) -> None:
         await self.execute(
