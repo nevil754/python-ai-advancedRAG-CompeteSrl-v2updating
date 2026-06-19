@@ -24,13 +24,13 @@ def setup_logging(settings: "AppSettings") -> None:
     Configura Loguru come sistema di logging globale.
     Rimuove il handler di default e ne aggiunge uno configurato.
     """
-    logger.remove()  #loguru ha gia un handler di default, here lo elimino
+    logger.remove()    #loguru ha gia un handler di default, here lo elimino
     level = settings.log_level.upper()
-    if settings.log_json_output:  #
+    if settings.log_json_output:  #ricorda che il '_' è per indicare un annidamento
         # Formato JSON per produzione — parsabile da Loki/Datadog/Elastic
         logger.add(  #aggiunge nuovo output handler
             sys.stdout,
-            level=level,  #minimo level log e.g. "INFO"
+            level=level,   #minimo level log e.g. "INFO"
             format="{time:YYYY-MM-DDTHH:mm:ss.SSSZ} {level} {name}:{line} {message} {extra}",
             serialize=True,    #🔥🔥CONVERTS LOGS -> JSON
             backtrace=False,   #non show stack trace avanzati
@@ -122,11 +122,11 @@ def _intercept_stdlib_logging() -> None:
                 level, record.getMessage()
             )  #re-invia log a loguru con livello corretto e info eccezione
 
-    # Intercetta root logger e logger specifici
+    #intercetta root logger e logger specifici
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi",
-                 "sqlalchemy.engine", "celery", "httpx"):  #tutti i logs che vuoi intercettare
-        logging.getLogger(name).handlers = [InterceptHandler()]  #sostituisce handler originali
-        logging.getLogger(name).propagate = False
+                 "sqlalchemy.engine", "celery", "httpx"):   #tutti i logs che vuoi intercettare
+        logging.getLogger(name).handlers = [InterceptHandler()]   #sostituisce handler originali
+        logging.getLogger(name).propagate = False   #evita che i log vengano propagati al root logger dopo essere stati intercettati
 
 
 

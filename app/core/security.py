@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any  #x type hints generici
 from jose import JWTError, jwt  #lib jwt, gia installata con "pip install python-jose[cryptography]"
 from loguru import logger  
-from passlib.context import CryptContext  #lib hashing psw
+from passlib.context import CryptContext   #lib hashing psw
 from app.core.settings import get_settings  #ur custom
 
 settings = get_settings()
@@ -61,7 +61,7 @@ def create_access_token(
     to_encode["exp"] = expire
     to_encode["iat"] = datetime.now(timezone.utc)   #issued at
     token = jwt.encode(   #firma token
-        to_encode,  #payload cloned&edited
+        to_encode,    #payload cloned&edited
         settings.jwt_secret_key,  #la secret key serve x firma!
         algorithm=settings.jwt_algorithm,  #e.g. HS256
     )
@@ -116,11 +116,11 @@ def generate_api_key(length: int | None = None) -> tuple[str, str]:   #genera ap
 
 def hash_api_key(api_key: str) -> str:
     """Hash SHA-256 di una API key. Deterministico — stesso input = stesso output."""
-    return hashlib.sha256(api_key.encode()).hexdigest()  #trasforma stringa api key in hash SHA-256(ricorda che lavora con bytes, quindi priva dovresti gia aver fatto api_key.encode() ) irreversibile in formato esadecimale. il risultato di sha-256 è attualmente binario quindi hexdigest() lo converte in str leggibile esadecimale.
+    return hashlib.sha256(api_key.encode()).hexdigest()  #trasforma stringa api key in hash SHA-256(ricorda che lavora con bytes, quindi prima dovresti devi fare api_key.encode() ) irreversibile in formato esadecimale. il risultato di sha-256 è attualmente binario quindi hexdigest() lo converte in str leggibile esadecimale.
 
 def verify_api_key(plain_key: str, stored_hash: str) -> bool:
     """Verifica una API key confrontando il suo hash con quello salvato."""
-    return secrets.compare_digest(hash_api_key(plain_key), stored_hash)
+    return secrets.compare_digest( hash_api_key(plain_key), stored_hash )
 
 def extract_bearer_token(authorization_header: str | None) -> str | None:
     """
@@ -132,7 +132,7 @@ def extract_bearer_token(authorization_header: str | None) -> str | None:
     """
     if not authorization_header:
         return None
-    parts = authorization_header.split(" ")  #divide portando 'Bearer' in [0] e il resto in [1]
+    parts = authorization_header.split(" ")   #divide portando 'Bearer' in [0] e il resto in [1]
     if len(parts) != 2 or parts[0].lower() != "bearer":
         return None
     return parts[1]

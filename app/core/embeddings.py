@@ -68,8 +68,9 @@ def embed_query(text: str) -> list[float]:
     """
     model = get_embedding_model()
     vectors = list( model.query_embed([text]) )  #🔥🔥here accada l'embedding docs!!
-    #🔥🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(mydocument) e query_embed(myquery)
+    #🔥🔥i modelli retrieval di solito hanno 2 modalita: document embedding e query embedding, quindi con BGE utilizziamo embed(myDocument) e query_embed(myQuery)
     return vectors[0].tolist()  #return il primo elem [0] xk hai passato [query] una lista con 1 solo elem
+
 
 async def aembed_texts(texts: list[str]) -> list[list[float]]:  #async
     """
@@ -93,7 +94,7 @@ def get_embedding_dimension() -> int:
     nomic-embed-text: 768 dimensioni
     """
     model = get_embedding_model()
-    test_vector = list(model.embed(["test"]))[0]  #dummy x ottenere la dimension del vettore
+    test_vector = list(model.embed(["test"]))[0]   #dummy x ottenere la dimension del vettore
     return len(test_vector)
 
 @lru_cache(maxsize=1)

@@ -35,13 +35,17 @@ def get_llm() -> BaseChatModel:
         return _build_google(settings)
     else:
         raise ValueError(
-            f"Provider LLM '{provider}' non supportato. "
-            f"Usa: ollama | openai | google"
+            f"Provider LLM '{provider}' non supportato.\n Usa: ollama | openai | google "
         )
 
 def _build_ollama(settings: Any) -> BaseChatModel:
     """Costruisce ChatOllama per modelli locali."""
-    from langchain_ollama import ChatOllama
+    try: 
+        from langchain_ollama import ChatOllama
+    except ImportError:   #se l'import fallisce..
+        raise ImportError(
+            "Installa langchain-ollama per usare Ollama come provider:  pip install langchain-ollama"
+        )
     return ChatOllama(
         model=settings.llm_model,
         base_url=settings.llm_base_url,
@@ -53,7 +57,12 @@ def _build_ollama(settings: Any) -> BaseChatModel:
 
 def _build_openai(settings: Any) -> BaseChatModel:
     """Costruisce ChatOpenAI per modelli OpenAI."""
-    from langchain_openai import ChatOpenAI
+    try:
+        from langchain_openai import ChatOpenAI  #uso SEMPRE langchain!
+    except ImportError:
+        raise ImportError(
+            "Installa langchain-openai per usare OpenAI come provider:  pip install langchain-openai"
+        )
     if not settings.openai_api_key:
         raise ValueError("OPENAI_API_KEY mancante nel .env")
     return ChatOpenAI(
@@ -69,10 +78,9 @@ def _build_google(settings: Any) -> BaseChatModel:
     """Costruisce ChatGoogleGenerativeAI per modelli Gemini."""
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
-    except ImportError:
+    except ImportError:  
         raise ImportError(
-            "Installa langchain-google-genai per usare Google come provider: "
-            "pip install langchain-google-genai"
+            "Installa langchain-google-genai per usare Google come provider:  pip install langchain-google-genai"
         )
     if not settings.google_api_key:
         raise ValueError("GOOGLE_API_KEY mancante nel .env")

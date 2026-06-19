@@ -47,7 +47,7 @@ def get_collection_name(tenant_slug: str) -> str:
     return f"tenant_{safe_slug}_documents"  #slug w '..documents' finale
 
 def get_memory_collection_name(tenant_slug: str) -> str:
-    """Collection per la semantic memory (fatti utente estratti da Zep-like layer!)."""
+    """Collection per la semantic memory (fatti utente estratti da Zep-like (Zep è un plugin per la memory, ma io faccio molto meglio tutto custom e adatto a me) layer!)."""
     safe_slug = tenant_slug.replace("-", "_").lower()
     return f"tenant_{safe_slug}_memory"  #slug w '..memory' finale
 
