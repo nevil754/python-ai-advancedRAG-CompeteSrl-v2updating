@@ -110,7 +110,7 @@ def ensure_collection(
     client.create_payload_index(
         collection_name=collection_name,
         field_name="tenant_id",
-        field_schema=qmodels.PayloadSchemaType.KEYWORD,  #KEYWORD è una stringa e.g. dell'enum
+        field_schema=qmodels.PayloadSchemaType.KEYWORD,  #KEYWORD significa stringa esatta. e.g. se tenant_id = "abc123", puoi fare filter=tenant_id="abc123" e trova tutti i documenti di quel tenant matchato 
     )
     client.create_payload_index(
         collection_name=collection_name,
@@ -130,7 +130,7 @@ def ensure_collection(
     )
     return collection_name
 
-async def aensure_collection(tenant_slug: str, force_recreate: bool = False) -> str:  #versione Async di ensure_collection
+async def aensure_collection( tenant_slug: str, force_recreate: bool = False ) -> str:  #versione Async di ensure_collection
     """Versione async di ensure_collection."""
     import asyncio
     loop = asyncio.get_event_loop()
